@@ -44,7 +44,7 @@ Business modeling in software development involves defining the product's vision
 
 ### Product Vision
 
-_[Define a clear and concise product vision for LeafMark — ideally one sentence that captures the essence of the app and its direction.]_
+Leafmark is a community-driven book exchange platform that makes trading books between readers effortless, affordable, and sustainable.
 
 ### Features and Assumptions
 

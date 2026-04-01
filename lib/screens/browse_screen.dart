@@ -23,6 +23,7 @@ class BrowseScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(
                   builder: (context) => BookDetailScreen(book: book, isOwner: false),
+                  // TODO: replace with actual user identity check
                 ),
               );
             },

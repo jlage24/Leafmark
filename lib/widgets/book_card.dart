@@ -6,10 +6,10 @@ class BookCard extends StatelessWidget {
   final VoidCallback onTap;
 
   const BookCard({
-    Key? key,
+    super.key,
     required this.book,
     required this.onTap,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +27,6 @@ class BookCard extends StatelessWidget {
             width: 50,
             height: 75,
             fit: BoxFit.cover,
-            // Fallback icon in case the image URL fails to load
             errorBuilder: (context, error, stackTrace) => const Icon(Icons.book, size: 50),
           ),
         ),

@@ -1,6 +1,6 @@
 import '../models/book.dart';
 
-final List<Book> browseDummyBooks = [
+const List<Book> browseDummyBooks = [
   Book(
     id: 'b1',
     title: 'The Pragmatic Programmer',

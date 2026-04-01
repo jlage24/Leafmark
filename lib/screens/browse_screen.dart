@@ -4,7 +4,7 @@ import '../widgets/book_card.dart';
 import 'book_detail_screen.dart';
 
 class BrowseScreen extends StatelessWidget {
-  const BrowseScreen({Key? key}) : super(key: key);
+  const BrowseScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -12,7 +12,6 @@ class BrowseScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Browse Books'),
       ),
-      // ListView.builder loops through your dummy data to create cards
       body: ListView.builder(
         itemCount: browseDummyBooks.length,
         itemBuilder: (context, index) {
@@ -23,10 +22,9 @@ class BrowseScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => BookDetailScreen(book: book),
+                  builder: (context) => BookDetailScreen(book: book, isOwner: false),
                 ),
               );
-              debugPrint('Tapped on ${book.title}');
             },
           );
         },

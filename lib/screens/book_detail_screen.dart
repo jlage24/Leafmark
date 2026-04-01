@@ -3,8 +3,13 @@ import '../models/book.dart';
 
 class BookDetailScreen extends StatelessWidget {
   final Book book;
+  final bool isOwner;
 
-  const BookDetailScreen({Key? key, required this.book}) : super(key: key);
+  const BookDetailScreen({
+    super.key,
+    required this.book,
+    required this.isOwner,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -17,7 +22,6 @@ class BookDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Book Cover
             ClipRRect(
               borderRadius: BorderRadius.circular(8.0),
               child: Image.network(
@@ -29,8 +33,6 @@ class BookDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 24),
-
-            // Title and Author
             Text(
               book.title,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
@@ -42,8 +44,6 @@ class BookDetailScreen extends StatelessWidget {
               style: const TextStyle(fontSize: 18, color: Colors.grey),
             ),
             const SizedBox(height: 16),
-
-            // Condition and Owner Info
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
@@ -60,13 +60,12 @@ class BookDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 32),
 
-            // Request Swap Button
-            SizedBox(
+            !isOwner
+                ? SizedBox(
               width: double.infinity,
               height: 50,
               child: ElevatedButton(
                 onPressed: () {
-                  //Just a simple confirmation message
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text('Swap request sent to ${book.ownerName}!'),
@@ -76,13 +75,20 @@ class BookDetailScreen extends StatelessWidget {
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).colorScheme.primary,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 ),
                 child: const Text(
                   'Request Swap',
                   style: TextStyle(fontSize: 18),
                 ),
+              ),
+            )
+                : const Padding(
+              padding: EdgeInsets.all(16.0),
+              child: Text(
+                'This is your book on your shelf.',
+                style: TextStyle(fontSize: 16, color: Colors.grey, fontStyle: FontStyle.italic),
               ),
             ),
           ],

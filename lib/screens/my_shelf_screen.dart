@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
 import '../models/book.dart';
 import '../widgets/book_card.dart';
+import 'book_detail_screen.dart';
 
 class MyShelfScreen extends StatefulWidget {
-  const MyShelfScreen({Key? key}) : super(key: key);
+  const MyShelfScreen({super.key});
 
   @override
   State<MyShelfScreen> createState() => _MyShelfScreenState();
 }
 
 class _MyShelfScreenState extends State<MyShelfScreen> {
-  // This is the local state for your shelf.
   List<Book> myBooks = [];
 
   @override
@@ -19,7 +19,6 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
       appBar: AppBar(
         title: const Text('My Shelf'),
       ),
-      // If the list is empty, show a friendly message. Otherwise, show the list.
       body: myBooks.isEmpty
           ? const Center(
         child: Text(
@@ -34,7 +33,12 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
           return BookCard(
             book: book,
             onTap: () {
-              debugPrint('Tapped on my own book: ${book.title}');
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BookDetailScreen(book: book, isOwner: true),
+                ),
+              );
             },
           );
         },

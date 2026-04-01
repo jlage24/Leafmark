@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../data/dummy_data.dart';
 import '../widgets/book_card.dart';
+import 'book_detail_screen.dart';
 
 class BrowseScreen extends StatelessWidget {
   const BrowseScreen({Key? key}) : super(key: key);
@@ -19,7 +20,12 @@ class BrowseScreen extends StatelessWidget {
           return BookCard(
             book: book,
             onTap: () {
-              // TODO: Navigate to the Book Detail Screen (we will build this next!)
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => BookDetailScreen(book: book),
+                ),
+              );
               debugPrint('Tapped on ${book.title}');
             },
           );

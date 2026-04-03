@@ -14,7 +14,7 @@ class AppTheme {
     return base.copyWith(
       colorScheme: base.colorScheme.copyWith(
         primary: primary,
-        background: surface,
+        surface: surface,
       ),
       scaffoldBackgroundColor: surface,
       appBarTheme: AppBarTheme(

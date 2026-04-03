@@ -1,18 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
+
 import '../../../../core/app_theme.dart';
 import '../../../../core/leafmark_text_field.dart';
 import '../../data/services/google_books_service.dart';
 import '../../domain/models/book_fetch_result.dart';
 import '../../domain/models/book.dart';
-import '../../data/repositories/shelf_repository.dart';
+import '../../data/providers/book_shelf_provider.dart';
 
 /// Shown after a successful ISBN scan (or tapping "Enter manually").
 /// Fetches book details, shows a pre-filled form, and lets the user save.
+///
 class AddBookScreen extends StatefulWidget {
   final String? isbn;
 
-  const AddBookScreen({super.key, required this.isbn});
+  final GoogleBooksService? googleBooksService;
+
+  const AddBookScreen({
+    super.key,
+    required this.isbn,
+    this.googleBooksService,
+  });
 
   @override
   State<AddBookScreen> createState() => _AddBookScreenState();
@@ -20,8 +30,7 @@ class AddBookScreen extends StatefulWidget {
 
 class _AddBookScreenState extends State<AddBookScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _googleBooksService = GoogleBooksService();
-  final _shelfRepository = ShelfRepository();
+  late final GoogleBooksService _googleBooksService;
 
   // Controllers
   late final TextEditingController _isbnController;
@@ -38,6 +47,8 @@ class _AddBookScreenState extends State<AddBookScreen> {
   @override
   void initState() {
     super.initState();
+    _googleBooksService = widget.googleBooksService ?? GoogleBooksService();
+
     _isbnController = TextEditingController(text: widget.isbn ?? '');
     _titleController = TextEditingController();
     _authorsController = TextEditingController();
@@ -45,6 +56,8 @@ class _AddBookScreenState extends State<AddBookScreen> {
 
     if (widget.isbn != null && widget.isbn!.isNotEmpty) {
       _fetchBookDetails(widget.isbn!);
+    } else {
+      setState(() => _state = _ScreenState.manual);
     }
   }
 
@@ -97,7 +110,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
     setState(() => _isSaving = true);
 
     final book = Book(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      id: const Uuid().v4(),
       isbn: _isbnController.text.trim(),
       title: _titleController.text.trim(),
       authors: _authorsController.text.trim(),
@@ -109,27 +122,40 @@ class _AddBookScreenState extends State<AddBookScreen> {
       addedAt: DateTime.now(),
     );
 
-    await _shelfRepository.addBook(book);
+    try {
+      await context.read<BookShelfProvider>().addBook(book);
+      if (!mounted) return;
 
-    if (!mounted) return;
-    setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('"${book.title}" added to your shelf!'),
+          backgroundColor: AppTheme.primary,
+          behavior: SnackBarBehavior.floating,
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('"${book.title}" added to your shelf!'),
-        backgroundColor: AppTheme.primary,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
-
-    Navigator.of(context).pop();
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _isSaving = false);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Failed to save book. Please try again.'),
+          backgroundColor: Colors.red.shade700,
+          behavior: SnackBarBehavior.floating,
+          shape:
+          RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Add Book'),
         backgroundColor: Colors.transparent,
@@ -143,7 +169,6 @@ class _AddBookScreenState extends State<AddBookScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // ISBN row
               _IsbnInputRow(
                 controller: _isbnController,
                 isLoading: _state == _ScreenState.loading,
@@ -155,7 +180,6 @@ class _AddBookScreenState extends State<AddBookScreen> {
 
               const SizedBox(height: 20),
 
-              // Status banners
               if (_state == _ScreenState.loading)
                 const _StatusBanner(
                   icon: Icons.search_rounded,
@@ -177,10 +201,9 @@ class _AddBookScreenState extends State<AddBookScreen> {
                   color: Colors.red,
                 ),
 
-              // Cover + fields
               if (_state == _ScreenState.found ||
                   _state == _ScreenState.notFound ||
-                  (widget.isbn == null))
+                  _state == _ScreenState.manual)
                 _BookForm(
                   titleController: _titleController,
                   authorsController: _authorsController,
@@ -352,7 +375,6 @@ class _BookForm extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Cover preview
         if (coverUrl != null) ...[
           Center(
             child: ClipRRect(
@@ -388,12 +410,11 @@ class _BookForm extends StatelessWidget {
 
         const SizedBox(height: 20),
 
-        // ~Book Condition picker
         Text(
           'Condition',
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w600,
-            color: Theme.of(context).colorScheme.onBackground,
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 10),
@@ -461,4 +482,4 @@ class _ConditionPicker extends StatelessWidget {
   }
 }
 
-enum _ScreenState { idle, loading, found, notFound, error }
+enum _ScreenState { idle, manual, loading, found, notFound, error }

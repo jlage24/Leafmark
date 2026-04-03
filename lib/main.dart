@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/app_theme.dart';
 import 'features/books/presentation/providers/book_shelf_provider.dart';
-import 'features/books/presentation/screens/my_shelf_screen.dart';
-
+import 'main_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -23,7 +22,7 @@ class LeafMarkApp extends StatelessWidget {
         title: 'LeafMark',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        home: const MyShelfScreen(),
+        home: const MainScreen(),
       ),
     );
   }

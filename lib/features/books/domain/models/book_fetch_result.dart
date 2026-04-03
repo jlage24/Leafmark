@@ -32,11 +32,11 @@ class BookFetchResult {
         : 'Unknown author';
 
     final imageLinks = json['imageLinks'] as Map<String, dynamic>?;
-    String? coverUrl = imageLinks?['thumbnail'] as String?;
+    String? coverUrl = (imageLinks?['thumbnail'] ?? imageLinks?['smallThumbnail']) as String?;
     if (coverUrl != null) {
-      coverUrl = coverUrl
-          .replaceFirst('http://', 'https://')
-          .replaceFirst('zoom=1', 'zoom=2');
+      coverUrl = coverUrl.replaceFirst('http://', 'https://');
+    } else {
+      coverUrl = 'https://covers.openlibrary.org/b/isbn/$isbn-L.jpg';
     }
 
     return BookFetchResult(

@@ -7,6 +7,7 @@ class Book {
   final BookCondition condition;
   final String? notes;
   final DateTime addedAt;
+  final String? ownerName; // optional — only set for browse/dummy books
 
   const Book({
     required this.id,
@@ -17,6 +18,7 @@ class Book {
     required this.condition,
     this.notes,
     required this.addedAt,
+    this.ownerName,
   });
 
   Map<String, dynamic> toJson() => {
@@ -28,6 +30,7 @@ class Book {
     'condition': condition.name,
     'notes': notes,
     'addedAt': addedAt.toIso8601String(),
+    'ownerName': ownerName,
   };
 
   factory Book.fromJson(Map<String, dynamic> json) => Book(
@@ -41,6 +44,7 @@ class Book {
     ),
     notes: json['notes'] as String?,
     addedAt: DateTime.parse(json['addedAt'] as String),
+    ownerName: json['ownerName'] as String?,
   );
 
   Book copyWith({
@@ -52,6 +56,7 @@ class Book {
     BookCondition? condition,
     String? notes,
     DateTime? addedAt,
+    String? ownerName,
   }) =>
       Book(
         id: id ?? this.id,
@@ -62,6 +67,7 @@ class Book {
         condition: condition ?? this.condition,
         notes: notes ?? this.notes,
         addedAt: addedAt ?? this.addedAt,
+        ownerName: ownerName ?? this.ownerName,
       );
 
   @override

@@ -21,7 +21,7 @@ class AppTheme {
         backgroundColor: surface,
         foregroundColor: onSurface,
         elevation: 0,
-        titleTextStyle: GoogleFonts.dmSerif(
+        titleTextStyle: GoogleFonts.dmSerifDisplay(
           fontSize: 18,
           fontWeight: FontWeight.w400,
           color: onSurface,

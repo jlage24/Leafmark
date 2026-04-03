@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import '../models/book_fetch_result.dart';
+import '../../../add_book/presentation/models/book_fetch_result.dart';
 
 /// Fetches book metadata from the Google Books API using an ISBN.
 class GoogleBooksService {

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/book.dart';
+import '../../domain/models/book.dart';
 
 class BookCard extends StatelessWidget {
   final Book book;
@@ -22,13 +22,16 @@ class BookCard extends StatelessWidget {
         onTap: onTap,
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: Image.network(
-            book.coverUrl,
+          child: book.coverUrl != null
+              ? Image.network(
+            book.coverUrl!,
             width: 50,
             height: 75,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => const Icon(Icons.book, size: 50),
-          ),
+            errorBuilder: (context, error, stackTrace) =>
+            const Icon(Icons.book, size: 50),
+          )
+              : const Icon(Icons.book, size: 50),
         ),
         title: Text(
           book.title,
@@ -41,10 +44,10 @@ class BookCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(book.author, maxLines: 1, overflow: TextOverflow.ellipsis),
+              Text(book.authors, maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 4),
               Text(
-                'Condition: ${book.condition}',
+                'Condition: ${book.condition.label}',
                 style: TextStyle(color: Colors.grey[600], fontSize: 12),
               ),
             ],

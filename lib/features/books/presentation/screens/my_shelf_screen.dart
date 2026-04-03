@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/book.dart';
+import 'package:provider/provider.dart';
+import '../providers/book_shelf_provider.dart';
 import '../widgets/book_card.dart';
 import 'book_detail_screen.dart';
 
@@ -11,15 +12,24 @@ class MyShelfScreen extends StatefulWidget {
 }
 
 class _MyShelfScreenState extends State<MyShelfScreen> {
-  List<Book> myBooks = [];
+  @override
+  void initState() {
+    super.initState();
+    // Load books after the first frame so context is ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<BookShelfProvider>().loadBooks();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final books = context.watch<BookShelfProvider>().books;
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Shelf'),
       ),
-      body: myBooks.isEmpty
+      body: books.isEmpty
           ? const Center(
         child: Text(
           'Your shelf is empty. Scan a book to add it!',
@@ -27,16 +37,17 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
         ),
       )
           : ListView.builder(
-        itemCount: myBooks.length,
+        itemCount: books.length,
         itemBuilder: (context, index) {
-          final book = myBooks[index];
+          final book = books[index];
           return BookCard(
             book: book,
             onTap: () {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => BookDetailScreen(book: book, isOwner: true),
+                  builder: (context) =>
+                      BookDetailScreen(book: book, isOwner: true),
                 ),
               );
             },

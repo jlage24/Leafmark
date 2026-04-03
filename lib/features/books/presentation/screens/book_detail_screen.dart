@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/book.dart';
+import '../../domain/models/book.dart';
 
 class BookDetailScreen extends StatelessWidget {
   final Book book;
@@ -22,16 +22,17 @@ class BookDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(8.0),
-              child: Image.network(
-                book.coverUrl,
-                height: 250,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.book, size: 100, color: Colors.grey),
+            if (book.coverUrl != null)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8.0),
+                child: Image.network(
+                  book.coverUrl!,
+                  height: 250,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                  const Icon(Icons.book, size: 100, color: Colors.grey),
+                ),
               ),
-            ),
             const SizedBox(height: 24),
             Text(
               book.title,
@@ -40,7 +41,7 @@ class BookDetailScreen extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'by ${book.author}',
+              'by ${book.authors}',
               style: const TextStyle(fontSize: 18, color: Colors.grey),
             ),
             const SizedBox(height: 16),
@@ -53,13 +54,12 @@ class BookDetailScreen extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  Text('Condition: ${book.condition}'),
-                  Text('Owner: ${book.ownerName}'),
+                  Text('Condition: ${book.condition.label}'),
+                  if (book.ownerName != null) Text('Owner: ${book.ownerName}'),
                 ],
               ),
             ),
             const SizedBox(height: 32),
-
             !isOwner
                 ? SizedBox(
               width: double.infinity,
@@ -68,15 +68,19 @@ class BookDetailScreen extends StatelessWidget {
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Swap request sent to ${book.ownerName}!'),
+                      content: Text(
+                        'Swap request sent to ${book.ownerName ?? 'owner'}!',
+                      ),
                       backgroundColor: Colors.green,
                       behavior: SnackBarBehavior.floating,
                     ),
                   );
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                  backgroundColor:
+                  Theme.of(context).colorScheme.primary,
+                  foregroundColor:
+                  Theme.of(context).colorScheme.onPrimary,
                 ),
                 child: const Text(
                   'Request Swap',
@@ -88,7 +92,11 @@ class BookDetailScreen extends StatelessWidget {
               padding: EdgeInsets.all(16.0),
               child: Text(
                 'This is your book on your shelf.',
-                style: TextStyle(fontSize: 16, color: Colors.grey, fontStyle: FontStyle.italic),
+                style: TextStyle(
+                  fontSize: 16,
+                  color: Colors.grey,
+                  fontStyle: FontStyle.italic,
+                ),
               ),
             ),
           ],

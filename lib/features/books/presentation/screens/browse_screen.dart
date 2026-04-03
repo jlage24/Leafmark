@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../data/dummy_data.dart';
+import '../../../../data/dummy_data.dart';
 import '../widgets/book_card.dart';
 import 'book_detail_screen.dart';
 
@@ -22,8 +22,8 @@ class BrowseScreen extends StatelessWidget {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => BookDetailScreen(book: book, isOwner: false),
-                  // TODO: replace with actual user identity check
+                  builder: (context) =>
+                      BookDetailScreen(book: book, isOwner: false),
                 ),
               );
             },

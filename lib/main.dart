@@ -22,7 +22,7 @@ class LeafMarkApp extends StatelessWidget {
       child: MaterialApp(
         title: 'LeafMark',
         debugShowCheckedModeBanner: false,
-        theme: LeafMarkTheme.light,
+        theme: AppTheme.light,
         home: const MyShelfScreen(),
       ),
     );

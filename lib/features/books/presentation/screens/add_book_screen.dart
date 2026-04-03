@@ -8,7 +8,7 @@ import '../../../../core/leafmark_text_field.dart';
 import '../../data/services/google_books_service.dart';
 import '../../domain/models/book_fetch_result.dart';
 import '../../domain/models/book.dart';
-import '../providers/book_shelf_provider.dart';
+import '../../data/providers/book_shelf_provider.dart';
 
 /// Shown after a successful ISBN scan (or tapping "Enter manually").
 /// Fetches book details, shows a pre-filled form, and lets the user save.

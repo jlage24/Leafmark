@@ -2,15 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'core/app_theme.dart';
 import 'features/books/presentation/providers/book_shelf_provider.dart';
+import 'features/books/presentation/screens/my_shelf_screen.dart';
+
 
 void main() {
-  runApp(
-    ChangeNotifierProvider(
-      create: (_) => BookShelfProvider(),
-      child: const LeafMarkApp(),
-    ),
-  );
+  WidgetsFlutterBinding.ensureInitialized();
+  runApp(const LeafMarkApp());
 }
+
 class LeafMarkApp extends StatelessWidget {
   const LeafMarkApp({super.key});
 

@@ -1,75 +1,32 @@
-import 'package:uuid/uuid.dart';
-
 class Book {
   final String id;
   final String isbn;
   final String title;
-  final String author;
+  final String authors;
   final String? coverUrl;
-  final String? description;
-  final String? publisher;
-  final String? publishedDate;
-  final String? pageCount;
-  final List<String> categories;
-  final BookShelfStatus shelfStatus;
+  final BookCondition condition;
+  final String? notes;
   final DateTime addedAt;
 
-  Book({
-    String? id,
+  const Book({
+    required this.id,
     required this.isbn,
     required this.title,
-    required this.author,
+    required this.authors,
     this.coverUrl,
-    this.description,
-    this.publisher,
-    this.publishedDate,
-    this.pageCount,
-    List<String>? categories,
-    this.shelfStatus = BookShelfStatus.shelf,
-    DateTime? addedAt,
-  })  : id = id ?? const Uuid().v4(),
-        categories = categories ?? [],
-        addedAt = addedAt ?? DateTime.now();
-
-  Book copyWith({
-    String? title,
-    String? author,
-    String? coverUrl,
-    String? description,
-    String? publisher,
-    String? publishedDate,
-    String? pageCount,
-    List<String>? categories,
-    BookShelfStatus? shelfStatus,
-  }) {
-    return Book(
-      id: id,
-      isbn: isbn,
-      title: title ?? this.title,
-      author: author ?? this.author,
-      coverUrl: coverUrl ?? this.coverUrl,
-      description: description ?? this.description,
-      publisher: publisher ?? this.publisher,
-      publishedDate: publishedDate ?? this.publishedDate,
-      pageCount: pageCount ?? this.pageCount,
-      categories: categories ?? this.categories,
-      shelfStatus: shelfStatus ?? this.shelfStatus,
-      addedAt: addedAt,
-    );
-  }
+    required this.condition,
+    this.notes,
+    required this.addedAt,
+  });
 
   Map<String, dynamic> toJson() => {
     'id': id,
     'isbn': isbn,
     'title': title,
-    'author': author,
+    'authors': authors,
     'coverUrl': coverUrl,
-    'description': description,
-    'publisher': publisher,
-    'publishedDate': publishedDate,
-    'pageCount': pageCount,
-    'categories': categories,
-    'shelfStatus': shelfStatus.name,
+    'condition': condition.name,
+    'notes': notes,
     'addedAt': addedAt.toIso8601String(),
   };
 
@@ -77,38 +34,53 @@ class Book {
     id: json['id'] as String,
     isbn: json['isbn'] as String,
     title: json['title'] as String,
-    author: json['author'] as String,
+    authors: json['authors'] as String,
     coverUrl: json['coverUrl'] as String?,
-    description: json['description'] as String?,
-    publisher: json['publisher'] as String?,
-    publishedDate: json['publishedDate'] as String?,
-    pageCount: json['pageCount'] as String?,
-    categories: List<String>.from(json['categories'] ?? []),
-    shelfStatus: BookShelfStatus.values.byName(
-      json['shelfStatus'] as String? ?? 'shelf',
+    condition: BookCondition.values.byName(
+      (json['condition'] as String?) ?? BookCondition.good.name,
     ),
+    notes: json['notes'] as String?,
     addedAt: DateTime.parse(json['addedAt'] as String),
   );
+
+  Book copyWith({
+    String? id,
+    String? isbn,
+    String? title,
+    String? authors,
+    String? coverUrl,
+    BookCondition? condition,
+    String? notes,
+    DateTime? addedAt,
+  }) =>
+      Book(
+        id: id ?? this.id,
+        isbn: isbn ?? this.isbn,
+        title: title ?? this.title,
+        authors: authors ?? this.authors,
+        coverUrl: coverUrl ?? this.coverUrl,
+        condition: condition ?? this.condition,
+        notes: notes ?? this.notes,
+        addedAt: addedAt ?? this.addedAt,
+      );
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) || (other is Book && other.id == id);
+
+  @override
+  int get hashCode => id.hashCode;
+
+  @override
+  String toString() => 'Book(id: $id, title: $title, isbn: $isbn)';
 }
 
-enum BookShelfStatus {
-  shelf,
-  wishlist,
-  swapping,
-  inProgress,
-}
+enum BookCondition {
+  mint('Mint'),
+  good('Good'),
+  fair('Fair'),
+  poor('Poor');
 
-extension BookShelfStatusLabel on BookShelfStatus {
-  String get label {
-    switch (this) {
-      case BookShelfStatus.shelf:
-        return 'My Shelf';
-      case BookShelfStatus.wishlist:
-        return 'Wishlist';
-      case BookShelfStatus.swapping:
-        return 'Available for Swap';
-      case BookShelfStatus.inProgress:
-        return 'In Progress';
-    }
-  }
+  final String label;
+  const BookCondition(this.label);
 }

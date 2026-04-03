@@ -123,7 +123,6 @@ class _AddBookScreenState extends State<AddBookScreen> {
       ),
     );
 
-    // Pop back to the scanner (or shelf if opened directly)
     Navigator.of(context).pop();
   }
 
@@ -230,10 +229,6 @@ class _AddBookScreenState extends State<AddBookScreen> {
     );
   }
 }
-
-// ---------------------------------------------------------------------------
-// Sub-widgets
-// ---------------------------------------------------------------------------
 
 class _IsbnInputRow extends StatelessWidget {
   final TextEditingController controller;
@@ -393,7 +388,7 @@ class _BookForm extends StatelessWidget {
 
         const SizedBox(height: 20),
 
-        // Condition picker
+        // ~Book Condition picker
         Text(
           'Condition',
           style: Theme.of(context).textTheme.labelLarge?.copyWith(

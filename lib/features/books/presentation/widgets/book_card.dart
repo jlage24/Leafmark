@@ -4,11 +4,13 @@ import '../../domain/models/book.dart';
 class BookCard extends StatelessWidget {
   final Book book;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
 
   const BookCard({
     super.key,
     required this.book,
     required this.onTap,
+    this.onLongPress,
   });
 
   @override
@@ -20,6 +22,7 @@ class BookCard extends StatelessWidget {
       child: ListTile(
         contentPadding: const EdgeInsets.all(12),
         onTap: onTap,
+        onLongPress: onLongPress,
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: book.coverUrl != null

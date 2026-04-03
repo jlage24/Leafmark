@@ -7,15 +7,19 @@ class GoogleBooksService {
   static const String _baseUrl =
       'https://www.googleapis.com/books/v1/volumes';
 
+  // Read in build-time, never hardcoded
+  static const String _apiKey =
+  String.fromEnvironment('GOOGLE_BOOKS_API_KEY', defaultValue: '');
+
   final http.Client _client;
 
   GoogleBooksService({http.Client? client})
       : _client = client ?? http.Client();
 
-  /// Throws a [BookFetchException] on network or parsing errors.
-  /// Returns null if no matching book was found.
   Future<BookFetchResult?> fetchByIsbn(String isbn) async {
-    final uri = Uri.parse('$_baseUrl?q=isbn:$isbn');
+    final uri = Uri.parse(
+      '$_baseUrl?q=isbn:$isbn${_apiKey.isNotEmpty ? '&key=$_apiKey' : ''}',
+    );
 
     final http.Response response;
     try {
@@ -43,7 +47,8 @@ class GoogleBooksService {
     if (items == null || items.isEmpty) return null;
 
     final volumeInfo =
-    (items.first as Map<String, dynamic>)['volumeInfo'] as Map<String, dynamic>?;
+    (items.first as Map<String, dynamic>)['volumeInfo']
+    as Map<String, dynamic>?;
     if (volumeInfo == null) return null;
 
     return BookFetchResult.fromGoogleBooksJson(volumeInfo, isbn);

@@ -13,95 +13,228 @@ class BookDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(book.title),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            if (book.coverUrl != null)
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8.0),
-                child: Image.network(
-                  book.coverUrl!,
-                  height: 250,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                  const Icon(Icons.book, size: 100, color: Colors.grey),
-                ),
-              ),
+            // Cover
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10.0),
+              child: book.coverUrl != null
+                  ? Image.network(
+                book.coverUrl!,
+                height: 220,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) =>
+                const _PlaceholderCover(),
+              )
+                  : const _PlaceholderCover(),
+            ),
+
             const SizedBox(height: 24),
+
+            // Title
             Text(
               book.title,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+
+            const SizedBox(height: 6),
+
+            // Authors
             Text(
-              'by ${book.authors}',
-              style: const TextStyle(fontSize: 18, color: Colors.grey),
+              book.authors,
+              style: textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+              textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                children: [
-                  Text('Condition: ${book.condition.label}'),
-                  if (book.ownerName != null) Text('Owner: ${book.ownerName}'),
-                ],
-              ),
+
+            const SizedBox(height: 20),
+
+            // Meta chips row
+            Wrap(
+              spacing: 10,
+              runSpacing: 8,
+              alignment: WrapAlignment.center,
+              children: [
+                _MetaChip(
+                  icon: Icons.star_outline_rounded,
+                  label: book.condition.label,
+                  color: _conditionColor(book.condition),
+                ),
+                if (book.ownerName != null)
+                  _MetaChip(
+                    icon: Icons.person_outline_rounded,
+                    label: book.ownerName!,
+                    color: colorScheme.primary,
+                  ),
+                _MetaChip(
+                  icon: Icons.qr_code_rounded,
+                  label: book.isbn,
+                  color: Colors.grey,
+                ),
+              ],
             ),
-            const SizedBox(height: 32),
-            !isOwner
-                ? SizedBox(
+
+            // Notes
+            if (book.notes != null && book.notes!.isNotEmpty) ...[
+              const SizedBox(height: 24),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: colorScheme.primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: colorScheme.primary.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.notes_rounded,
+                        size: 18, color: colorScheme.primary),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        book.notes!,
+                        style: textTheme.bodyMedium?.copyWith(
+                          color: colorScheme.onSurface.withValues(alpha: 0.75),
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 36),
+
+            // Action button
+            SizedBox(
               width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
+              height: 52,
+              child: isOwner
+                  ? OutlinedButton.icon(
+                onPressed: null,
+                icon: const Icon(Icons.check_circle_outline_rounded),
+                label: const Text('This book is on your shelf'),
+                style: OutlinedButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              )
+                  : FilledButton.icon(
                 onPressed: () {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
                         'Swap request sent to ${book.ownerName ?? 'owner'}!',
                       ),
-                      backgroundColor: Colors.green,
+                      backgroundColor: Colors.green[700],
                       behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                     ),
                   );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                  Theme.of(context).colorScheme.primary,
-                  foregroundColor:
-                  Theme.of(context).colorScheme.onPrimary,
-                ),
-                child: const Text(
+                icon: const Icon(Icons.swap_horiz_rounded),
+                label: const Text(
                   'Request Swap',
-                  style: TextStyle(fontSize: 18),
+                  style: TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w600),
                 ),
-              ),
-            )
-                : const Padding(
-              padding: EdgeInsets.all(16.0),
-              child: Text(
-                'This is your book on your shelf.',
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey,
-                  fontStyle: FontStyle.italic,
+                style: FilledButton.styleFrom(
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
                 ),
               ),
             ),
+
+            const SizedBox(height: 24),
           ],
         ),
       ),
+    );
+  }
+
+  Color _conditionColor(BookCondition condition) {
+    switch (condition) {
+      case BookCondition.mint:
+        return Colors.green[700]!;
+      case BookCondition.good:
+        return Colors.blue[700]!;
+      case BookCondition.fair:
+        return Colors.orange[700]!;
+      case BookCondition.poor:
+        return Colors.red[700]!;
+    }
+  }
+}
+
+class _MetaChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _MetaChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PlaceholderCover extends StatelessWidget {
+  const _PlaceholderCover();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 220,
+      width: 150,
+      color: Colors.grey[200],
+      child: const Icon(Icons.book_outlined, size: 64, color: Colors.grey),
     );
   }
 }

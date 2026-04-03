@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/book.dart';
+import '../../domain/models/book.dart';
 
 /// Local shelf persistence using shared_preferences.
-/// No backend is needed for the Sprint 0 prototype.
+
 class ShelfRepository {
   static const String _kShelfKey = 'leafmark_shelf_books';
 
@@ -25,7 +25,7 @@ class ShelfRepository {
       ..sort((a, b) => b.addedAt.compareTo(a.addedAt));
   }
 
-  /// Persists [book] to the shelf. Replaces any existing book with the same id.
+  /// Persists book to the shelf. Replaces any existing book with the same id.
   Future<void> addBook(Book book) async {
     final books = await getBooks();
     final index = books.indexWhere((b) => b.id == book.id);
@@ -37,7 +37,7 @@ class ShelfRepository {
     await _persist(books);
   }
 
-  /// Removes the book with [bookId] from the shelf.
+  /// Removes the book with bookId from the shelf.
   Future<void> removeBook(String bookId) async {
     final books = await getBooks();
     books.removeWhere((b) => b.id == bookId);
@@ -52,7 +52,7 @@ class ShelfRepository {
     );
   }
 
-  /// Clears all books — useful for tests and the dev menu.
+  /// Clears all books
   Future<void> clearAll() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_kShelfKey);

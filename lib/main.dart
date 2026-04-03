@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'providers/book_shelf_provider.dart';
-import 'screens/my_shelf_screen.dart';
-import 'theme/app_theme.dart';
+import 'core/app_theme.dart';
+import 'features/books/presentation/providers/book_shelf_provider.dart';
+import 'features/books/presentation/screens/my_shelf_screen.dart';
+
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();

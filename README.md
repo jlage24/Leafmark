@@ -64,12 +64,14 @@ _[Provide a concise summary of all user stories here. The individual user storie
 
 ### Domain Model
 
-_[Insert a UML class diagram with the key concepts, attributes, and relationships of the LeafMark domain. Accompany with a short description of each concept.]_
+* **User**: A member of the LeafMark community who maintains a profile, tracks their rating, and manages their personal book collections.
+* **Book**: A physical item defined by its title, author, and ISBN. It includes metadata such as current condition and photos to facilitate fair trading.
+* **Shelf**: A collection belonging to a specific user that contains the books they currently own and are available for exchange.
+* **SwapRequest**: A formal proposal that connects two users and involves the exchange of two or more books.
+* **Wishlist**: A personal list belonging to a user that contains the titles of books they are actively looking to acquire.
+* **Rating**: A feedback mechanism where one user evaluates another after a trade is completed to maintain community trust.
 
-<p align="center">
-  <!-- <img src="images/DomainModel.png"/> -->
-  <em>Domain model diagram coming soon.</em>
-</p>
+![Domain Model Diagram](./docs/images/DomainModel.png)
 
 ### User Interfaces
 

@@ -77,7 +77,21 @@ _Optionally, list assumptions about the app and its dependencies on external sys
 
 ### User Interfaces
 
-_[Add mockups or drafts of the main user interfaces for LeafMark's key screens.]_
+**Browse**:
+
+![Browse Mockup](docs/images/Browse-Mockup.png)
+
+**Search**:
+
+![Search Mockup](docs/images/Search-Mockup.png)
+
+**My Shelf**:
+
+![My Shelf Mockup](docs/images/MyShelf-Mockup.png)
+
+**Profile**:
+
+![Profile Mockup](docs/images/Profile-Mockup.png)
 
 ---
 

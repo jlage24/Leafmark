@@ -28,7 +28,7 @@ class BookFetchResult {
       ) {
     final rawAuthors = json['authors'];
     final authors = rawAuthors is List
-        ? (rawAuthors as List<dynamic>).join(', ')
+        ? rawAuthors.join(', ')
         : 'Unknown author';
 
     final imageLinks = json['imageLinks'] as Map<String, dynamic>?;

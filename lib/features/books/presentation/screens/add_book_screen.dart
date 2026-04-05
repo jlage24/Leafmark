@@ -293,7 +293,7 @@ class _IsbnInputRow extends StatelessWidget {
             child: FilledButton(
               onPressed: isLoading ? null : onLookup,
               style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.primary.withOpacity(0.15),
+                backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
                 foregroundColor: AppTheme.primary,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
@@ -332,9 +332,9 @@ class _StatusBanner extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -383,7 +383,7 @@ class _BookForm extends StatelessWidget {
                 coverUrl!,
                 height: 140,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                errorBuilder: (context, error, _) => const SizedBox.shrink(),
               ),
             ),
           ),
@@ -457,7 +457,7 @@ class _ConditionPicker extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppTheme.primary
-                    : AppTheme.primary.withOpacity(0.07),
+                    : AppTheme.primary.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
                   color: isSelected

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // 👈 for haptic feedback
+import 'package:flutter/services.dart'; // For HapticFeedback
 import 'package:provider/provider.dart';
 import '../providers/book_shelf_provider.dart';
 import '../widgets/book_card.dart';
@@ -59,8 +59,7 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
                         width: 44,
                         height: 64,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                        const Icon(Icons.book, size: 44),
+                        errorBuilder: (context, error, _) => const Icon(Icons.book, size: 44),
                       )
                           : const Icon(Icons.book, size: 44),
                     ),

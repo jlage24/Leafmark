@@ -48,12 +48,19 @@ Leafmark is a community-driven book exchange platform that makes trading books b
 
 ### Features and Assumptions
 
-_[List the initial high-level features of LeafMark, e.g.:_
-- _Feature X — brief description_
-- _Feature Y — brief description_
+**Features:**
+- **ISBN Barcode Scanning** — scan a book's barcode with the camera to auto-fill title, author, and cover via Google Books API
+- **Personal Shelf Management** — add books to a virtual shelf, view the collection, and remove books with a long-press gesture
+- **Community Browsing** — explore books listed by other users with cover images and condition details
+- **Book Detail View** — inspect any book's full metadata, condition, owner, and notes
+- **Swap Request** — initiate a trade proposal directly from a book's detail page (partially)
+- **Local Persistence** — shelf data is saved across sessions using on-device storage
 
-_Optionally, list assumptions about the app and its dependencies on external systems.]_
-
+**Assumptions:**
+- Users have an Android device with a working camera for ISBN scanning
+- Google Books API is available and returns results for standard ISBN-10 and ISBN-13 codes; OpenLibrary is used as a cover fallback
+- For Sprint 0, all data is stored locally — no user accounts or backend yet
+- Firebase will be introduced in a later sprint to support real user accounts, swap requests, and community features
 ---
 
 ## Requirements
@@ -77,21 +84,14 @@ _Optionally, list assumptions about the app and its dependencies on external sys
 
 ### User Interfaces
 
-**Browse**:
+<div align="center">
 
-![Browse Mockup](docs/images/Browse-Mockup.png)
+<img src="docs/images/Browse-Mockup.png" alt="Browse screen" width="22%" />
+<img src="docs/images/Search-Mockup.png" alt="Search screen" width="22%" />
+<img src="docs/images/MyShelf-Mockup.png" alt="My Shelf screen" width="22%" />
+<img src="docs/images/Profile-Mockup.png" alt="Profile screen" width="22%" />
 
-**Search**:
-
-![Search Mockup](docs/images/Search-Mockup.png)
-
-**My Shelf**:
-
-![My Shelf Mockup](docs/images/MyShelf-Mockup.png)
-
-**Profile**:
-
-![Profile Mockup](docs/images/Profile-Mockup.png)
+</div>
 
 ---
 
@@ -150,7 +150,7 @@ The functional prototype developed in Sprint 0 focuses on validating the core in
 
 - Users can scan ISBN barcodes with the camera, fetching book information automatically from Google Books API.
 - Books are added to the virtual shelf and can be browsed by other users.
-- Basic swap request flow is implemented.
+- Basic swap request flow is partially implemented.
 - Local storage is used for the prototype; full backend integration with Firebase will come in later sprints.
 
 ---
@@ -169,7 +169,44 @@ The functional prototype developed in Sprint 0 focuses on validating the core in
 
 ### Sprint 0
 
-_[Add Sprint 0 planning screenshots and retrospective notes here.]_
+#### Planning
+
+Sprint 0 focused on establishing the project foundation: repository setup, architecture decisions, core prototype, and development workflow.
+
+**Delivered:**
+- ISBN barcode scanner with Google Books API integration
+- `BookShelfProvider` with `shared_preferences` persistence
+- `MyShelfScreen` with long-press-to-delete (bottom sheet + haptic feedback)
+- `BrowseScreen` with 32 dummy books using OpenLibrary covers
+- `BookDetailScreen` with condition chips, notes, and swap placeholder
+- `MainScreen` navigation shell (2 tabs + FAB)
+- GitHub Actions CI pipeline (analyze, test, build)
+- Unit, integration, and acceptance test suites (0 failures)
+- MoSCoW-labelled backlog with 19 user stories
+- Git Flow branching with branch protection on `main` and `dev`
+
+**Release:** [v0.1.0](../../releases/tag/v0.1.0)
+
+#### Retrospective
+
+✅ **Did well**
+- Clean feature branch workflow with formal PR reviews kept `dev` stable throughout
+- Survey-driven backlog reprioritization — security concerns surfaced early and shaped Must Have requirements correctly
+- Provider architecture discipline: caught and fixed a silent double-registration bug during integration
+
+🔁 **Do differently**
+- Start writing tests in parallel with features, not as a separate closing step
+- Finalize visual identity earlier so UI decisions aren't blocked waiting on design direction
+
+❓ **Puzzles**
+- How to handle API key injection cleanly across all team members' environments without friction
+- Whether to go platform-adaptive UI or consistent cross-platform look in Sprint 1
+
+📌 **Improvements for Sprint 1**
+- Implement real swap request flow (replace snackbar placeholder)
+- Begin Firebase integration for user accounts
+- Finalize app visual identity and design system
+- Build trust/safety features: peer ratings, report flow
 
 ### Sprint 1
 

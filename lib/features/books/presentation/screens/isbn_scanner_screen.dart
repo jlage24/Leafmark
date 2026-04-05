@@ -213,7 +213,7 @@ class _OverlayPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = Colors.black.withOpacity(0.62);
+    final paint = Paint()..color = Colors.black.withValues(alpha: 0.62);
 
     final cutoutRect = RRect.fromRectAndRadius(
       Rect.fromCenter(
@@ -290,13 +290,13 @@ class _OverlayIconButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: isActive
-              ? AppTheme.primary.withOpacity(0.2)
-              : Colors.white.withOpacity(0.12),
+              ? AppTheme.primary.withValues(alpha: 0.2)
+              : Colors.white.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isActive
-                ? AppTheme.primary.withOpacity(0.6)
-                : Colors.white.withOpacity(0.2),
+                ? AppTheme.primary.withValues(alpha: 0.6)
+                : Colors.white.withValues(alpha: 0.2),
             width: 1,
           ),
         ),

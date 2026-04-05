@@ -44,36 +44,54 @@ Business modeling in software development involves defining the product's vision
 
 ### Product Vision
 
-_[Define a clear and concise product vision for LeafMark — ideally one sentence that captures the essence of the app and its direction.]_
+Leafmark is a community-driven book exchange platform that makes trading books between readers effortless, affordable, and sustainable.
 
 ### Features and Assumptions
 
-_[List the initial high-level features of LeafMark, e.g.:_
-- _Feature X — brief description_
-- _Feature Y — brief description_
+**Features:**
+- **ISBN Barcode Scanning** — scan a book's barcode with the camera to auto-fill title, author, and cover via Google Books API
+- **Personal Shelf Management** — add books to a virtual shelf, view the collection, and remove books with a long-press gesture
+- **Community Browsing** — explore books listed by other users with cover images and condition details
+- **Book Detail View** — inspect any book's full metadata, condition, owner, and notes
+- **Swap Request** — initiate a trade proposal directly from a book's detail page (partially)
+- **Local Persistence** — shelf data is saved across sessions using on-device storage
 
-_Optionally, list assumptions about the app and its dependencies on external systems.]_
-
+**Assumptions:**
+- Users have an Android device with a working camera for ISBN scanning
+- Google Books API is available and returns results for standard ISBN-10 and ISBN-13 codes; OpenLibrary is used as a cover fallback
+- For Sprint 0, all data is stored locally — no user accounts or backend yet
+- Firebase will be introduced in a later sprint to support real user accounts, swap requests, and community features
 ---
 
 ## Requirements
 
 ### User Stories
-
-_[Provide a concise summary of all user stories here. The individual user stories should be created as items in your GitHub Project with the label "user story".]_
+* **ISBN Barcode Scanning**: As a user with many books to add, I want to scan the barcode (ISBN) of a physical book using my camera, So that the book details (title, author, cover) are filled in automatically.
+* **Initiating a Trade Request**: As a borrower, I want to propose a "swap" (my Book A for your Book B), so that we can reach a mutual agreement on the value of the trade.
+* **Personal Catalog Organization**: As a user who wishes to swap books, I want to add books to my virtual shelf, so that I can keep my collection organized and choose books for future swaps.
+* **Community Browsing**: As a user, I want to browse books available from other users so that I can find books I'd like to acquire.
 
 ### Domain Model
 
-_[Insert a UML class diagram with the key concepts, attributes, and relationships of the LeafMark domain. Accompany with a short description of each concept.]_
+* **User**: A member of the LeafMark community who maintains a profile, tracks their rating, and manages their personal book collections.
+* **Book**: A physical item defined by its title, author, and ISBN. It includes metadata such as current condition and photos to facilitate fair trading.
+* **Shelf**: A collection belonging to a specific user that contains the books they currently own and are available for exchange.
+* **SwapRequest**: A formal proposal that connects two users and involves the exchange of two or more books.
+* **Wishlist**: A personal list belonging to a user that contains the titles of books they are actively looking to acquire.
+* **Rating**: A feedback mechanism where one user evaluates another after a trade is completed to maintain community trust.
 
-<p align="center">
-  <!-- <img src="images/DomainModel.png"/> -->
-  <em>Domain model diagram coming soon.</em>
-</p>
+![Domain Model Diagram](docs/diagrams/DomainModel.png)
 
 ### User Interfaces
 
-_[Add mockups or drafts of the main user interfaces for LeafMark's key screens.]_
+<div align="center">
+
+<img src="docs/images/Browse-Mockup.png" alt="Browse screen" width="22%" />
+<img src="docs/images/Search-Mockup.png" alt="Search screen" width="22%" />
+<img src="docs/images/MyShelf-Mockup.png" alt="My Shelf screen" width="22%" />
+<img src="docs/images/Profile-Mockup.png" alt="Profile screen" width="22%" />
+
+</div>
 
 ---
 
@@ -81,25 +99,59 @@ _[Add mockups or drafts of the main user interfaces for LeafMark's key screens.]
 
 ### Logical Architecture
 
-_[Document the high-level logical structure of LeafMark using a UML package diagram (Logical View), describing layers such as UI, business logic, and data.]_
 
 <p align="center">
-  <!-- <img src="images/LogicalView.png"/> -->
-  <em>Logical architecture diagram coming soon.</em>
+  <img src="docs/diagrams/Logical-Architecture-UML.drawio.png" alt="Logical Architecture"/>
 </p>
+
+**Package Descriptions and Dependencies:**
+
+- **UI Layer** — Responsible for user interaction: screens, widgets, navigation. Communicates with Business Logic.
+- **Business Logic Layer** — Contains use cases and state management. Coordinates between UI and Data Layer.
+- **Data Layer** — Handles data access and persistence. Uses Domain entities to structure the data.
+- **Domain Layer** — Defines core entities like `Book`, `User`, `SwapRequest`. Independent layer; does not depend on any other layer.
+
+**Dependencies (arrows in diagram):**
+- UI → Business Logic (uses)
+- Business Logic → Data (uses)
+- Data → Domain (uses)
 
 ### Physical Architecture
 
-_[Document the high-level physical structure using a UML deployment diagram. Describe the technologies used — e.g., Flutter for the mobile frontend, any backend services, databases — and justify the choices.]_
 
 <p align="center">
-  <!-- <img src="images/DeploymentView.png"/> -->
-  <em>Physical architecture diagram coming soon.</em>
+  <img src="docs/diagrams/Physical-Architecture-UML.drawio.png" alt="Physical Architecture"/>
 </p>
+
+**Node Descriptions and Connections:**
+
+- **Mobile App (Flutter)** — Client-side application running on Android (and eventually iOS). Handles UI, user interactions, and communication with backend and external API.
+- **Firebase Backend** — Provides Firestore (database), Firebase Auth (authentication), Firebase Storage (book images). Fully managed, scalable.
+- **Google Books API** — Retrieves book information from ISBN codes via HTTP.
+
+**Connections:**
+- Mobile App → Firebase: SDK calls
+- Mobile App → Google Books API: HTTP requests
+
+
+### Technology Justification
+
+Flutter was chosen because it enables cross-platform mobile development with a single codebase, which is especially valuable for a small team of five developers working under tight sprint deadlines. It allows rapid iteration and consistent UI development across platforms.
+
+Firebase is a suitable backend solution for Leafmark because it provides a fully managed and scalable infrastructure without requiring server maintenance, which reduces development overhead during early project stages. Features like Firebase Authentication are particularly useful for handling user identity and trust in a community-driven platform where users exchange books.
+
+For the current prototype (Sprint 0), local storage is sufficient to demonstrate the core functionality. However, Firebase will support future features such as user accounts, swap requests, and real-time interactions between users.
+
+Additionally, the Google Books API allows automatic retrieval of book data from ISBN codes, which is central to Leafmark’s core user flow and significantly simplifies the user experience.
 
 ### Functional Prototype
 
-_[Describe the functional prototype implemented to validate architectural and technological decisions. Include a snapshot of the UI if applicable.]_
+The functional prototype developed in Sprint 0 focuses on validating the core interaction flow of Leafmark.
+
+- Users can scan ISBN barcodes with the camera, fetching book information automatically from Google Books API.
+- Books are added to the virtual shelf and can be browsed by other users.
+- Basic swap request flow is partially implemented.
+- Local storage is used for the prototype; full backend integration with Firebase will come in later sprints.
 
 ---
 
@@ -117,7 +169,44 @@ _[Describe the functional prototype implemented to validate architectural and te
 
 ### Sprint 0
 
-_[Add Sprint 0 planning screenshots and retrospective notes here.]_
+#### Planning
+
+Sprint 0 focused on establishing the project foundation: repository setup, architecture decisions, core prototype, and development workflow.
+
+**Delivered:**
+- ISBN barcode scanner with Google Books API integration
+- `BookShelfProvider` with `shared_preferences` persistence
+- `MyShelfScreen` with long-press-to-delete (bottom sheet + haptic feedback)
+- `BrowseScreen` with 32 dummy books using OpenLibrary covers
+- `BookDetailScreen` with condition chips, notes, and swap placeholder
+- `MainScreen` navigation shell (2 tabs + FAB)
+- GitHub Actions CI pipeline (analyze, test, build)
+- Unit, integration, and acceptance test suites (0 failures)
+- MoSCoW-labelled backlog with 19 user stories
+- Git Flow branching with branch protection on `main` and `dev`
+
+**Release:** [v0.1.0](../../releases/tag/v0.1.0)
+
+#### Retrospective
+
+✅ **Did well**
+- Clean feature branch workflow with formal PR reviews kept `dev` stable throughout
+- Survey-driven backlog reprioritization — security concerns surfaced early and shaped Must Have requirements correctly
+- Provider architecture discipline: caught and fixed a silent double-registration bug during integration
+
+🔁 **Do differently**
+- Start writing tests in parallel with features, not as a separate closing step
+- Finalize visual identity earlier so UI decisions aren't blocked waiting on design direction
+
+❓ **Puzzles**
+- How to handle API key injection cleanly across all team members' environments without friction
+- Whether to go platform-adaptive UI or consistent cross-platform look in Sprint 1
+
+📌 **Improvements for Sprint 1**
+- Implement real swap request flow (replace snackbar placeholder)
+- Begin Firebase integration for user accounts
+- Finalize app visual identity and design system
+- Build trust/safety features: peer ratings, report flow
 
 ### Sprint 1
 

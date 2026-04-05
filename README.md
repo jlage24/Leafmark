@@ -106,7 +106,7 @@ _[Add mockups or drafts of the main user interfaces for LeafMark's key screens.]
 
 
 <p align="center">
-  <img src="docs/diagrams/Physical-architecture-UML.drawio.png" alt="Physical Architecture"/>
+  <img src="docs/diagrams/Physical-Architecture-UML.drawio.png" alt="Physical Architecture"/>
 </p>
 
 **Node Descriptions and Connections:**

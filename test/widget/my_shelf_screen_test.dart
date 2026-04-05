@@ -1,0 +1,179 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:network_image_mock/network_image_mock.dart';
+import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:leafmark/features/books/domain/models/book.dart';
+import 'package:leafmark/features/books/presentation/providers/book_shelf_provider.dart';
+import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dart';
+
+void main() {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  Book makeBook(String id, {String title = 'Test Book'}) => Book(
+    id: id,
+    isbn: '9780000000001',
+    title: title,
+    authors: 'Test Author',
+    condition: BookCondition.good,
+    addedAt: DateTime.parse('2025-01-01T00:00:00.000'),
+  );
+
+  Widget buildShelf(BookShelfProvider provider) {
+    return ChangeNotifierProvider<BookShelfProvider>.value(
+      value: provider,
+      child: const MaterialApp(
+        home: MyShelfScreen(),
+      ),
+    );
+  }
+
+  group('MyShelfScreen - empty state', () {
+    testWidgets('shows empty state message when shelf is empty', (tester) async {
+      final provider = BookShelfProvider();
+
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(buildShelf(provider));
+        await tester.pumpAndSettle();
+      });
+
+      expect(find.text('Your shelf is empty. Scan a book to add it!'), findsOneWidget);
+    });
+
+    testWidgets('shows AppBar with My Shelf title', (tester) async {
+      final provider = BookShelfProvider();
+
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(buildShelf(provider));
+        await tester.pumpAndSettle();
+      });
+
+      expect(find.text('My Shelf'), findsOneWidget);
+    });
+  });
+
+  group('MyShelfScreen - books list', () {
+    testWidgets('renders book title when shelf has a book', (tester) async {
+      final provider = BookShelfProvider();
+      await provider.addBook(makeBook('1', title: 'Nineteen Eighty-Four'));
+
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(buildShelf(provider));
+        await tester.pumpAndSettle();
+      });
+
+      expect(find.text('Nineteen Eighty-Four'), findsOneWidget);
+    });
+
+    testWidgets('renders all books when multiple are added', (tester) async {
+      final provider = BookShelfProvider();
+      await provider.addBook(makeBook('1', title: 'Book One'));
+      await provider.addBook(makeBook('2', title: 'Book Two'));
+      await provider.addBook(makeBook('3', title: 'Book Three'));
+
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(buildShelf(provider));
+        await tester.pumpAndSettle();
+      });
+
+      expect(find.text('Book One'), findsOneWidget);
+      expect(find.text('Book Two'), findsOneWidget);
+      expect(find.text('Book Three'), findsOneWidget);
+    });
+
+    testWidgets('empty state is not shown when shelf has books', (tester) async {
+      final provider = BookShelfProvider();
+      await provider.addBook(makeBook('1', title: 'Some Book'));
+
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(buildShelf(provider));
+        await tester.pumpAndSettle();
+      });
+
+      expect(
+        find.text('Your shelf is empty. Scan a book to add it!'),
+        findsNothing,
+      );
+    });
+  });
+
+  group('MyShelfScreen - delete flow', () {
+    testWidgets('long press opens bottom sheet with book title', (tester) async {
+      final provider = BookShelfProvider();
+      await provider.addBook(makeBook('1', title: 'Animal Farm'));
+
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(buildShelf(provider));
+        await tester.pumpAndSettle();
+
+        await tester.longPress(find.text('Animal Farm'));
+        await tester.pumpAndSettle();
+      });
+
+      expect(find.text('Animal Farm'), findsWidgets);
+      expect(find.text('Remove from shelf'), findsOneWidget);
+      expect(find.text('Cancel'), findsOneWidget);
+    });
+
+    testWidgets('tapping Cancel closes the bottom sheet', (tester) async {
+      final provider = BookShelfProvider();
+      await provider.addBook(makeBook('1', title: 'Animal Farm'));
+
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(buildShelf(provider));
+        await tester.pumpAndSettle();
+
+        await tester.longPress(find.text('Animal Farm'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Cancel'));
+        await tester.pumpAndSettle();
+      });
+
+      expect(find.text('Remove from shelf'), findsNothing);
+      expect(find.text('Animal Farm'), findsOneWidget);
+    });
+
+    testWidgets('tapping Remove deletes book and shows snackbar', (tester) async {
+      final provider = BookShelfProvider();
+      await provider.addBook(makeBook('1', title: 'Animal Farm'));
+
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(buildShelf(provider));
+        await tester.pumpAndSettle();
+
+        await tester.longPress(find.text('Animal Farm'));
+        await tester.pumpAndSettle();
+
+        await tester.tap(find.text('Remove from shelf'));
+        await tester.pumpAndSettle();
+      });
+
+      expect(find.text('Remove from shelf'), findsNothing);
+      expect(
+        find.text('"Animal Farm" removed from your shelf'),
+        findsOneWidget,
+      );
+      expect(provider.books, isEmpty);
+    });
+  });
+
+  group('App bootstrap', () {
+    testWidgets('BookShelfProvider is accessible from widget tree', (tester) async {
+      final provider = BookShelfProvider();
+
+      await mockNetworkImagesFor(() async {
+        await tester.pumpWidget(buildShelf(provider));
+        await tester.pumpAndSettle();
+      });
+
+      final context = tester.element(find.byType(MyShelfScreen));
+      expect(
+            () => context.read<BookShelfProvider>(),
+        returnsNormally,
+      );
+    });
+  });
+}

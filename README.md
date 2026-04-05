@@ -59,8 +59,10 @@ _Optionally, list assumptions about the app and its dependencies on external sys
 ## Requirements
 
 ### User Stories
-
-_[Provide a concise summary of all user stories here. The individual user stories should be created as items in your GitHub Project with the label "user story".]_
+* **ISBN Barcode Scanning**: As a user with many books to add, I want to scan the barcode (ISBN) of a physical book using my camera, So that the book details (title, author, cover) are filled in automatically.
+* **Initiating a Trade Request**: As a borrower, I want to propose a "swap" (my Book A for your Book B), so that we can reach a mutual agreement on the value of the trade.
+* **Personal Catalog Organization**: As a user who wishes to swap books, I want to add books to my virtual shelf, so that I can keep my collection organized and choose books for future swaps.
+* **Community Browsing**: As a user, I want to browse books available from other users so that I can find books I'd like to acquire.
 
 ### Domain Model
 

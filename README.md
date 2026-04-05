@@ -78,16 +78,16 @@ _Optionally, list assumptions about the app and its dependencies on external sys
 ### User Interfaces
 
 **Browse**:
-![Browse Mockup](docs/images/Browse_Mockup.png)
+![Browse Mockup](docs/images/Browse-Mockup.png)
 
 **Search**:
-![Search Mockup](docs/images/Search_Mockup.png)
+![Search Mockup](docs/images/Search-Mockup.png)
 
 **My Shelf**:
-![My Shelf Mockup](docs/images/MyShelf_Mockup.png)
+![My Shelf Mockup](docs/images/MyShelf-Mockup.png)
 
 **Profile**:
-![Profile Mockup](docs/images/Profile_Mockup.png)
+![Profile Mockup](docs/images/Profile-Mockup.png)
 
 ---
 

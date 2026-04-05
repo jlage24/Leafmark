@@ -33,8 +33,7 @@ class BookDetailScreen extends StatelessWidget {
                 book.coverUrl!,
                 height: 220,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                const _PlaceholderCover(),
+                errorBuilder: (context, error, _) => const _PlaceholderCover(),
               )
                   : const _PlaceholderCover(),
             ),

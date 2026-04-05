@@ -59,8 +59,7 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
                         width: 44,
                         height: 64,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                        const Icon(Icons.book, size: 44),
+                        errorBuilder: (context, error, _) => const Icon(Icons.book, size: 44),
                       )
                           : const Icon(Icons.book, size: 44),
                     ),

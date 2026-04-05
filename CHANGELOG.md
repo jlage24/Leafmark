@@ -31,6 +31,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
   applied minimal targeted fix)
 - Resolved `Book` model conflict between parallel feature branches by adopting
   the richer schema with `toJson`/`fromJson`, enums, and timestamps as canonical
+  - Resolved all `flutter analyze` warnings: removed unnecessary cast in
+  `BookFetchResult`, replaced deprecated `withOpacity` with `withValues`
+  across `AddBookScreen`, `IsbnScannerScreen`, and fixed unnecessary
+  multiple underscores in error builders across all screens
 
 ### Security
 - Google Books API key injected via `--dart-define-from-file`; `.env` excluded

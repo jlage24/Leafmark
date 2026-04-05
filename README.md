@@ -73,7 +73,7 @@ _Optionally, list assumptions about the app and its dependencies on external sys
 * **Wishlist**: A personal list belonging to a user that contains the titles of books they are actively looking to acquire.
 * **Rating**: A feedback mechanism where one user evaluates another after a trade is completed to maintain community trust.
 
-![Domain Model Diagram](./docs/images/DomainModel.png)
+![Domain Model Diagram](docs/diagrams/DomainModel.png)
 
 ### User Interfaces
 

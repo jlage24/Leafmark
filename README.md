@@ -59,17 +59,21 @@ _Optionally, list assumptions about the app and its dependencies on external sys
 ## Requirements
 
 ### User Stories
-
-_[Provide a concise summary of all user stories here. The individual user stories should be created as items in your GitHub Project with the label "user story".]_
+* **ISBN Barcode Scanning**: As a user with many books to add, I want to scan the barcode (ISBN) of a physical book using my camera, So that the book details (title, author, cover) are filled in automatically.
+* **Initiating a Trade Request**: As a borrower, I want to propose a "swap" (my Book A for your Book B), so that we can reach a mutual agreement on the value of the trade.
+* **Personal Catalog Organization**: As a user who wishes to swap books, I want to add books to my virtual shelf, so that I can keep my collection organized and choose books for future swaps.
+* **Community Browsing**: As a user, I want to browse books available from other users so that I can find books I'd like to acquire.
 
 ### Domain Model
 
-_[Insert a UML class diagram with the key concepts, attributes, and relationships of the LeafMark domain. Accompany with a short description of each concept.]_
+* **User**: A member of the LeafMark community who maintains a profile, tracks their rating, and manages their personal book collections.
+* **Book**: A physical item defined by its title, author, and ISBN. It includes metadata such as current condition and photos to facilitate fair trading.
+* **Shelf**: A collection belonging to a specific user that contains the books they currently own and are available for exchange.
+* **SwapRequest**: A formal proposal that connects two users and involves the exchange of two or more books.
+* **Wishlist**: A personal list belonging to a user that contains the titles of books they are actively looking to acquire.
+* **Rating**: A feedback mechanism where one user evaluates another after a trade is completed to maintain community trust.
 
-<p align="center">
-  <!-- <img src="images/DomainModel.png"/> -->
-  <em>Domain model diagram coming soon.</em>
-</p>
+![Domain Model Diagram](docs/diagrams/DomainModel.png)
 
 ### User Interfaces
 

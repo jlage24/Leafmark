@@ -85,25 +85,59 @@ _[Add mockups or drafts of the main user interfaces for LeafMark's key screens.]
 
 ### Logical Architecture
 
-_[Document the high-level logical structure of LeafMark using a UML package diagram (Logical View), describing layers such as UI, business logic, and data.]_
 
 <p align="center">
-  <!-- <img src="images/LogicalView.png"/> -->
-  <em>Logical architecture diagram coming soon.</em>
+  <img src="docs/diagrams/Logical-Architecture-UML.drawio.png" alt="Logical Architecture"/>
 </p>
+
+**Package Descriptions and Dependencies:**
+
+- **UI Layer** — Responsible for user interaction: screens, widgets, navigation. Communicates with Business Logic.
+- **Business Logic Layer** — Contains use cases and state management. Coordinates between UI and Data Layer.
+- **Data Layer** — Handles data access and persistence. Uses Domain entities to structure the data.
+- **Domain Layer** — Defines core entities like `Book`, `User`, `SwapRequest`. Independent layer; does not depend on any other layer.
+
+**Dependencies (arrows in diagram):**
+- UI → Business Logic (uses)
+- Business Logic → Data (uses)
+- Data → Domain (uses)
 
 ### Physical Architecture
 
-_[Document the high-level physical structure using a UML deployment diagram. Describe the technologies used — e.g., Flutter for the mobile frontend, any backend services, databases — and justify the choices.]_
 
 <p align="center">
-  <!-- <img src="images/DeploymentView.png"/> -->
-  <em>Physical architecture diagram coming soon.</em>
+  <img src="docs/diagrams/Physical-architecture-UML.drawio.png" alt="Physical Architecture"/>
 </p>
+
+**Node Descriptions and Connections:**
+
+- **Mobile App (Flutter)** — Client-side application running on Android (and eventually iOS). Handles UI, user interactions, and communication with backend and external API.
+- **Firebase Backend** — Provides Firestore (database), Firebase Auth (authentication), Firebase Storage (book images). Fully managed, scalable.
+- **Google Books API** — Retrieves book information from ISBN codes via HTTP.
+
+**Connections:**
+- Mobile App → Firebase: SDK calls
+- Mobile App → Google Books API: HTTP requests
+
+
+### Technology Justification
+
+Flutter was chosen because it enables cross-platform mobile development with a single codebase, which is especially valuable for a small team of five developers working under tight sprint deadlines. It allows rapid iteration and consistent UI development across platforms.
+
+Firebase is a suitable backend solution for Leafmark because it provides a fully managed and scalable infrastructure without requiring server maintenance, which reduces development overhead during early project stages. Features like Firebase Authentication are particularly useful for handling user identity and trust in a community-driven platform where users exchange books.
+
+For the current prototype (Sprint 0), local storage is sufficient to demonstrate the core functionality. However, Firebase will support future features such as user accounts, swap requests, and real-time interactions between users.
+
+Additionally, the Google Books API allows automatic retrieval of book data from ISBN codes, which is central to Leafmark’s core user flow and significantly simplifies the user experience.
 
 ### Functional Prototype
 
-_[Describe the functional prototype implemented to validate architectural and technological decisions. Include a snapshot of the UI if applicable.]_
+The functional prototype developed in Sprint 0 focuses on validating the core interaction flow of Leafmark.
+
+- Users can scan ISBN barcodes with the camera, fetching book information automatically from Google Books API.
+- Books are added to the virtual shelf and can be browsed by other users.
+- Basic swap request flow is implemented.
+- Local storage is used for the prototype; full backend integration with Firebase will come in later sprints.
 
 ---
 

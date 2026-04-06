@@ -71,6 +71,21 @@ Leafmark is a community-driven book exchange platform that makes trading books b
 * **Personal Catalog Organization**: As a user who wishes to swap books, I want to add books to my virtual shelf, so that I can keep my collection organized and choose books for future swaps.
 * **Community Browsing**: As a user, I want to browse books available from other users so that I can find books I'd like to acquire.
 
+### User Research
+
+A survey was conducted to validate assumptions and inform backlog prioritisation before Sprint 1 development began.
+
+**27 responses** were collected from potential users. Key findings:
+
+- **100%** had previously exchanged books informally, confirming real demand for a structured platform
+- **Cost** was the primary motivation for using a book trading platform over buying new
+- **Peer ratings** emerged as the main trust mechanism users expected before agreeing to a swap
+- **Security concerns** were identified as the biggest adoption barrier
+
+Based on this feedback, the following backlog changes were made:
+- **Peer-to-Peer Reliability Rating**, **Report Malicious Users**, and **In-App Secure Chat Messaging** were elevated to **Must Have**
+- **Blind Date with a Book** was moved from **Could Have** to **Should Have**
+
 ### Domain Model
 
 * **User**: A member of the LeafMark community who maintains a profile, tracks their rating, and manages their personal book collections.
@@ -193,6 +208,7 @@ Sprint 0 focused on establishing the project foundation: repository setup, archi
 - Clean feature branch workflow with formal PR reviews kept `dev` stable throughout
 - Survey-driven backlog reprioritization — security concerns surfaced early and shaped Must Have requirements correctly
 - Provider architecture discipline: caught and fixed a silent double-registration bug during integration
+- User survey (27 responses) conducted before Sprint 1 planning — findings directly reshaped the backlog, elevating security and trust features to Must Have
 
 🔁 **Do differently**
 - Start writing tests in parallel with features, not as a separate closing step

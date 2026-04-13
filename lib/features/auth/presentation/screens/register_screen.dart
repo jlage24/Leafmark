@@ -9,10 +9,10 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey            = GlobalKey<FormState>();
-  final _nameController     = TextEditingController();
-  final _emailController    = TextEditingController();
-  final _passwordController = TextEditingController();
+  final _formKey             = GlobalKey<FormState>();
+  final _nameController      = TextEditingController();
+  final _emailController     = TextEditingController();
+  final _passwordController  = TextEditingController();
   bool _loading = false;
 
   @override
@@ -32,6 +32,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _passwordController.text,
       _nameController.text,
     );
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Welcome, ${_nameController.text.trim()}!')),
+      );
+    }
     if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.errorMessage ?? 'Unknown error.')),
@@ -43,7 +48,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Create an account')),
+      appBar: AppBar(title: const Text('Create account')),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -57,7 +62,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _nameController,
                     decoration: const InputDecoration(labelText: 'Name'),
                     validator: (v) =>
-                    v != null && v.trim().isNotEmpty ? null : 'Enter a name',
+                    v != null && v.trim().isNotEmpty ? null : 'Name required',
                   ),
                   const SizedBox(height: 16),
                   TextFormField(
@@ -83,7 +88,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       height: 18, width: 18,
                       child: CircularProgressIndicator(strokeWidth: 2),
                     )
-                        : const Text('Create an account'),
+                        : const Text('Register'),
                   ),
                   const SizedBox(height: 12),
                   TextButton(

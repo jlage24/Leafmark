@@ -30,6 +30,11 @@ class _LoginScreenState extends State<LoginScreen> {
       _emailController.text,
       _passwordController.text,
     );
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Welcome back! 👋')),
+      );
+    }
     if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(auth.errorMessage ?? 'Unknown error.')),
@@ -50,7 +55,7 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Image(image: AssetImage('assets/images/leafmark_logo.png'), height: 72),
+                  const Image(image: AssetImage('assets/images/leafmark_logo.png')),
                   const SizedBox(height: 32),
                   TextFormField(
                     controller: _emailController,

@@ -25,7 +25,7 @@ void main() {
 
     test('loadBooks with no persisted data results in empty shelf', () async {
       final provider = BookShelfProvider();
-      await provider.loadBooks();
+      await provider.loadBooks('test-uid');
       expect(provider.books, isEmpty);
     });
   });
@@ -33,12 +33,14 @@ void main() {
   group('BookShelfProvider - addBook', () {
     test('adds a book and shelf grows', () async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1'));
       expect(provider.books.length, 1);
     });
 
     test('added book is retrievable', () async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       final book = makeBook('1');
       await provider.addBook(book);
       expect(provider.books.first.id, '1');
@@ -46,6 +48,7 @@ void main() {
 
     test('multiple books can be added', () async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1'));
       await provider.addBook(makeBook('2'));
       await provider.addBook(makeBook('3'));
@@ -54,15 +57,19 @@ void main() {
 
     test('books list is unmodifiable', () async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1'));
-      expect(() => (provider.books as dynamic).add(makeBook('2')),
-          throwsUnsupportedError);
+      expect(
+            () => (provider.books as dynamic).add(makeBook('2')),
+        throwsUnsupportedError,
+      );
     });
   });
 
   group('BookShelfProvider - removeBook', () {
     test('removes book by id', () async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1'));
       await provider.removeBook('1');
       expect(provider.books, isEmpty);
@@ -70,6 +77,7 @@ void main() {
 
     test('removing non-existent id does not throw', () async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1'));
       await expectLater(provider.removeBook('ghost-id'), completes);
       expect(provider.books.length, 1);
@@ -77,6 +85,7 @@ void main() {
 
     test('only the targeted book is removed', () async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1'));
       await provider.addBook(makeBook('2'));
       await provider.removeBook('1');
@@ -88,25 +97,25 @@ void main() {
   group('BookShelfProvider - persistence', () {
     test('books survive a provider reload', () async {
       final provider1 = BookShelfProvider();
+      await provider1.loadBooks('test-uid'); // sets _uid before persisting
       await provider1.addBook(makeBook('1'));
       await provider1.addBook(makeBook('2'));
 
       final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
-
+      await provider2.loadBooks('test-uid'); // reads same key
       expect(provider2.books.length, 2);
       expect(provider2.books.map((b) => b.id), containsAll(['1', '2']));
     });
 
     test('removed books are not reloaded', () async {
       final provider1 = BookShelfProvider();
+      await provider1.loadBooks('test-uid'); // sets _uid before persisting
       await provider1.addBook(makeBook('1'));
       await provider1.addBook(makeBook('2'));
       await provider1.removeBook('1');
 
       final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
-
+      await provider2.loadBooks('test-uid');
       expect(provider2.books.length, 1);
       expect(provider2.books.first.id, '2');
     });

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'features/books/presentation/screens/my_shelf_screen.dart';
 import 'features/books/presentation/screens/browse_screen.dart';
 import 'features/books/presentation/screens/isbn_scanner_screen.dart';
+import 'features/auth/presentation/screens/profile_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -16,6 +17,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = const [
     MyShelfScreen(),
     BrowseScreen(),
+    ProfileScreen(),
   ];
 
   void _openScanner() {
@@ -52,6 +54,11 @@ class _MainScreenState extends State<MainScreen> {
             icon: Icon(Icons.explore_outlined),
             selectedIcon: Icon(Icons.explore),
             label: 'Browse',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
       ),

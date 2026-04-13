@@ -6,6 +6,32 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:leafmark/features/books/domain/models/book.dart';
 import 'package:leafmark/features/books/presentation/providers/book_shelf_provider.dart';
 import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dart';
+import 'package:leafmark/features/auth/presentation/providers/auth_provider.dart';
+import 'package:leafmark/features/auth/domain/models/app_user.dart';
+
+class FakeAuthProvider extends ChangeNotifier implements AuthProvider {
+  @override
+  AppUser? get user => const AppUser(
+    uid: 'test-uid',
+    email: 'test@test.com',
+    displayName: 'Test User',
+  );
+
+  @override
+  AuthStatus get status => AuthStatus.authenticated;
+
+  @override
+  String? get errorMessage => null;
+
+  @override
+  Future<bool> login(String email, String password) async => true;
+
+  @override
+  Future<bool> register(String email, String password, String name) async => true;
+
+  @override
+  Future<void> logout() async {}
+}
 
 void main() {
   setUp(() {
@@ -22,11 +48,14 @@ void main() {
   );
 
   Widget buildShelf(BookShelfProvider provider) {
-    return ChangeNotifierProvider<BookShelfProvider>.value(
-      value: provider,
-      child: const MaterialApp(
-        home: MyShelfScreen(),
-      ),
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider<AuthProvider>(
+          create: (_) => FakeAuthProvider(),
+        ),
+        ChangeNotifierProvider<BookShelfProvider>.value(value: provider),
+      ],
+      child: const MaterialApp(home: MyShelfScreen()),
     );
   }
 
@@ -57,6 +86,7 @@ void main() {
   group('MyShelfScreen - books list', () {
     testWidgets('renders book title when shelf has a book', (tester) async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Nineteen Eighty-Four'));
 
       await mockNetworkImagesFor(() async {
@@ -69,6 +99,7 @@ void main() {
 
     testWidgets('renders all books when multiple are added', (tester) async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Book One'));
       await provider.addBook(makeBook('2', title: 'Book Two'));
       await provider.addBook(makeBook('3', title: 'Book Three'));
@@ -85,6 +116,7 @@ void main() {
 
     testWidgets('empty state is not shown when shelf has books', (tester) async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Some Book'));
 
       await mockNetworkImagesFor(() async {
@@ -102,6 +134,7 @@ void main() {
   group('MyShelfScreen - delete flow', () {
     testWidgets('long press opens bottom sheet with book title', (tester) async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Animal Farm'));
 
       await mockNetworkImagesFor(() async {
@@ -119,6 +152,7 @@ void main() {
 
     testWidgets('tapping Cancel closes the bottom sheet', (tester) async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Animal Farm'));
 
       await mockNetworkImagesFor(() async {
@@ -138,6 +172,7 @@ void main() {
 
     testWidgets('tapping Remove deletes book and shows snackbar', (tester) async {
       final provider = BookShelfProvider();
+      await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Animal Farm'));
 
       await mockNetworkImagesFor(() async {
@@ -152,10 +187,7 @@ void main() {
       });
 
       expect(find.text('Remove from shelf'), findsNothing);
-      expect(
-        find.text('"Animal Farm" removed from your shelf'),
-        findsOneWidget,
-      );
+      expect(find.text('"Animal Farm" removed from your shelf'), findsOneWidget);
       expect(provider.books, isEmpty);
     });
   });
@@ -170,10 +202,7 @@ void main() {
       });
 
       final context = tester.element(find.byType(MyShelfScreen));
-      expect(
-            () => context.read<BookShelfProvider>(),
-        returnsNormally,
-      );
+      expect(() => context.read<BookShelfProvider>(), returnsNormally);
     });
   });
 }

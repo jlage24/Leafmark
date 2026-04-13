@@ -1,0 +1,28 @@
+{
+  "flutter": {
+    "platforms": {
+      "android": {
+        "default": {
+          "projectId": "leafmark-app-f513f",
+          "appId": "1:442635503420:android:2362e0c8bc6c1779bb8039",
+          "fileOutput": "android/app/google-services.json"
+        }
+      },
+      "dart": {
+        "lib/firebase_options.dart": {
+          "projectId": "leafmark-app-f513f",
+          "configurations": {
+            "android": "1:442635503420:android:2362e0c8bc6c1779bb8039",
+            "ios": "1:442635503420:ios:c2319c69dee21f2dbb8039"
+          }
+        }
+      }
+    }
+  },
+  "firestore": {
+    "database": "(default)",
+    "location": "eur3",
+    "rules": "firestore.rules",
+    "indexes": "firestore.indexes.json"
+  }
+}

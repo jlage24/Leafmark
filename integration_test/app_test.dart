@@ -27,7 +27,7 @@ void main() {
       await provider1.addBook(makeBook('B'));
 
       final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      await provider2.loadBooks('test-uid');
 
       expect(provider2.books.length, 2);
       expect(provider2.books.map((b) => b.id), containsAll(['A', 'B']));
@@ -40,7 +40,7 @@ void main() {
       await provider1.removeBook('A');
 
       final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      await provider2.loadBooks('test-uid');
 
       expect(provider2.books.length, 1);
       expect(provider2.books.first.id, 'B');
@@ -63,7 +63,7 @@ void main() {
       }
 
       final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      await provider2.loadBooks('test-uid');
 
       for (final condition in BookCondition.values) {
         final match = provider2.books.firstWhere((b) => b.id == condition.name);
@@ -77,7 +77,7 @@ void main() {
       await provider1.removeBook('A');
 
       final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      await provider2.loadBooks('test-uid');
 
       expect(provider2.books, isEmpty);
     });
@@ -87,7 +87,7 @@ void main() {
       await provider1.addBook(makeBook('A'));
 
       final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      await provider2.loadBooks('test-uid');
 
       final book = provider2.books.first;
       expect(book.coverUrl, isNull);
@@ -106,7 +106,7 @@ void main() {
       );
 
       final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      await provider2.loadBooks('test-uid');
 
       final book = provider2.books.first;
       expect(book.coverUrl, 'https://example.com/cover.jpg');

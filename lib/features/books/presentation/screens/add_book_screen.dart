@@ -216,9 +216,12 @@ class _AddBookScreenState extends State<AddBookScreen> {
               const SizedBox(height: 32),
 
               // Save button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
+              ConstrainedBox (
+                constraints: const BoxConstraints(
+                  minWidth: double.infinity,
+                  maxHeight: 52,
+                  minHeight: 52,
+                ),
                 child: FilledButton(
                   onPressed: (_state == _ScreenState.loading || _isSaving)
                       ? null
@@ -289,6 +292,7 @@ class _IsbnInputRow extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.only(top: 24),
           child: SizedBox(
+            width: 52,
             height: 52,
             child: FilledButton(
               onPressed: isLoading ? null : onLookup,

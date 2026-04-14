@@ -34,8 +34,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Welcome, ${_nameController.text.trim()}!')),
+        SnackBar(content: Text('Welcome, ${_nameController.text.trim()}! 🎉')),
       );
+      Navigator.of(context).popUntil((route) => route.isFirst);
     }
     if (!success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -77,8 +78,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     controller: _passwordController,
                     obscureText: true,
                     decoration: const InputDecoration(labelText: 'Password'),
-                    validator: (v) =>
-                    v != null && v.length >= 6 ? null : 'Minimum 6 characters',
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Password is required';
+                      if (v.length < 8) return 'At least 8 characters';
+                      if (!v.contains(RegExp(r'[A-Z]'))) return 'Include at least one uppercase letter';
+                      if (!v.contains(RegExp(r'[a-z]'))) return 'Include at least one lowercase letter';
+                      if (!v.contains(RegExp(r'[0-9]'))) return 'Include at least one number';
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 24),
                   FilledButton(

@@ -54,7 +54,6 @@ class AppTheme {
       ),
 
       // ── Typography ──────────────────────────────────────────────────────────
-      // DM Serif Display for headings, DM Sans for body — literary but legible
       textTheme: GoogleFonts.dmSansTextTheme(base.textTheme).copyWith(
         displayLarge:  GoogleFonts.dmSerifDisplay(color: onSurface),
         displayMedium: GoogleFonts.dmSerifDisplay(color: onSurface),

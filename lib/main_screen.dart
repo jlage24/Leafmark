@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'features/books/presentation/screens/my_shelf_screen.dart';
+import 'package:provider/provider.dart';
 import 'features/books/presentation/screens/browse_screen.dart';
 import 'features/books/presentation/screens/isbn_scanner_screen.dart';
+import 'features/books/presentation/screens/add_book_screen.dart';
 import 'features/auth/presentation/screens/profile_screen.dart';
+import 'features/chat/presentation/screens/chat_placeholder_screen.dart';
+import 'features/search/presentation/screens/search_placeholder_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -15,47 +18,73 @@ class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
 
   final List<Widget> _screens = const [
-    MyShelfScreen(),
     BrowseScreen(),
+    SearchPlaceholderScreen(),
+    SizedBox.shrink(), // Add Book — handled via _onTabTapped
+    ChatPlaceholderScreen(),
     ProfileScreen(),
   ];
 
-  void _openScanner() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const IsbnScannerScreen()),
-    );
+  void _onTabTapped(int index) {
+    if (index == 2) {
+      // Add Book tab → open scanner directly
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const IsbnScannerScreen()),
+      );
+      return;
+    }
+    setState(() => _currentIndex = index);
   }
 
   @override
   Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+
     return Scaffold(
-      body: _screens[_currentIndex],
-      floatingActionButton: _currentIndex == 0
-          ? FloatingActionButton(
-        onPressed: _openScanner,
-        backgroundColor: Theme.of(context).colorScheme.primary,
-        foregroundColor: Colors.white,
-        tooltip: 'Scan a book',
-        child: const Icon(Icons.document_scanner_outlined),
-      )
-          : null,
+      body: IndexedStack(
+        index: _currentIndex,
+        children: _screens,
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _currentIndex,
-        onDestinationSelected: (index) =>
-            setState(() => _currentIndex = index),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.menu_book_outlined),
-            selectedIcon: Icon(Icons.menu_book),
-            label: 'My Shelf',
+        onDestinationSelected: _onTabTapped,
+        destinations: [
+          const NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          const NavigationDestination(
+            icon: Icon(Icons.search_outlined),
+            selectedIcon: Icon(Icons.search),
+            label: 'Search',
           ),
           NavigationDestination(
-            icon: Icon(Icons.explore_outlined),
-            selectedIcon: Icon(Icons.explore),
-            label: 'Browse',
+            icon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: scheme.primary,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.add, color: scheme.onPrimary, size: 26),
+            ),
+            selectedIcon: Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: scheme.primary,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(Icons.add, color: scheme.onPrimary, size: 26),
+            ),
+            label: '',
           ),
-          NavigationDestination(
+          const NavigationDestination(
+            icon: Icon(Icons.chat_bubble_outline),
+            selectedIcon: Icon(Icons.chat_bubble),
+            label: 'Chat',
+          ),
+          const NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: 'Profile',

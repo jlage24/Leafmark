@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'features/books/presentation/screens/browse_screen.dart';
 import 'features/books/presentation/screens/isbn_scanner_screen.dart';
-import 'features/books/presentation/screens/add_book_screen.dart';
 import 'features/auth/presentation/screens/profile_screen.dart';
 import 'features/chat/presentation/screens/chat_placeholder_screen.dart';
 import 'features/search/presentation/screens/search_placeholder_screen.dart';

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../domain/models/book.dart';
+import '../../../swaps/domain/models/swap_request.dart';
+import '../../../swaps/presentation/providers/swap_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class BookDetailScreen extends StatelessWidget {
   final Book book;
@@ -15,6 +19,9 @@ class BookDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+
+    final swapProvider = context.watch<SwapProvider>();
+    final authProvider = context.read<AuthProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -136,31 +143,37 @@ class BookDetailScreen extends StatelessWidget {
                 ),
               )
                   : FilledButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Swap request sent to ${book.ownerName ?? 'owner'}!',
-                      ),
-                      backgroundColor: Colors.green[700],
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
+                onPressed: (isOwner || swapProvider.isLoading)
+                    ? null
+                    : () async {
+                  try {
+                    final request = SwapRequest(
+                      id: '',
+                      requesterId: authProvider.user!.uid,
+                      ownerId: book.ownerName ?? '', // Nota: Idealmente o model Book teria ownerId
+                      bookOfferedId: 'temporary_id', // Mock conforme Sprint 1
+                      bookWantedId: book.id,
+                      status: SwapStatus.pending,
+                      createdAt: DateTime.now(),
+                    );
+                    await swapProvider.sendRequest(request);
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Pedido enviado com sucesso!')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(e.toString()), backgroundColor: colorScheme.error),
+                      );
+                    }
+                  }
                 },
-                icon: const Icon(Icons.swap_horiz_rounded),
-                label: const Text(
-                  'Request Swap',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
+                icon: swapProvider.isLoading
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    : const Icon(Icons.swap_horiz_rounded),
+                label: const Text('Request Swap'),
               ),
             ),
 

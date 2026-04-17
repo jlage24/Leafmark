@@ -19,7 +19,7 @@ class _SearchScreenState extends State<SearchScreen> {
   @override
   void dispose() {
     _searchController.dispose();
-    _hasText.dispose(); // Don't forget to dispose the notifier!
+    _hasText.dispose();
     super.dispose();
   }
 
@@ -31,7 +31,6 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Listen to our SearchProvider
     final searchProvider = Provider.of<SearchProvider>(context);
     final theme = Theme.of(context);
 
@@ -71,14 +70,22 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 const SizedBox(width: 8),
 
-                FilledButton(
-                  onPressed: () {
-                    FocusScope.of(context).unfocus(); // Dismiss keyboard
-                    searchProvider.performSearch(_searchController.text);
-                  },
-                  child: const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                    child: Icon(Icons.arrow_forward),
+                // Fixed width to prevent infinite width constraint from theme
+                SizedBox(
+                  width: 56,
+                  height: 56,
+                  child: FilledButton(
+                    onPressed: () {
+                      FocusScope.of(context).unfocus();
+                      searchProvider.performSearch(_searchController.text);
+                    },
+                    style: FilledButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Icon(Icons.arrow_forward),
                   ),
                 ),
               ],
@@ -99,7 +106,6 @@ class _SearchScreenState extends State<SearchScreen> {
                 selected: {searchProvider.searchType},
                 onSelectionChanged: (Set<SearchType> newSelection) {
                   searchProvider.setSearchType(newSelection.first);
-                  // Automatically search again if text exists and filter changes
                   if (_searchController.text.isNotEmpty) {
                     searchProvider.performSearch(_searchController.text);
                   }
@@ -119,7 +125,6 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  // Helper method to keep the build method clean
   Widget _buildResults(SearchProvider provider, ThemeData theme) {
     if (provider.isLoading) {
       return const Center(child: CircularProgressIndicator());
@@ -138,7 +143,6 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    // Handling empty state distinctly from error state
     if (provider.results.isEmpty) {
       return Center(
         child: Column(
@@ -161,13 +165,10 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
-    // Results List using your BookCard from Sprint 0
     return ListView.builder(
       itemCount: provider.results.length,
       itemBuilder: (context, index) {
         final fetchResult = provider.results[index];
-
-        // Convert BookFetchResult to your canonical Book model.
         final book = fetchResult.toBook();
 
         return BookCard(
@@ -178,7 +179,7 @@ class _SearchScreenState extends State<SearchScreen> {
               MaterialPageRoute(
                 builder: (context) => BookDetailScreen(
                   book: book,
-                  isOwner: false, // You are searching global API, so you don't own it
+                  isOwner: false,
                 ),
               ),
             );

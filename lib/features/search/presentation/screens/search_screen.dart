@@ -54,7 +54,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       prefixIcon: const Icon(Icons.search),
                       suffixIcon: ValueListenableBuilder<bool>(
                         valueListenable: _hasText,
-                        builder: (_, hasText, __) => hasText
+                        builder: (context, hasText, child) => hasText
                             ? IconButton(
                           icon: const Icon(Icons.clear),
                           onPressed: () => _clearSearch(searchProvider),

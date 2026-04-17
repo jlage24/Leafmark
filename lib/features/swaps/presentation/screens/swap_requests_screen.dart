@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../domain/models/swap_request.dart';
 import '../providers/swap_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../../data/dummy_data.dart';
 
 class SwapRequestsScreen extends StatelessWidget {
   const SwapRequestsScreen({super.key});
@@ -10,7 +11,6 @@ class SwapRequestsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final uid = context.read<AuthProvider>().user?.uid ?? '';
-    final theme = Theme.of(context);
 
     return DefaultTabController(
       length: 2,
@@ -18,13 +18,22 @@ class SwapRequestsScreen extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Swap Requests'),
           bottom: const TabBar(
-            tabs: [Tab(text: 'Incoming'), Tab(text: 'Outgoing')],
+            tabs: [
+              Tab(text: 'Incoming'),
+              Tab(text: 'Outgoing'),
+            ],
           ),
         ),
         body: TabBarView(
           children: [
-            _RequestList(stream: context.read<SwapProvider>().incoming(uid), isIncoming: true),
-            _RequestList(stream: context.read<SwapProvider>().outgoing(uid), isIncoming: false),
+            _RequestList(
+              stream: context.read<SwapProvider>().incoming(uid),
+              isIncoming: true,
+            ),
+            _RequestList(
+              stream: context.read<SwapProvider>().outgoing(uid),
+              isIncoming: false,
+            ),
           ],
         ),
       ),
@@ -46,43 +55,150 @@ class _RequestList extends StatelessWidget {
     return StreamBuilder<List<SwapRequest>>(
       stream: stream,
       builder: (context, snapshot) {
-        if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-        final reqs = snapshot.data!;
-        if (reqs.isEmpty) return const Center(child: Text('No requests yet.'));
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        final reqs = snapshot.data ?? [];
+        if (reqs.isEmpty) {
+          return Center(
+            child: Text(
+              isIncoming ? 'No incoming requests yet.' : 'You haven\'t sent any requests.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          );
+        }
 
         return ListView.builder(
+          padding: const EdgeInsets.all(8),
           itemCount: reqs.length,
           itemBuilder: (context, index) {
             final req = reqs[index];
+            // 👇 Procurar o livro nos dados dummy usando o ID
+            final book = findBookById(req.bookWantedId);
+
+            // Determinar o nome da outra pessoa
+            // Se é incoming, quero saber quem pediu (requesterId)
+            // Se é outgoing, quero saber a quem pedi (ownerId)
+            final otherPerson = isIncoming ? req.requesterId : req.ownerId;
+
             return Card(
-              child: ListTile(
-                title: Text('Book ID: ${req.bookWantedId}'),
-                subtitle: Text('Status: ${req.status.name}'),
-                trailing: isIncoming && req.status == SwapStatus.pending
-                    ? Row(
-                  mainAxisSize: MainAxisSize.min,
+              margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
                   children: [
-                    IconButton(
-                      icon: const Icon(Icons.check, color: Colors.green),
-                      onPressed: () => swapP.accept(req.id),
+                    // 1. Foto do Livro
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: book?.coverUrl != null
+                          ? Image.network(
+                        book!.coverUrl!,
+                        width: 60,
+                        height: 90,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => _placeholder(),
+                      )
+                          : _placeholder(),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.close, color: Colors.red),
-                      onPressed: () => swapP.reject(req.id),
+                    const SizedBox(width: 16),
+
+                    // 2. Título e Pessoa
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            book?.title ?? 'Unknown Book',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            isIncoming
+                                ? 'From: $otherPerson'
+                                : 'To: $otherPerson',
+                            style: Theme.of(context).textTheme.bodySmall,
+                          ),
+                          const SizedBox(height: 8),
+                          _StatusBadge(status: req.status),
+                        ],
+                      ),
                     ),
+
+                    // 3. Botões de Ação
+                    if (req.status == SwapStatus.pending)
+                      Column(
+                        children: isIncoming
+                            ? [
+                          // Botões para pedidos recebidos: Aceitar ou Recusar
+                          IconButton(
+                            icon: const Icon(Icons.check_circle, color: Colors.green, size: 30),
+                            onPressed: () => swapP.accept(req.id),
+                            tooltip: 'Accept Request',
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.cancel, color: Colors.red, size: 30),
+                            onPressed: () => swapP.reject(req.id),
+                            tooltip: 'Reject Request',
+                          ),
+                        ]
+                            : [
+                          // Botão para pedidos enviados: Cancelar
+                          TextButton(
+                            onPressed: () => swapP.cancel(req.id),
+                            child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                          ),
+                        ],
+                      ),
                   ],
-                )
-                    : !isIncoming && req.status == SwapStatus.pending
-                    ? TextButton(
-                  onPressed: () => swapP.cancel(req.id),
-                  child: Text('Cancel', style: TextStyle(color: colorScheme.error)),
-                )
-                    : null,
+                ),
               ),
             );
           },
         );
       },
+    );
+  }
+
+  Widget _placeholder() {
+    return Container(
+      width: 60,
+      height: 90,
+      color: Colors.grey[300],
+      child: const Icon(Icons.book, color: Colors.grey),
+    );
+  }
+}
+
+// Widget auxiliar para mostrar o badge de status (Accepted, Pending, Rejected)
+class _StatusBadge extends StatelessWidget {
+  final SwapStatus status;
+  const _StatusBadge({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    switch (status) {
+      case SwapStatus.accepted: color = Colors.green; break;
+      case SwapStatus.rejected: color = Colors.red; break;
+      case SwapStatus.pending: color = Colors.orange; break;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Text(
+        status.name.toUpperCase(),
+        style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+      ),
     );
   }
 }

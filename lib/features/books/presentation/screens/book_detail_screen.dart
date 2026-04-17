@@ -143,35 +143,56 @@ class BookDetailScreen extends StatelessWidget {
                 ),
               )
                   : FilledButton.icon(
-                onPressed: (isOwner || swapProvider.isLoading)
+                onPressed: swapProvider.isLoading
                     ? null
                     : () async {
                   try {
                     final request = SwapRequest(
                       id: '',
                       requesterId: authProvider.user!.uid,
-                      ownerId: book.ownerName ?? '', // Nota: Idealmente o model Book teria ownerId
-                      bookOfferedId: 'temporary_id', // Mock conforme Sprint 1
+                      ownerId: book.ownerId ?? '',
+                      bookOfferedId: 'temporary_id',
                       bookWantedId: book.id,
                       status: SwapStatus.pending,
                       createdAt: DateTime.now(),
                     );
                     await swapProvider.sendRequest(request);
+
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Pedido enviado com sucesso!')),
+                      _showResultDialog(
+                        context,
+                        title: 'Request Sent!',
+                        message: 'Your swap request for "${book.title}" was successfully sent to ${book.ownerName ?? 'the owner'}.\n\nYou can track it in your Swap Requests.',
+                        icon: Icons.check_circle_outline_rounded,
+                        iconColor: Colors.green,
                       );
                     }
                   } catch (e) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text(e.toString()), backgroundColor: colorScheme.error),
-                      );
+                      final errorMsg = e.toString();
+
+                      if (errorMsg.contains('already exists') || errorMsg.contains('Já enviaste')) {
+                        _showResultDialog(
+                          context,
+                          title: 'Already Requested!',
+                          message: 'You have already sent a pending request for "${book.title}". Please wait for the owner to respond.',
+                          icon: Icons.info_outline_rounded,
+                          iconColor: Colors.orange,
+                        );
+                      } else {
+                        // Qualquer outro erro (ex: falha de rede)
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(errorMsg.replaceAll('Exception: ', '')),
+                            backgroundColor: colorScheme.error,
+                          ),
+                        );
+                      }
                     }
                   }
                 },
                 icon: swapProvider.isLoading
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                     : const Icon(Icons.swap_horiz_rounded),
                 label: const Text('Request Swap'),
               ),
@@ -180,6 +201,38 @@ class BookDetailScreen extends StatelessWidget {
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showResultDialog(
+      BuildContext context, {
+        required String title,
+        required String message,
+        required IconData icon,
+        required Color iconColor,
+      }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: Icon(icon, color: iconColor, size: 54),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15)),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          FilledButton(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(120, 44),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pop(context);
+            },
+            child: const Text('Awesome'),
+          ),
+        ],
       ),
     );
   }

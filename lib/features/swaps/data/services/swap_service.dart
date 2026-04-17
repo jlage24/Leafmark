@@ -6,19 +6,18 @@ class SwapService {
   final String _collection = 'swap_requests';
 
   Future<void> createSwapRequest(SwapRequest request) async {
-    // Verificar se já existe um pedido pendente para o mesmo livro pelo mesmo user
     final existing = await _db
         .collection(_collection)
         .where('requesterId', isEqualTo: request.requesterId)
         .where('bookWantedId', isEqualTo: request.bookWantedId)
         .where('status', isEqualTo: SwapStatus.pending.name)
-        .get();
+        .get(const GetOptions(source: Source.serverAndCache));
 
     if (existing.docs.isNotEmpty) {
       throw Exception('Já enviaste um pedido para este livro.');
     }
 
-    await _db.collection(_collection).add(request.toMap());
+    _db.collection(_collection).add(request.toMap());
   }
 
   Future<void> updateStatus(String id, SwapStatus status) async {

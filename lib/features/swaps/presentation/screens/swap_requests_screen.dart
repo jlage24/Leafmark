@@ -50,7 +50,6 @@ class _RequestList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final swapP = context.read<SwapProvider>();
-    final colorScheme = Theme.of(context).colorScheme;
 
     return StreamBuilder<List<SwapRequest>>(
       stream: stream,
@@ -95,7 +94,7 @@ class _RequestList extends StatelessWidget {
                         width: 60,
                         height: 90,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => _placeholder(),
+                        errorBuilder: (context, error, stackTrace) => _placeholder(),
                       )
                           : _placeholder(),
                     ),
@@ -185,9 +184,9 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.5)),
+        border: Border.all(color: color.withValues(alpha: 0.5)),
       ),
       child: Text(
         status.name.toUpperCase(),

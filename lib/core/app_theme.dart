@@ -101,7 +101,7 @@ class AppTheme {
         style: FilledButton.styleFrom(
           backgroundColor: primary,
           foregroundColor: onPrimary,
-          minimumSize: const Size.fromHeight(48),
+          minimumSize: const Size(64, 48),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           textStyle: GoogleFonts.dmSans(fontSize: 15, fontWeight: FontWeight.w600),
         ),

@@ -1,6 +1,8 @@
-/// The data returned from the Google Books API for a given ISBN.
+import 'book.dart';
+
+/// The data returned from the Google Books API for a given ISBN or search query.
 /// This is a transfer object — it gets mapped to a full [Book] by the user
-/// after confirming or editing the pre-filled form.
+/// after confirming or editing the pre-filled form, or when displaying search results.
 class BookFetchResult {
   final String isbn;
   final String title;
@@ -78,6 +80,20 @@ class BookFetchResult {
       publisher: publisher ?? this.publisher,
       publishedDate: publishedDate ?? this.publishedDate,
       pageCount: pageCount ?? this.pageCount,
+    );
+  }
+
+  /// Converts the fetch result into a canonical Book model for UI display
+  Book toBook() {
+    return Book(
+      id: isbn.isNotEmpty ? isbn : title.hashCode.toString(),
+      title: title,
+      authors: authors,
+      isbn: isbn,
+      coverUrl: coverUrl ?? 'https://via.placeholder.com/150',
+      condition: BookCondition.good,
+      addedAt: DateTime.now(), // This is fine for addedAt, just not for ID!
+      ownerName: 'Google Books',
     );
   }
 

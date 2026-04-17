@@ -74,13 +74,11 @@ class _RequestList extends StatelessWidget {
           itemCount: reqs.length,
           itemBuilder: (context, index) {
             final req = reqs[index];
-            // 👇 Procurar o livro nos dados dummy usando o ID
             final book = findBookById(req.bookWantedId);
 
-            // Determinar o nome da outra pessoa
-            // Se é incoming, quero saber quem pediu (requesterId)
-            // Se é outgoing, quero saber a quem pedi (ownerId)
-            final otherPerson = isIncoming ? req.requesterId : req.ownerId;
+            final otherPerson = isIncoming
+                ? req.requesterId
+                : (book?.ownerName ?? req.ownerId);
 
             return Card(
               margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
@@ -103,7 +101,6 @@ class _RequestList extends StatelessWidget {
                     ),
                     const SizedBox(width: 16),
 
-                    // 2. Título e Pessoa
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -129,12 +126,10 @@ class _RequestList extends StatelessWidget {
                       ),
                     ),
 
-                    // 3. Botões de Ação
                     if (req.status == SwapStatus.pending)
                       Column(
                         children: isIncoming
                             ? [
-                          // Botões para pedidos recebidos: Aceitar ou Recusar
                           IconButton(
                             icon: const Icon(Icons.check_circle, color: Colors.green, size: 30),
                             onPressed: () => swapP.accept(req.id),
@@ -147,7 +142,6 @@ class _RequestList extends StatelessWidget {
                           ),
                         ]
                             : [
-                          // Botão para pedidos enviados: Cancelar
                           TextButton(
                             onPressed: () => swapP.cancel(req.id),
                             child: const Text('Cancel', style: TextStyle(color: Colors.red)),

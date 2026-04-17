@@ -43,7 +43,7 @@ class SearchProvider extends ChangeNotifier {
     }
 
     _isLoading = true;
-    _errorMessage = null;
+    _errorMessage = null; // Clear previous errors
     notifyListeners();
 
     try {
@@ -56,9 +56,9 @@ class SearchProvider extends ChangeNotifier {
         _results = await _booksService.searchBooks(query.trim(), _searchType);
       }
 
-      if (_results.isEmpty) {
-        _errorMessage = 'No books found for "$query".';
-      }
+      // REC 2 FIX: Removed the block that set an error message for empty results.
+      // The UI will now handle _results.isEmpty natively without treating it as an error.
+
     } catch (e) {
       _errorMessage = 'Failed to fetch books. Please try again.';
     } finally {

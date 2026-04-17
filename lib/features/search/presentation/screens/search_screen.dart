@@ -14,11 +14,19 @@ class SearchScreen extends StatefulWidget {
 
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
+  final ValueNotifier<bool> _hasText = ValueNotifier<bool>(false);
 
   @override
   void dispose() {
     _searchController.dispose();
+    _hasText.dispose(); // Don't forget to dispose the notifier!
     super.dispose();
+  }
+
+  void _clearSearch(SearchProvider provider) {
+    _searchController.clear();
+    _hasText.value = false;
+    provider.clearSearch();
   }
 
   @override
@@ -32,88 +40,81 @@ class _SearchScreenState extends State<SearchScreen> {
         title: const Text('Search'),
       ),
       body: Column(
-          children: [
-      // 1. Search Bar & Button
-      Padding(
-      padding: const EdgeInsets.all(16.0),
-      child: Row(
         children: [
-          Expanded(
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search for books...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchController.text.isNotEmpty
-                    ? IconButton(
-                  icon: const Icon(Icons.clear),
-                  onPressed: () {
-                    _searchController.clear();
-                    searchProvider.clearSearch();
-                    setState(() {}); // Refresh to hide clear button
-                  },
-                )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+          // 1. Search Bar & Button
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _searchController,
+                    decoration: InputDecoration(
+                      hintText: 'Search for books...',
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: ValueListenableBuilder<bool>(
+                        valueListenable: _hasText,
+                        builder: (_, hasText, __) => hasText
+                            ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () => _clearSearch(searchProvider),
+                        )
+                            : const SizedBox.shrink(),
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    onSubmitted: (value) => searchProvider.performSearch(value),
+                    onChanged: (value) => _hasText.value = value.isNotEmpty,
+                  ),
                 ),
-              ),
-              onSubmitted: (value) => searchProvider.performSearch(value),
-              onChanged: (_) => setState(() {}), // Refresh for clear button
+                const SizedBox(width: 8),
+
+                FilledButton(
+                  onPressed: () {
+                    FocusScope.of(context).unfocus(); // Dismiss keyboard
+                    searchProvider.performSearch(_searchController.text);
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 16),
+                    child: Icon(Icons.arrow_forward),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(width: 8),
 
-          // Search Submit Button
-          ElevatedButton(
-            onPressed: () {
-              FocusScope.of(context).unfocus(); // Dismiss keyboard
-              searchProvider.performSearch(_searchController.text);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: theme.colorScheme.primary, // Using strict theme rules
-              foregroundColor: theme.colorScheme.onPrimary,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
+          // 2. Filter Toggle (Title / Author / ISBN)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: SizedBox(
+              width: double.infinity,
+              child: SegmentedButton<SearchType>(
+                segments: const [
+                  ButtonSegment(value: SearchType.title, label: Text('Title')),
+                  ButtonSegment(value: SearchType.author, label: Text('Author')),
+                  ButtonSegment(value: SearchType.isbn, label: Text('ISBN')),
+                ],
+                selected: {searchProvider.searchType},
+                onSelectionChanged: (Set<SearchType> newSelection) {
+                  searchProvider.setSearchType(newSelection.first);
+                  // Automatically search again if text exists and filter changes
+                  if (_searchController.text.isNotEmpty) {
+                    searchProvider.performSearch(_searchController.text);
+                  }
+                },
               ),
             ),
-            child: const Icon(Icons.arrow_forward),
+          ),
+
+          const SizedBox(height: 16),
+
+          // 3. Results Area
+          Expanded(
+            child: _buildResults(searchProvider, theme),
           ),
         ],
-      ),
-    ),
-
-    // 2. Filter Toggle (Title / Author / ISBN)
-    Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 16.0),
-    child: SizedBox(
-    width: double.infinity,
-    child: SegmentedButton<SearchType>(
-    segments: const [
-    ButtonSegment(value: SearchType.title, label: Text('Title')),
-    ButtonSegment(value: SearchType.author, label: Text('Author')),
-    ButtonSegment(value: SearchType.isbn, label: Text('ISBN')),
-    ],
-    selected: {searchProvider.searchType},
-    onSelectionChanged: (Set<SearchType> newSelection) {
-    searchProvider.setSearchType(newSelection.first);
-    // Automatically search again if text exists and filter changes
-    if (_searchController.text.isNotEmpty) {
-    searchProvider.performSearch(_searchController.text);
-    }
-    },
-    ),
-    ),
-    ),
-
-    const SizedBox(height: 16),
-
-    // 3. Results Area
-    Expanded(
-    child: _buildResults(searchProvider, theme),
-    ),
-          ],
       ),
     );
   }
@@ -137,20 +138,22 @@ class _SearchScreenState extends State<SearchScreen> {
       );
     }
 
+    // Handling empty state distinctly from error state
     if (provider.results.isEmpty) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(
-              Icons.search_off,
+              _searchController.text.isEmpty ? Icons.search : Icons.search_off,
               size: 64,
-              // Strictly following the new alpha rule: withValues(alpha: x)
               color: theme.colorScheme.primary.withValues(alpha: 0.4),
             ),
             const SizedBox(height: 16),
             Text(
-              'No books found. Try a different search.',
+              _searchController.text.isEmpty
+                  ? 'Type something to start searching.'
+                  : 'No books found. Try a different search.',
               style: theme.textTheme.bodyLarge?.copyWith(color: Colors.grey),
             ),
           ],
@@ -165,7 +168,6 @@ class _SearchScreenState extends State<SearchScreen> {
         final fetchResult = provider.results[index];
 
         // Convert BookFetchResult to your canonical Book model.
-        // Assuming your BookFetchResult has a toBook() method!
         final book = fetchResult.toBook();
 
         return BookCard(

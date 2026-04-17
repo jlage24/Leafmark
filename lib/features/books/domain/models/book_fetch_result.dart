@@ -86,16 +86,14 @@ class BookFetchResult {
   /// Converts the fetch result into a canonical Book model for UI display
   Book toBook() {
     return Book(
-      // Use ISBN as a temporary ID for search results, or a fallback if ISBN is empty
-      id: isbn.isNotEmpty ? isbn : DateTime.now().millisecondsSinceEpoch.toString(),
+      id: isbn.isNotEmpty ? isbn : title.hashCode.toString(),
       title: title,
       authors: authors,
       isbn: isbn,
-      coverUrl: coverUrl ?? 'https://via.placeholder.com/150', // Fallback if no cover
-      // Since it's a global search and not owned by anyone yet, we use defaults:
-      condition: BookCondition.good, // Make sure BookCondition matches your enum
-      addedAt: DateTime.now(),
-      ownerName: 'Google Books', // Placeholder for the UI
+      coverUrl: coverUrl ?? 'https://via.placeholder.com/150',
+      condition: BookCondition.good,
+      addedAt: DateTime.now(), // This is fine for addedAt, just not for ID!
+      ownerName: 'Google Books',
     );
   }
 

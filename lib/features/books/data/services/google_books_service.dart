@@ -75,7 +75,7 @@ class GoogleBooksService {
         break;
     }
 
-    final uri = Uri.parse(
+    final uri = Uri.https(
       '$_baseUrl?q=$queryParam${_apiKey.isNotEmpty ? '&key=$_apiKey' : ''}',
     );
 

@@ -6,12 +6,14 @@ class BookCard extends StatelessWidget {
   final Book book;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final bool isCatalogView;
 
   const BookCard({
     super.key,
     required this.book,
     required this.onTap,
     this.onLongPress,
+    this.isCatalogView = false,
   });
 
   @override
@@ -56,16 +58,19 @@ class BookCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(book.authors, maxLines: 1, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 4),
-              Text(
-                'Condition: ${book.condition.label}',
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
-              ),
+              // only show condition if not in catalog view
+              if (!isCatalogView) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Condition: ${book.condition.label}',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+              ],
             ],
           ),
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-        isThreeLine: true,
+        isThreeLine: !isCatalogView,
       ),
     );
   }

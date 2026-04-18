@@ -9,11 +9,13 @@ import '../../../swaps/data/services/swap_service.dart';
 class BookDetailScreen extends StatelessWidget {
   final Book book;
   final bool isOwner;
+  final bool isCatalogView;
 
   const BookDetailScreen({
     super.key,
     required this.book,
     required this.isOwner,
+    this.isCatalogView = false,
   });
 
   @override
@@ -74,27 +76,31 @@ class BookDetailScreen extends StatelessWidget {
               runSpacing: 8,
               alignment: WrapAlignment.center,
               children: [
-                _MetaChip(
-                  icon: Icons.star_outline_rounded,
-                  label: book.condition.label,
-                  color: _conditionColor(book.condition),
-                ),
-                if (book.ownerName != null)
+                // Hides condition if in catalog view
+                if (!isCatalogView) ...[
                   _MetaChip(
-                    icon: Icons.person_outline_rounded,
-                    label: book.ownerName!,
-                    color: colorScheme.primary,
+                    icon: Icons.star_outline_rounded,
+                    label: book.condition.label,
+                    color: _conditionColor(book.condition),
                   ),
-                _MetaChip(
-                  icon: Icons.qr_code_rounded,
-                  label: book.isbn,
-                  color: Colors.grey,
-                ),
+                  if (book.ownerName != null)
+                    _MetaChip(
+                      icon: Icons.person_outline_rounded,
+                      label: book.ownerName!,
+                      color: colorScheme.primary,
+                    ),
+                ],
+                if (book.isbn.isNotEmpty)
+                  _MetaChip(
+                    icon: Icons.qr_code_rounded,
+                    label: book.isbn,
+                    color: Colors.grey,
+                  ),
               ],
             ),
 
-            // Notes
-            if (book.notes != null && book.notes!.isNotEmpty) ...[
+            // Notes - only shows if there are notes and not in catalog view
+            if (!isCatalogView && book.notes != null && book.notes!.isNotEmpty) ...[
               const SizedBox(height: 24),
               Container(
                 width: double.infinity,
@@ -126,75 +132,84 @@ class BookDetailScreen extends StatelessWidget {
               ),
             ],
 
-            const SizedBox(height: 36),
-
-            // Action button
-            SizedBox(
-              width: double.infinity,
-              height: 52,
-              child: isOwner
-                  ? OutlinedButton.icon(
-                onPressed: null,
-                icon: const Icon(Icons.check_circle_outline_rounded),
-                label: const Text('This book is on your shelf'),
-                style: OutlinedButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+            // Action button - only show if not in catalog view
+            if (!isCatalogView) ...[
+              const SizedBox(height: 36),
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: isOwner
+                    ? OutlinedButton.icon(
+                  onPressed: null,
+                  icon: const Icon(Icons.check_circle_outline_rounded),
+                  label: const Text('This book is on your shelf'),
+                  style: OutlinedButton.styleFrom(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
                   ),
-                ),
-              )
-                  : FilledButton.icon(
-                onPressed: swapProvider.isLoading
-                    ? null
-                    : () async {
-                  try {
-                    final request = SwapRequest(
-                      id: '',
-                      requesterId: authProvider.user!.uid,
-                      ownerId: book.ownerId ?? '',
-                      bookOfferedId: 'temporary_id',
-                      bookWantedId: book.id,
-                      status: SwapStatus.pending,
-                      createdAt: DateTime.now(),
-                    );
-                    await swapProvider.sendRequest(request);
+                )
+                    : FilledButton.icon(
+                  onPressed: swapProvider.isLoading
+                      ? null
+                      : () async {
+                    try {
+                      final request = SwapRequest(
+                        id: '',
+                        requesterId: authProvider.user!.uid,
+                        ownerId: book.ownerId ?? '',
+                        bookOfferedId: 'temporary_id',
+                        bookWantedId: book.id,
+                        status: SwapStatus.pending,
+                        createdAt: DateTime.now(),
+                      );
+                      await swapProvider.sendRequest(request);
 
-                    if (context.mounted) {
-                      _showResultDialog(
-                        context,
-                        title: 'Request Sent!',
-                        message: 'Your swap request for "${book.title}" was successfully sent to ${book.ownerName ?? 'the owner'}.\n\nYou can track it in your Swap Requests.',
-                        icon: Icons.check_circle_outline_rounded,
-                        iconColor: Colors.green,
-                      );
+                      if (context.mounted) {
+                        _showResultDialog(
+                          context,
+                          title: 'Request Sent!',
+                          message:
+                          'Your swap request for "${book.title}" was successfully sent to ${book.ownerName ?? 'the owner'}.\n\nYou can track it in your Swap Requests.',
+                          icon: Icons.check_circle_outline_rounded,
+                          iconColor: Colors.green,
+                        );
+                      }
+                    } on DuplicateSwapException {
+                      if (context.mounted) {
+                        _showResultDialog(
+                          context,
+                          title: 'Already Requested!',
+                          message:
+                          'You already have a pending request for this book.',
+                          icon: Icons.info_outline_rounded,
+                          iconColor: Colors.orange,
+                        );
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e
+                                .toString()
+                                .replaceAll('Exception: ', '')),
+                            backgroundColor: colorScheme.error,
+                          ),
+                        );
+                      }
                     }
-                  } on DuplicateSwapException {
-                    if (context.mounted) {
-                      _showResultDialog(
-                        context,
-                        title: 'Already Requested!',
-                        message: 'You already have a pending request for this book.',
-                        icon: Icons.info_outline_rounded,
-                        iconColor: Colors.orange,
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(e.toString().replaceAll('Exception: ', '')),
-                          backgroundColor: colorScheme.error,
-                        ),
-                      );
-                    }
-                  }
-                },
-                icon: swapProvider.isLoading
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
-                    : const Icon(Icons.swap_horiz_rounded),
-                label: const Text('Request Swap'),
+                  },
+                  icon: swapProvider.isLoading
+                      ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2, color: Colors.white))
+                      : const Icon(Icons.swap_horiz_rounded),
+                  label: const Text('Request Swap'),
+                ),
               ),
-            ),
+            ],
 
             const SizedBox(height: 24),
           ],
@@ -217,7 +232,9 @@ class BookDetailScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: Icon(icon, color: iconColor, size: 54),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15)),
+        content: Text(message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15)),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           FilledButton(

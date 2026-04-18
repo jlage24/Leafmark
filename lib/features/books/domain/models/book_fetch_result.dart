@@ -26,23 +26,46 @@ class BookFetchResult {
 
   factory BookFetchResult.fromGoogleBooksJson(
       Map<String, dynamic> json,
-      String isbn,
+      String fallbackIsbn,
       ) {
     final rawAuthors = json['authors'];
     final authors = rawAuthors is List
         ? rawAuthors.join(', ')
         : 'Unknown author';
 
+    // Extract the ISBN
+    String extractedIsbn = fallbackIsbn;
+    final identifiers = json['industryIdentifiers'] as List<dynamic>?;
+
+    if (identifiers != null) {
+      String? isbn13;
+      String? isbn10;
+
+      for (var id in identifiers) {
+        if (id is Map<String, dynamic>) {
+          final type = id['type'] as String?;
+          final identifier = id['identifier'] as String?;
+          if (type == 'ISBN_13') isbn13 = identifier;
+          if (type == 'ISBN_10') isbn10 = identifier;
+        }
+      }
+      // Use the first ISBN found
+      extractedIsbn = isbn13 ?? isbn10 ?? fallbackIsbn;
+    }
+
+    // Get the cover
     final imageLinks = json['imageLinks'] as Map<String, dynamic>?;
     String? coverUrl = (imageLinks?['thumbnail'] ?? imageLinks?['smallThumbnail']) as String?;
+
     if (coverUrl != null) {
       coverUrl = coverUrl.replaceFirst('http://', 'https://');
-    } else {
-      coverUrl = 'https://covers.openlibrary.org/b/isbn/$isbn-L.jpg';
+    } else if (extractedIsbn.isNotEmpty) {
+      // Uses the real ISBN to get the cover from OpenLibrary if Google fails
+      coverUrl = 'https://covers.openlibrary.org/b/isbn/$extractedIsbn-L.jpg';
     }
 
     return BookFetchResult(
-      isbn: isbn,
+      isbn: extractedIsbn,
       title: (json['title'] as String?) ?? 'Unknown title',
       authors: authors,
       coverUrl: coverUrl,

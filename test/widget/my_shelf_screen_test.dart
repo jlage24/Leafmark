@@ -15,6 +15,7 @@ class FakeAuthProvider extends ChangeNotifier implements AuthProvider {
     uid: 'test-uid',
     email: 'test@test.com',
     displayName: 'Test User',
+    username: 'testuser',
   );
 
   @override
@@ -27,7 +28,7 @@ class FakeAuthProvider extends ChangeNotifier implements AuthProvider {
   Future<bool> login(String email, String password) async => true;
 
   @override
-  Future<bool> register(String email, String password, String name) async => true;
+  Future<bool> register(String email, String password, String name, String username) async => true;
 
   @override
   Future<void> logout() async {}

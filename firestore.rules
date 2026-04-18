@@ -18,6 +18,8 @@ service cloud.firestore {
       allow read, update: if request.auth != null
         && (request.auth.uid == resource.data.requesterId
          || request.auth.uid == resource.data.ownerId);
+      allow delete: if request.auth != null
+        && request.auth.uid == resource.data.requesterId;
     }
   }
 }

@@ -17,6 +17,7 @@ class AuthRepository {
       email: email.trim(), password: password,
     );
     await cred.user!.updateDisplayName(name.trim());
+    await cred.user!.reload();
     final user = AppUser(
       uid: cred.user!.uid,
       email: cred.user!.email!,

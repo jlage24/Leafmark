@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../domain/models/book.dart';
+import '../../../swaps/domain/models/swap_request.dart';
+import '../../../swaps/presentation/providers/swap_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../swaps/data/services/swap_service.dart';
 
 class BookDetailScreen extends StatelessWidget {
   final Book book;
@@ -15,6 +20,9 @@ class BookDetailScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+
+    final swapProvider = context.watch<SwapProvider>();
+    final authProvider = context.read<AuthProvider>();
 
     return Scaffold(
       appBar: AppBar(
@@ -136,37 +144,93 @@ class BookDetailScreen extends StatelessWidget {
                 ),
               )
                   : FilledButton.icon(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'Swap request sent to ${book.ownerName ?? 'owner'}!',
-                      ),
-                      backgroundColor: Colors.green[700],
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                  );
+                onPressed: swapProvider.isLoading
+                    ? null
+                    : () async {
+                  try {
+                    final request = SwapRequest(
+                      id: '',
+                      requesterId: authProvider.user!.uid,
+                      ownerId: book.ownerId ?? '',
+                      bookOfferedId: 'temporary_id',
+                      bookWantedId: book.id,
+                      status: SwapStatus.pending,
+                      createdAt: DateTime.now(),
+                    );
+                    await swapProvider.sendRequest(request);
+
+                    if (context.mounted) {
+                      _showResultDialog(
+                        context,
+                        title: 'Request Sent!',
+                        message: 'Your swap request for "${book.title}" was successfully sent to ${book.ownerName ?? 'the owner'}.\n\nYou can track it in your Swap Requests.',
+                        icon: Icons.check_circle_outline_rounded,
+                        iconColor: Colors.green,
+                      );
+                    }
+                  } on DuplicateSwapException {
+                    if (context.mounted) {
+                      _showResultDialog(
+                        context,
+                        title: 'Already Requested!',
+                        message: 'You already have a pending request for this book.',
+                        icon: Icons.info_outline_rounded,
+                        iconColor: Colors.orange,
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(e.toString().replaceAll('Exception: ', '')),
+                          backgroundColor: colorScheme.error,
+                        ),
+                      );
+                    }
+                  }
                 },
-                icon: const Icon(Icons.swap_horiz_rounded),
-                label: const Text(
-                  'Request Swap',
-                  style: TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-                style: FilledButton.styleFrom(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
+                icon: swapProvider.isLoading
+                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                    : const Icon(Icons.swap_horiz_rounded),
+                label: const Text('Request Swap'),
               ),
             ),
 
             const SizedBox(height: 24),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showResultDialog(
+      BuildContext context, {
+        required String title,
+        required String message,
+        required IconData icon,
+        required Color iconColor,
+      }) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        icon: Icon(icon, color: iconColor, size: 54),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15)),
+        actionsAlignment: MainAxisAlignment.center,
+        actions: [
+          FilledButton(
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(120, 44),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.pop(context);
+            },
+            child: const Text('Awesome'),
+          ),
+        ],
       ),
     );
   }

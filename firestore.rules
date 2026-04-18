@@ -2,25 +2,24 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Users can only read/write their own profile
     match /users/{uid} {
       allow read:  if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Books on a shelf: owner writes, authenticated users read
     match /users/{uid}/shelf/{bookId} {
       allow read:  if request.auth != null;
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 
-    // Swap requests: sender writes, either party reads/updates
     match /swap_requests/{requestId} {
       allow create: if request.auth != null
-        && request.auth.uid == request.resource.data.fromUid;
+        && request.auth.uid == request.resource.data.requesterId;
       allow read, update: if request.auth != null
-        && (request.auth.uid == resource.data.fromUid
-         || request.auth.uid == resource.data.toUid);
+        && (request.auth.uid == resource.data.requesterId
+         || request.auth.uid == resource.data.ownerId);
+      allow delete: if request.auth != null
+        && request.auth.uid == resource.data.requesterId;
     }
   }
 }

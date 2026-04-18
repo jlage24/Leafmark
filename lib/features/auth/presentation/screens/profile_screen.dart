@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../../../../features/books/presentation/providers/book_shelf_provider.dart';
 import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dart';
+import '../../../../features/swaps/presentation/screens/swap_requests_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -60,6 +61,19 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const Divider(),
+
+          ListTile(
+            leading: const Icon(Icons.swap_horiz_rounded),
+            title: const Text('Swap Requests'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SwapRequestsScreen()),
+            ),
+          ),
+
+          const Divider(),
+
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.red),
             title: const Text('Logout', style: TextStyle(color: Colors.red)),

@@ -4,6 +4,7 @@ import '../../domain/models/book.dart';
 import '../../../swaps/domain/models/swap_request.dart';
 import '../../../swaps/presentation/providers/swap_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../swaps/data/services/swap_service.dart';
 
 class BookDetailScreen extends StatelessWidget {
   final Book book;
@@ -167,27 +168,24 @@ class BookDetailScreen extends StatelessWidget {
                         iconColor: Colors.green,
                       );
                     }
+                  } on DuplicateSwapException {
+                    if (context.mounted) {
+                      _showResultDialog(
+                        context,
+                        title: 'Already Requested!',
+                        message: 'You already have a pending request for this book.',
+                        icon: Icons.info_outline_rounded,
+                        iconColor: Colors.orange,
+                      );
+                    }
                   } catch (e) {
                     if (context.mounted) {
-                      final errorMsg = e.toString();
-
-                      if (errorMsg.contains('already exists') || errorMsg.contains('Já enviaste')) {
-                        _showResultDialog(
-                          context,
-                          title: 'Already Requested!',
-                          message: 'You have already sent a pending request for "${book.title}". Please wait for the owner to respond.',
-                          icon: Icons.info_outline_rounded,
-                          iconColor: Colors.orange,
-                        );
-                      } else {
-                        // Qualquer outro erro (ex: falha de rede)
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(errorMsg.replaceAll('Exception: ', '')),
-                            backgroundColor: colorScheme.error,
-                          ),
-                        );
-                      }
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(e.toString().replaceAll('Exception: ', '')),
+                          backgroundColor: colorScheme.error,
+                        ),
+                      );
                     }
                   }
                 },

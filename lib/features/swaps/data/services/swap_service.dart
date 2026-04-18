@@ -1,23 +1,23 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/swap_request.dart';
 
+class DuplicateSwapException implements Exception {}
+
 class SwapService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _collection = 'swap_requests';
 
   Future<void> createSwapRequest(SwapRequest request) async {
-    final existing = await _db
-        .collection(_collection)
-        .where('requesterId', isEqualTo: request.requesterId)
+    final existing = await _db.collection(_collection)
         .where('bookWantedId', isEqualTo: request.bookWantedId)
+        .where('requesterId', isEqualTo: request.requesterId)
         .where('status', isEqualTo: SwapStatus.pending.name)
-        .get(const GetOptions(source: Source.serverAndCache));
+        .get(const GetOptions(source: Source.server));
 
     if (existing.docs.isNotEmpty) {
-      throw Exception('Já enviaste um pedido para este livro.');
+      throw DuplicateSwapException();
     }
-
-    _db.collection(_collection).add(request.toMap());
+    await _db.collection(_collection).add(request.toMap());
   }
 
   Future<void> updateStatus(String id, SwapStatus status) async {

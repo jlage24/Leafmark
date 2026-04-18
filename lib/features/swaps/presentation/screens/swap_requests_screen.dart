@@ -5,13 +5,29 @@ import '../providers/swap_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../../data/dummy_data.dart';
 
-class SwapRequestsScreen extends StatelessWidget {
+class SwapRequestsScreen extends StatefulWidget {
   const SwapRequestsScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final uid = context.read<AuthProvider>().user?.uid ?? '';
+  State<SwapRequestsScreen> createState() => _SwapRequestsScreenState();
+}
 
+class _SwapRequestsScreenState extends State<SwapRequestsScreen> {
+  late final Stream<List<SwapRequest>> _incoming;
+  late final Stream<List<SwapRequest>> _outgoing;
+
+  @override
+  void initState() {
+    super.initState();
+    final uid = context.read<AuthProvider>().user?.uid ?? '';
+    final provider = context.read<SwapProvider>();
+
+    _incoming = provider.incoming(uid);
+    _outgoing = provider.outgoing(uid);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return DefaultTabController(
       length: 2,
       child: Scaffold(
@@ -27,11 +43,11 @@ class SwapRequestsScreen extends StatelessWidget {
         body: TabBarView(
           children: [
             _RequestList(
-              stream: context.read<SwapProvider>().incoming(uid),
+              stream: _incoming,
               isIncoming: true,
             ),
             _RequestList(
-              stream: context.read<SwapProvider>().outgoing(uid),
+              stream: _outgoing,
               isIncoming: false,
             ),
           ],
@@ -40,6 +56,7 @@ class SwapRequestsScreen extends StatelessWidget {
     );
   }
 }
+
 
 class _RequestList extends StatelessWidget {
   final Stream<List<SwapRequest>> stream;

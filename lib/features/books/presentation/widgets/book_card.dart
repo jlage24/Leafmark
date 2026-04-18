@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/book.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class BookCard extends StatelessWidget {
   final Book book;
@@ -26,12 +27,19 @@ class BookCard extends StatelessWidget {
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: book.coverUrl != null
-              ? Image.network(
-            book.coverUrl!,
+              ? CachedNetworkImage(
+            imageUrl: book.coverUrl!,
             width: 50,
             height: 75,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) =>
+            placeholder: (context, url) => const SizedBox(
+              width: 50,
+              height: 75,
+              child: Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+            errorWidget: (context, url, error) =>
             const Icon(Icons.book, size: 50),
           )
               : const Icon(Icons.book, size: 50),

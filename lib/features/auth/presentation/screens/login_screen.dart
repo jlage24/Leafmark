@@ -70,7 +70,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     obscureText: true,
                     decoration: const InputDecoration(labelText: 'Password'),
                     validator: (v) =>
-                    v != null && v.length >= 6 ? null : 'Minimum 6 characters',
+                    v != null && v.isNotEmpty ? null : 'Password is required',
                   ),
                   const SizedBox(height: 24),
                   FilledButton(

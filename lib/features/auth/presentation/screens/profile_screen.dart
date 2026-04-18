@@ -75,8 +75,8 @@ class ProfileScreen extends StatelessWidget {
           const Divider(),
 
           ListTile(
-            leading: const Icon(Icons.logout, color: Colors.red),
-            title: const Text('Logout', style: TextStyle(color: Colors.red)),
+            leading: Icon(Icons.logout, color: Theme.of(context).colorScheme.error),
+            title: Text('Logout', style: TextStyle(color: Theme.of(context).colorScheme.error)),
             onTap: () => _logout(context),
           ),
         ],

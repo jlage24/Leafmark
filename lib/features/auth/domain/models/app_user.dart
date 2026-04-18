@@ -8,4 +8,10 @@ class AppUser {
     required this.email,
     required this.displayName,
   });
+
+  AppUser copyWith({String? displayName, String? email}) => AppUser(
+    uid: uid,
+    email: email ?? this.email,
+    displayName: displayName ?? this.displayName,
+  );
 }

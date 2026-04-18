@@ -13,10 +13,9 @@ class SplashScreen extends StatelessWidget {
     return Consumer<AuthProvider>(
       builder: (context, auth, _) {
         if (auth.status == AuthStatus.authenticated && auth.user != null) {
-          // If the user is authenticated, load their books
-          Future.microtask(() =>
-              context.read<BookShelfProvider>().loadBooks(auth.user!.uid)
-          );
+          final shelf = context.read<BookShelfProvider>();
+          final uid = auth.user!.uid;
+          Future.microtask(() => shelf.loadBooks(uid));
         }
         switch (auth.status) {
           case AuthStatus.unknown:

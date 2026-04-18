@@ -36,9 +36,6 @@ dependencies:
   # HTTP requests (Google Books API)
   http: ^1.2.1
 
-  # Local persistence
-  shared_preferences: ^2.2.3
-
   # JSON serialization
   json_annotation: ^4.9.0
 

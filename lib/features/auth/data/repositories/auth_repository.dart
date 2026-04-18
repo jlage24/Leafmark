@@ -6,39 +6,92 @@ class AuthRepository {
   final _auth = FirebaseAuth.instance;
   final _db   = FirebaseFirestore.instance;
 
-  Stream<AppUser?> get authStateChanges => _auth.authStateChanges().map(
-        (user) => user != null
-        ? AppUser(uid: user.uid, email: user.email!, displayName: user.displayName ?? '')
-        : null,
-  );
+  Stream<AppUser?> get authStateChanges async* {
+    await for (final user in _auth.authStateChanges()) {
+      if (user == null) {
+        yield null;
+      } else {
+        // searches for the username in the Firestore database
+        final doc = await _db.collection('users').doc(user.uid).get();
+        final data = doc.data();
+        yield AppUser(
+          uid: user.uid,
+          email: user.email!,
+          displayName: data?['displayName'] ?? user.displayName ?? '',
+          username: data?['username'] ?? '',
+        );
+      }
+    }
+  }
 
-  Future<AppUser> register(String email, String password, String name) async {
+  /// Returns true if the username is already taken.
+  Future<bool> isUsernameTaken(String username) async {
+    final doc = await _db
+        .collection('usernames')
+        .doc(username.toLowerCase())
+        .get();
+    return doc.exists;
+  }
+
+  Future<AppUser> register(
+      String email,
+      String password,
+      String displayName,
+      String username,
+      ) async {
+    final normalizedUsername = username.trim().toLowerCase();
+
+    if (await isUsernameTaken(normalizedUsername)) {
+      throw Exception('username-already-taken');
+    }
+
     final cred = await _auth.createUserWithEmailAndPassword(
-      email: email.trim(), password: password,
+      email: email.trim(),
+      password: password,
     );
-    await cred.user!.updateDisplayName(name.trim());
+
+    await cred.user!.updateDisplayName(displayName.trim());
     await cred.user!.reload();
+
     final user = AppUser(
       uid: cred.user!.uid,
       email: cred.user!.email!,
-      displayName: name.trim(),
+      displayName: displayName.trim(),
+      username: normalizedUsername,
     );
-    await _db.collection('users').doc(user.uid).set({
+
+    final batch = _db.batch();
+
+    batch.set(_db.collection('users').doc(user.uid), {
       'email': user.email,
       'displayName': user.displayName,
+      'username': user.username,
       'createdAt': FieldValue.serverTimestamp(),
     });
+
+    batch.set(_db.collection('usernames').doc(normalizedUsername), {
+      'uid': user.uid,
+    });
+
+    await batch.commit();
+
     return user;
   }
 
   Future<AppUser> login(String email, String password) async {
     final cred = await _auth.signInWithEmailAndPassword(
-      email: email.trim(), password: password,
+      email: email.trim(),
+      password: password,
     );
+
+    final doc = await _db.collection('users').doc(cred.user!.uid).get();
+    final data = doc.data();
+
     return AppUser(
       uid: cred.user!.uid,
       email: cred.user!.email!,
-      displayName: cred.user!.displayName ?? '',
+      displayName: data?['displayName'] ?? cred.user!.displayName ?? '',
+      username: data?['username'] ?? '',
     );
   }
 

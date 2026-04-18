@@ -26,13 +26,26 @@ class AuthProvider extends ChangeNotifier {
     });
   }
 
-  Future<bool> register(String email, String password, String name) async {
+  Future<bool> register(
+      String email,
+      String password,
+      String displayName,
+      String username,
+      ) async {
     _errorMessage = null;
     try {
-      _user = await _repo.register(email, password, name);
+      _user = await _repo.register(email, password, displayName, username);
       return true;
     } on FirebaseAuthException catch (e) {
       _errorMessage = _parseError(e.code);
+      notifyListeners();
+      return false;
+    } catch (e) {
+      if (e.toString().contains('username-already-taken')) {
+        _errorMessage = 'This username is already taken.';
+      } else {
+        _errorMessage = 'An unknown error occurred. Try again.';
+      }
       notifyListeners();
       return false;
     }

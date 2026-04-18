@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../../../../core/username_validator.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -9,15 +10,17 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey             = GlobalKey<FormState>();
-  final _nameController      = TextEditingController();
-  final _emailController     = TextEditingController();
-  final _passwordController  = TextEditingController();
+  final _formKey            = GlobalKey<FormState>();
+  final _nameController     = TextEditingController();
+  final _usernameController = TextEditingController();
+  final _emailController    = TextEditingController();
+  final _passwordController = TextEditingController();
   bool _loading = false;
 
   @override
   void dispose() {
     _nameController.dispose();
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -31,6 +34,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _emailController.text,
       _passwordController.text,
       _nameController.text,
+      _usernameController.text,
     );
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -59,6 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
+                  // Name
                   TextFormField(
                     controller: _nameController,
                     decoration: const InputDecoration(labelText: 'Name'),
@@ -66,6 +71,30 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     v != null && v.trim().isNotEmpty ? null : 'Name required',
                   ),
                   const SizedBox(height: 16),
+                  // Username
+                  TextFormField(
+                    controller: _usernameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Username',
+                      prefixText: '@',
+                    ),
+                    // converts to lowercase in real time
+                    onChanged: (v) {
+                      final lower = v.toLowerCase();
+                      if (v != lower) {
+                        _usernameController.value =
+                            _usernameController.value.copyWith(
+                              text: lower,
+                              selection: TextSelection.collapsed(
+                                offset: lower.length,
+                              ),
+                            );
+                      }
+                    },
+                    validator: UsernameValidator.validate,
+                  ),
+                  const SizedBox(height: 16),
+                  // Email
                   TextFormField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
@@ -74,6 +103,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     v != null && v.contains('@') ? null : 'Invalid email',
                   ),
                   const SizedBox(height: 16),
+                  // Password
                   TextFormField(
                     controller: _passwordController,
                     obscureText: true,

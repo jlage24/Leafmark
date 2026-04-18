@@ -46,7 +46,7 @@ class ProfileScreen extends StatelessWidget {
           ),
           Center(
             child: Text(
-              user?.email ?? '',
+              user?.username ?? '',
               style: Theme.of(context).textTheme.bodySmall,
             ),
           ),

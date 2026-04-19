@@ -10,21 +10,21 @@ void main() {
       provider = SearchProvider();
     });
 
-    test('estado inicial deve estar vazio e não deve estar a carregar', () {
+    test('Initial state should be empty and should not be loading', () {
       expect(provider.results, isEmpty);
       expect(provider.isLoading, isFalse);
       expect(provider.errorMessage, isNull);
       expect(provider.searchType, SearchType.title);
     });
 
-    test('limpar pesquisa deve resetar resultados e mensagens de erro', () {
+    test('Clearing the search should reset results and error messages', () {
       provider.clearSearch();
 
       expect(provider.results, isEmpty);
       expect(provider.errorMessage, isNull);
     });
 
-    test('alterar o tipo de pesquisa deve atualizar o searchType e notificar listeners', () {
+    test('Changing the search type should update the searchType and notify listeners', () {
       var notified = false;
       provider.addListener(() => notified = true);
 

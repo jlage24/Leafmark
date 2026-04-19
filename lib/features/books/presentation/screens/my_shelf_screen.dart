@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // For HapticFeedback
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/book_shelf_provider.dart';
 import '../widgets/book_card.dart';
 import '../../domain/models/book.dart';
 import 'book_detail_screen.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class MyShelfScreen extends StatefulWidget {
   const MyShelfScreen({super.key});
@@ -18,7 +19,9 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BookShelfProvider>().loadBooks();
+      final uid = context.read<AuthProvider>().user?.uid;
+      if (uid == null) return;
+      context.read<BookShelfProvider>().loadBooks(uid);
     });
   }
 
@@ -35,7 +38,6 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Drag handle
               Container(
                 margin: const EdgeInsets.only(top: 10),
                 width: 40,
@@ -45,8 +47,6 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
-
-              // Book preview header
               Padding(
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Row(
@@ -59,7 +59,8 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
                         width: 44,
                         height: 64,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, _) => const Icon(Icons.book, size: 44),
+                        errorBuilder: (context, error, _) =>
+                        const Icon(Icons.book, size: 44),
                       )
                           : const Icon(Icons.book, size: 44),
                     ),
@@ -93,10 +94,7 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
                   ],
                 ),
               ),
-
               const Divider(height: 1),
-
-              // Remove action
               ListTile(
                 leading: const Icon(Icons.delete_outline, color: Colors.red),
                 title: const Text(
@@ -117,14 +115,11 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
                   );
                 },
               ),
-
-              // Cancel
               ListTile(
                 leading: const Icon(Icons.close),
                 title: const Text('Cancel'),
                 onTap: () => Navigator.pop(sheetCtx),
               ),
-
               const SizedBox(height: 8),
             ],
           ),

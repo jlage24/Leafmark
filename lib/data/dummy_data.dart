@@ -11,6 +11,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.mint,
     addedAt: DateTime(2024, 1, 5),
     ownerName: 'Beatriz',
+    ownerId: 'uid_beatriz',
     notes: 'First book of the series. Absolute classic, barely touched.',
   ),
   Book(
@@ -22,6 +23,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 1, 6),
     ownerName: 'Beatriz',
+    ownerId: 'uid_beatriz',
     notes: 'Read a couple times but still in great shape.',
   ),
   Book(
@@ -33,6 +35,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 1, 7),
     ownerName: 'Mafalda',
+    ownerId: 'uid_mafalda',
     notes: 'My personal favourite of the series. Some light spine creasing.',
   ),
   Book(
@@ -44,6 +47,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.fair,
     addedAt: DateTime(2024, 1, 8),
     ownerName: 'Tomás',
+    ownerId: 'uid_tomas',
     notes: 'Heavy book, cover shows some wear. Pages fully intact.',
   ),
   Book(
@@ -55,6 +59,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.fair,
     addedAt: DateTime(2024, 1, 9),
     ownerName: 'Tomás',
+    ownerId: 'uid_tomas',
     notes: 'Longest in the series. Visibly loved. A few dog-eared pages.',
   ),
   Book(
@@ -66,6 +71,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 1, 10),
     ownerName: 'Sofia',
+    ownerId: 'uid_sofia',
     notes: 'That ending still hits. No marks inside.',
   ),
   Book(
@@ -77,6 +83,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.mint,
     addedAt: DateTime(2024, 1, 11),
     ownerName: 'Sofia',
+    ownerId: 'uid_sofia',
     notes: 'Pristine. Never lent out — until now.',
   ),
 
@@ -90,6 +97,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 2, 14),
     ownerName: 'Pedro',
+    ownerId: 'uid_pedro',
     notes: 'Perfect entry point to the series. Light wear on cover.',
   ),
   Book(
@@ -101,6 +109,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 2, 15),
     ownerName: 'Pedro',
+    ownerId: 'uid_pedro',
     notes: 'Clean inside. Spine slightly bent.',
   ),
   Book(
@@ -112,6 +121,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 2, 18),
     ownerName: 'Catarina',
+    ownerId: 'uid_catarina',
     notes: 'Great finale. A few underlines in my favourite quotes.',
   ),
 
@@ -125,6 +135,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.fair,
     addedAt: DateTime(2024, 3, 1),
     ownerName: 'Gonçalo',
+    ownerId: 'uid_goncalo',
     notes: 'Paperback. Survived two re-reads. Pages slightly yellowed.',
   ),
   Book(
@@ -136,6 +147,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 3, 3),
     ownerName: 'Diogo',
+    ownerId: 'uid_diogo',
     notes: 'The Red Wedding is in here. Fair warning. Good condition.',
   ),
   Book(
@@ -147,6 +159,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 3, 5),
     ownerName: 'Rui',
+    ownerId: 'uid_rui',
     notes: 'Still waiting for Winds of Winter... This one\'s in great shape.',
   ),
 
@@ -160,6 +173,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 4, 10),
     ownerName: 'Rita',
+    ownerId: 'uid_rita',
     notes: 'Gripping from page one. Well-read but no damage.',
   ),
   Book(
@@ -171,6 +185,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.mint,
     addedAt: DateTime(2024, 4, 11),
     ownerName: 'Mariana',
+    ownerId: 'uid_mariana',
     notes: 'Barely opened. Mint condition.',
   ),
   Book(
@@ -182,6 +197,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 4, 12),
     ownerName: 'Mariana',
+    ownerId: 'uid_mariana',
     notes: 'Emotional ending. A few pencil marks near the finale.',
   ),
 
@@ -195,6 +211,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.fair,
     addedAt: DateTime(2024, 5, 23),
     ownerName: 'Afonso',
+    ownerId: 'uid_afonso',
     notes: 'Older edition. Very loved. Cover detached slightly but readable.',
   ),
   Book(
@@ -206,6 +223,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 5, 20),
     ownerName: 'Francisco',
+    ownerId: 'uid_francisco',
     notes: 'Classic Houghton Mifflin edition. Slight cover wear.',
   ),
   Book(
@@ -217,6 +235,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.mint,
     addedAt: DateTime(2024, 5, 22),
     ownerName: 'Leonor',
+    ownerId: 'uid_leonor',
     notes: 'Bought as a set, never finished. This one\'s untouched.',
   ),
 
@@ -230,6 +249,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.fair,
     addedAt: DateTime(2024, 9, 20),
     ownerName: 'Gonçalo',
+    ownerId: 'uid_goncalo',
     notes: 'The sci-fi bible. Yellowed pages but fully intact.',
   ),
   Book(
@@ -241,6 +261,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 8, 5),
     ownerName: 'Rodrigo',
+    ownerId: 'uid_rodrigo',
     notes: 'Masterpiece of military sci-fi. Lightly read.',
   ),
   Book(
@@ -252,6 +273,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 6, 15),
     ownerName: 'Miguel',
+    ownerId: 'uid_miguel',
     notes: 'Great pacing. Minor spine creasing.',
   ),
   Book(
@@ -263,6 +285,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.mint,
     addedAt: DateTime(2024, 9, 1),
     ownerName: 'João',
+    ownerId: 'uid_joao',
     notes: 'Pop culture overload. Great fun. Barely touched.',
   ),
   Book(
@@ -274,6 +297,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 9, 10),
     ownerName: 'João',
+    ownerId: 'uid_joao',
     notes: 'Science-heavy but hilarious. No damage.',
   ),
 
@@ -287,6 +311,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 10, 3),
     ownerName: 'Diogo',
+    ownerId: 'uid_diogo',
     notes: 'Big Brother is watching. Classic Signet edition.',
   ),
   Book(
@@ -298,6 +323,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.mint,
     addedAt: DateTime(2024, 10, 8),
     ownerName: 'Sofia',
+    ownerId: 'uid_sofia',
     notes: 'Ironic to own a book about burning books. Pristine copy.',
   ),
   Book(
@@ -309,6 +335,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 10, 15),
     ownerName: 'Catarina',
+    ownerId: 'uid_catarina',
     notes: 'Short but profound. Great condition.',
   ),
 
@@ -322,6 +349,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.fair,
     addedAt: DateTime(2024, 11, 2),
     ownerName: 'Rita',
+    ownerId: 'uid_rita',
     notes: 'Do NOT read in public. Wavy pages from tears. Still readable.',
   ),
   Book(
@@ -333,6 +361,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 11, 10),
     ownerName: 'Mariana',
+    ownerId: 'uid_mariana',
     notes: 'Twist you won\'t see coming. Clean copy.',
   ),
   Book(
@@ -344,6 +373,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.mint,
     addedAt: DateTime(2024, 12, 1),
     ownerName: 'Ana Luísa',
+    ownerId: 'uid_ana_luisa',
     notes: 'Edição inglesa. A história que inspira. Sem marcas.',
   ),
   Book(
@@ -355,6 +385,7 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.fair,
     addedAt: DateTime(2024, 12, 10),
     ownerName: 'Francisco',
+    ownerId: 'uid_francisco',
     notes: 'A page-turner. Cover worn from being carried everywhere.',
   ),
   Book(
@@ -366,6 +397,16 @@ final List<Book> browseDummyBooks = [
     condition: BookCondition.good,
     addedAt: DateTime(2024, 11, 18),
     ownerName: 'Rui',
+    ownerId: 'uid_rui',
     notes: 'Nordic noir at its best. Minor cover scuff.',
   ),
 ];
+
+// Opcional: Função utilitária sugerida anteriormente
+Book? findBookById(String id) {
+  try {
+    return browseDummyBooks.firstWhere((b) => b.id == id);
+  } catch (_) {
+    return null;
+  }
+}

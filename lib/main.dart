@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'firebase_options.dart';
 import 'core/app_theme.dart';
+import 'features/auth/presentation/providers/auth_provider.dart';
+import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/books/presentation/providers/book_shelf_provider.dart';
-import 'main_screen.dart';
+import 'features/search/presentation/providers/search_provider.dart';
+import 'features/swaps/presentation/providers/swap_provider.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const LeafMarkApp());
 }
 
@@ -16,13 +22,16 @@ class LeafMarkApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => BookShelfProvider()),
+        ChangeNotifierProvider(create: (_) => SwapProvider()),
+        ChangeNotifierProvider(create: (_) => SearchProvider()),
       ],
       child: MaterialApp(
         title: 'LeafMark',
         debugShowCheckedModeBanner: false,
         theme: AppTheme.light,
-        home: const MainScreen(),
+        home: const SplashScreen(),
       ),
     );
   }

@@ -2,11 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../../domain/models/book_fetch_result.dart';
 
-/// Fetches book metadata from the Google Books API using an ISBN.
-class GoogleBooksService {
-  static const String _baseUrl =
-      'https://www.googleapis.com/books/v1/volumes';
+// Define the enum for our new search filters
+enum SearchType { title, author, isbn }
 
+/// Fetches book metadata from the Google Books API.
+class GoogleBooksService {
   // Read in build-time, never hardcoded
   static const String _apiKey =
   String.fromEnvironment('GOOGLE_BOOKS_API_KEY', defaultValue: '');
@@ -16,21 +16,35 @@ class GoogleBooksService {
   GoogleBooksService({http.Client? client})
       : _client = client ?? http.Client();
 
+  Future<http.Response> _getWithRetry(Uri uri, {int maxAttempts = 3}) async {
+    int attempt = 0;
+    while (true) {
+      attempt++;
+      final response = await _client.get(uri).timeout(const Duration(seconds: 10));
+      if (response.statusCode != 503 || attempt >= maxAttempts) {
+        return response;
+      }
+      // Exponential backoff: 1s, 2s, 4s...
+      final delay = Duration(seconds: 1 << (attempt - 1));
+      await Future.delayed(delay);
+    }
+  }
+
   Future<BookFetchResult?> fetchByIsbn(String isbn) async {
-    final uri = Uri.parse(
-      '$_baseUrl?q=isbn:$isbn${_apiKey.isNotEmpty ? '&key=$_apiKey' : ''}',
-    );
+    final uri = Uri.https('www.googleapis.com', '/books/v1/volumes', {
+      'q': 'isbn:$isbn',
+      if (_apiKey.isNotEmpty) 'key': _apiKey,
+    });
 
     final http.Response response;
     try {
-      response = await _client.get(uri).timeout(const Duration(seconds: 10));
+      response = await _getWithRetry(uri);
     } catch (e) {
       throw BookFetchException('Network error: $e');
     }
 
     if (response.statusCode != 200) {
-      throw BookFetchException(
-          'Unexpected status code: ${response.statusCode}');
+      throw BookFetchException('Unexpected status code: ${response.statusCode}');
     }
 
     final Map<String, dynamic> json;
@@ -47,11 +61,59 @@ class GoogleBooksService {
     if (items == null || items.isEmpty) return null;
 
     final volumeInfo =
-    (items.first as Map<String, dynamic>)['volumeInfo']
-    as Map<String, dynamic>?;
+    (items.first as Map<String, dynamic>)['volumeInfo'] as Map<String, dynamic>?;
     if (volumeInfo == null) return null;
 
     return BookFetchResult.fromGoogleBooksJson(volumeInfo, isbn);
+  }
+
+  Future<List<BookFetchResult>> searchBooks(String query, SearchType type) async {
+    final String queryParam;
+    switch (type) {
+      case SearchType.title:
+        queryParam = 'intitle:$query';
+        break;
+      case SearchType.author:
+        queryParam = 'inauthor:$query';
+        break;
+      case SearchType.isbn:
+        queryParam = 'isbn:$query';
+        break;
+    }
+
+    final uri = Uri.https('www.googleapis.com', '/books/v1/volumes', {
+      'q': queryParam,
+      if (_apiKey.isNotEmpty) 'key': _apiKey,
+    });
+
+    final http.Response response;
+    try {
+      response = await _getWithRetry(uri);
+    } catch (e) {
+      throw BookFetchException('Network error: $e');
+    }
+
+    if (response.statusCode != 200) {
+      throw BookFetchException('Unexpected status code: ${response.statusCode}');
+    }
+
+    final Map<String, dynamic> json;
+    try {
+      json = jsonDecode(response.body) as Map<String, dynamic>;
+    } catch (e) {
+      throw BookFetchException('Failed to parse response: $e');
+    }
+
+    final items = json['items'] as List<dynamic>?;
+    if (items == null || items.isEmpty) return [];
+
+    return items.map((item) {
+      final volumeInfo =
+      (item as Map<String, dynamic>)['volumeInfo'] as Map<String, dynamic>?;
+      if (volumeInfo == null) return null;
+      final fallbackIsbn = type == SearchType.isbn ? query : '';
+      return BookFetchResult.fromGoogleBooksJson(volumeInfo, fallbackIsbn);
+    }).where((result) => result != null).cast<BookFetchResult>().toList();
   }
 }
 

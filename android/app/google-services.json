@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "442635503420",
+    "project_id": "leafmark-app-f513f",
+    "storage_bucket": "leafmark-app-f513f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:442635503420:android:2362e0c8bc6c1779bb8039",
+        "android_client_info": {
+          "package_name": "com.feup.esof.leafmark"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB21IWEHO2iTHrpkjIJKWvI2omPA0f5ajI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

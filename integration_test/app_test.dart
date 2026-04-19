@@ -1,14 +1,16 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:leafmark/features/books/domain/models/book.dart';
 import 'package:leafmark/features/books/presentation/providers/book_shelf_provider.dart';
 
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
+  late FakeFirebaseFirestore fakeFirestore;
+
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    fakeFirestore = FakeFirebaseFirestore();
   });
 
   Book makeBook(String id) => Book(
@@ -20,50 +22,54 @@ void main() {
     addedAt: DateTime.parse('2025-01-01T00:00:00.000'),
   );
 
-  group('Provider <-> Persistence integration', () {
-    testWidgets('shelf state persists across provider instances', (tester) async {
-      final provider1 = BookShelfProvider();
+  BookShelfProvider makeProvider() =>
+      BookShelfProvider(firestore: fakeFirestore);
+
+  group('BookShelfProvider - Firestore integration', () {
+    testWidgets('books added are persisted and reloadable', (tester) async {
+      final provider1 = makeProvider();
+      await provider1.loadBooks('test-uid');
       await provider1.addBook(makeBook('A'));
       await provider1.addBook(makeBook('B'));
 
-      final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      final provider2 = BookShelfProvider(firestore: fakeFirestore);
+      await provider2.loadBooks('test-uid');
 
       expect(provider2.books.length, 2);
       expect(provider2.books.map((b) => b.id), containsAll(['A', 'B']));
     });
 
     testWidgets('add then remove persists correctly across reload', (tester) async {
-      final provider1 = BookShelfProvider();
+      final provider1 = makeProvider();
+      await provider1.loadBooks('test-uid');
       await provider1.addBook(makeBook('A'));
       await provider1.addBook(makeBook('B'));
       await provider1.removeBook('A');
 
-      final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      final provider2 = BookShelfProvider(firestore: fakeFirestore);
+      await provider2.loadBooks('test-uid');
 
       expect(provider2.books.length, 1);
       expect(provider2.books.first.id, 'B');
     });
 
     testWidgets('all BookCondition values persist and reload correctly', (tester) async {
-      final provider1 = BookShelfProvider();
+      final provider1 = makeProvider();
+      await provider1.loadBooks('test-uid');
 
       for (final condition in BookCondition.values) {
-        await provider1.addBook(
-          Book(
-            id: condition.name,
-            isbn: '9780000000001',
-            title: 'Book ${condition.name}',
-            authors: 'Author',
-            condition: condition,
-            addedAt: DateTime.parse('2025-01-01T00:00:00.000'),
-          ),
-        );
+        await provider1.addBook(Book(
+          id: condition.name,
+          isbn: '9780000000001',
+          title: 'Book ${condition.name}',
+          authors: 'Author',
+          condition: condition,
+          addedAt: DateTime.parse('2025-01-01T00:00:00.000'),
+        ));
       }
 
-      final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      final provider2 = BookShelfProvider(firestore: fakeFirestore);
+      await provider2.loadBooks('test-uid');
 
       for (final condition in BookCondition.values) {
         final match = provider2.books.firstWhere((b) => b.id == condition.name);
@@ -72,22 +78,24 @@ void main() {
     });
 
     testWidgets('empty shelf persists as empty after reload', (tester) async {
-      final provider1 = BookShelfProvider();
+      final provider1 = makeProvider();
+      await provider1.loadBooks('test-uid');
       await provider1.addBook(makeBook('A'));
       await provider1.removeBook('A');
 
-      final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      final provider2 = BookShelfProvider(firestore: fakeFirestore);
+      await provider2.loadBooks('test-uid');
 
       expect(provider2.books, isEmpty);
     });
 
     testWidgets('optional fields persist as null when not set', (tester) async {
-      final provider1 = BookShelfProvider();
+      final provider1 = makeProvider();
+      await provider1.loadBooks('test-uid');
       await provider1.addBook(makeBook('A'));
 
-      final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      final provider2 = BookShelfProvider(firestore: fakeFirestore);
+      await provider2.loadBooks('test-uid');
 
       final book = provider2.books.first;
       expect(book.coverUrl, isNull);
@@ -96,7 +104,8 @@ void main() {
     });
 
     testWidgets('optional fields persist correctly when set', (tester) async {
-      final provider1 = BookShelfProvider();
+      final provider1 = makeProvider();
+      await provider1.loadBooks('test-uid');
       await provider1.addBook(
         makeBook('A').copyWith(
           coverUrl: 'https://example.com/cover.jpg',
@@ -105,13 +114,23 @@ void main() {
         ),
       );
 
-      final provider2 = BookShelfProvider();
-      await provider2.loadBooks();
+      final provider2 = BookShelfProvider(firestore: fakeFirestore);
+      await provider2.loadBooks('test-uid');
 
       final book = provider2.books.first;
       expect(book.coverUrl, 'https://example.com/cover.jpg');
       expect(book.notes, 'A great book');
       expect(book.ownerName, 'Alice');
+    });
+
+    testWidgets('clearBooks empties the shelf in memory', (tester) async {
+      final provider = makeProvider();
+      await provider.loadBooks('test-uid');
+      await provider.addBook(makeBook('A'));
+      await provider.addBook(makeBook('B'));
+      await provider.clearBooks();
+
+      expect(provider.books, isEmpty);
     });
   });
 }

@@ -6,6 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.2.0] - 2026-04-19 — Sprint 1 Release
+
+### Added
+- User account creation and authentication via Firebase Auth
+- Trade status management — mark a swap as "In Progress" or "Completed"
+- Accept/reject swap requests as a book owner
+- Search books by title, author, and ISBN
+- Cached network images in `BookCard` for improved performance
+- Full Firebase backend integration (Firestore + Firebase Auth + Firebase Storage)
+
+### Changed
+- Migrated persistence layer from `shared_preferences` to Firestore
+- UI enhancements across multiple screens
+
+### Removed
+- Local-only `shared_preferences` persistence (replaced by Firebase)
+
+### Known Limitations
+- Trust/safety features (peer ratings, report user, secure chat) identified as Must Have but not yet implemented
+
 ## [0.1.0] - 2026-04-05 — Sprint 0 Release
 
 ### Added

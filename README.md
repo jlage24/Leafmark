@@ -52,15 +52,17 @@ Leafmark is a community-driven book exchange platform that makes trading books b
 - **ISBN Barcode Scanning** — scan a book's barcode with the camera to auto-fill title, author, and cover via Google Books API
 - **Personal Shelf Management** — add books to a virtual shelf, view the collection, and remove books with a long-press gesture
 - **Community Browsing** — explore books listed by other users with cover images and condition details
+- **Book Search** — search books by title, author, or ISBN
 - **Book Detail View** — inspect any book's full metadata, condition, owner, and notes
-- **Swap Request** — initiate a trade proposal directly from a book's detail page (partially)
-- **Local Persistence** — shelf data is saved across sessions using on-device storage
+- **Swap Request Management** — initiate, accept, or reject trade proposals; mark trades as "In Progress" or "Completed"
+- **User Accounts** — create an account and authenticate securely via Firebase Auth
+- **Cloud Persistence** — all data synced to Firestore; book images stored in Firebase Storage
 
 **Assumptions:**
 - Users have an Android device with a working camera for ISBN scanning
 - Google Books API is available and returns results for standard ISBN-10 and ISBN-13 codes; OpenLibrary is used as a cover fallback
-- For Sprint 0, all data is stored locally — no user accounts or backend yet
-- Firebase will be introduced in a later sprint to support real user accounts, swap requests, and community features
+- Firebase services (Auth, Firestore, Storage) are available and correctly configured
+- Trust/safety features (peer ratings, report user, secure chat) are planned for upcoming sprints
 ---
 
 ## Requirements
@@ -101,10 +103,15 @@ Based on this feedback, the following backlog changes were made:
 
 <div align="center">
 
-<img src="docs/images/Browse-Mockup.png" alt="Browse screen" width="22%" />
+<img src="docs/images/Home-Mockup.png" alt="Home screen" width="22%" />
 <img src="docs/images/Search-Mockup.png" alt="Search screen" width="22%" />
-<img src="docs/images/MyShelf-Mockup.png" alt="My Shelf screen" width="22%" />
 <img src="docs/images/Profile-Mockup.png" alt="Profile screen" width="22%" />
+<img src="docs/images/MyShelf-Mockup.png" alt="My Shelf screen" width="22%" />
+
+<img src="docs/images/Login-Mockup.png" alt="Login screen" width="22%" />
+<img src="docs/images/SwapRequests-Mockup.png" alt="Swap Requests screen" width="22%" />
+<img src="docs/images/RequestSent-Mockup.png" alt="Request Sent screen" width="22%" />
+<img src="docs/images/Book-Mockup.png" alt="Book screen" width="22%" />
 
 </div>
 
@@ -153,7 +160,7 @@ Based on this feedback, the following backlog changes were made:
 
 Flutter was chosen because it enables cross-platform mobile development with a single codebase, which is especially valuable for a small team of five developers working under tight sprint deadlines. It allows rapid iteration and consistent UI development across platforms.
 
-Firebase is a suitable backend solution for Leafmark because it provides a fully managed and scalable infrastructure without requiring server maintenance, which reduces development overhead during early project stages. Features like Firebase Authentication are particularly useful for handling user identity and trust in a community-driven platform where users exchange books.
+Firebase was chosen as the backend for LeafMark because it provides a fully managed and scalable infrastructure without requiring server maintenance, reducing development overhead for a small team under tight sprint deadlines. Firebase Authentication handles user identity and trust in a community-driven platform. Firestore provides real-time data sync for shelves and swap requests, and Firebase Storage handles book cover images uploaded by users.
 
 For the current prototype (Sprint 0), local storage is sufficient to demonstrate the core functionality. However, Firebase will support future features such as user accounts, swap requests, and real-time interactions between users.
 
@@ -161,19 +168,20 @@ Additionally, the Google Books API allows automatic retrieval of book data from 
 
 ### Functional Prototype
 
-The functional prototype developed in Sprint 0 focuses on validating the core interaction flow of Leafmark.
+The functional prototype evolved across Sprint 0 and Sprint 1 to cover the full core interaction flow of LeafMark.
 
 - Users can scan ISBN barcodes with the camera, fetching book information automatically from Google Books API.
-- Books are added to the virtual shelf and can be browsed by other users.
-- Basic swap request flow is partially implemented.
-- Local storage is used for the prototype; full backend integration with Firebase will come in later sprints.
+- Books are added to a virtual shelf, browsable by other users, and searchable by title, author, or ISBN.
+- Users can create accounts and authenticate securely via Firebase Auth.
+- Swap requests can be initiated, accepted, or rejected; trades can be marked as "In Progress" or "Completed".
+- All data is persisted in Firestore with book images stored in Firebase Storage.
 
 ---
 
 ## Project Management
 
 * Backlog management: Product backlog and Sprint backlog in a [GitHub Projects board](#);
-* Release management: v0, v1, v2, v3, ...;
+* Release management: [v0.1.0](../../releases/tag/v0.1.0), [v0.2.0](../../releases/tag/v0.2.0);
 * Sprint planning and retrospectives:
     * **Plans**: screenshots of GitHub Projects board at the beginning and end of each Sprint;
     * **Retrospectives**: meeting notes addressing:
@@ -226,7 +234,46 @@ Sprint 0 focused on establishing the project foundation: repository setup, archi
 
 ### Sprint 1
 
-_[Add Sprint 1 planning screenshots and retrospective notes here.]_
+#### Planning
+
+<p align="center">
+  <img src="docs/images/sprint1_board_start.png" alt="Sprint 1 Board — Start"/>
+</p>
+
+Sprint 1 focused on backend integration and core exchange features: user authentication, swap request management, and book discovery.
+
+**Delivered:**
+- User account creation and authentication via Firebase Auth
+- Accept/reject swap requests as a book owner
+- Trade status management ("In Progress" / "Completed")
+- Search books by title, author, and ISBN
+- Cached network images in `BookCard`
+- Full migration from `shared_preferences` to Firebase (Firestore + Auth + Storage)
+- UI enhancements across multiple screens
+
+**Release:** [v0.2.0](../../releases/tag/v0.2.0)
+
+#### Retrospective
+
+<p align="center">
+  <img src="docs/images/sprint1_board_end.png" alt="Sprint 1 Board — End"/>
+</p>
+
+✅ **Did well**
+- Successfully delivered all 3 Sprint backlog user stories
+- Full Firebase migration completed within the sprint — no half-states left behind
+- Search feature added beyond the original sprint scope
+
+🔁 **Do differently**
+- Start writing tests in parallel with features, not as a separate closing step
+
+❓ **Puzzles**
+- How to improve coordination across the team
+
+📌 **Improvements for Sprint 2**
+- Implement peer-to-peer reliability ratings
+- Report malicious users flow
+- In-app secure chat messaging
 
 ### Sprint 2
 

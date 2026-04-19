@@ -4,7 +4,7 @@ import 'package:leafmark/features/chat/presentation/screens/chat_placeholder_scr
 
 void main() {
   group('ChatPlaceholderScreen', () {
-    testWidgets('deve renderizar sem erros', (tester) async {
+    testWidgets('SHould render with no errors', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(home: ChatPlaceholderScreen()),
       );
@@ -12,7 +12,7 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('deve mostrar textos indicativos de que o chat chega em breve', (tester) async {
+    testWidgets('Should display text indicating that chat is coming soon', (tester) async {
       await tester.pumpWidget(
         const MaterialApp(home: ChatPlaceholderScreen()),
       );

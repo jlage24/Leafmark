@@ -36,14 +36,11 @@ dependencies:
   # HTTP requests (Google Books API)
   http: ^1.2.1
 
-  # Local persistence
-  shared_preferences: ^2.2.3
-
   # JSON serialization
   json_annotation: ^4.9.0
 
   # Image caching
-  cached_network_image: ^3.3.1
+  cached_network_image: ^3.4.1
 
   # UUID generation
   uuid: ^4.4.0
@@ -68,6 +65,7 @@ dev_dependencies:
     sdk: flutter
   network_image_mock: ^2.1.1
   flutter_launcher_icons: ^0.14.3
+  fake_cloud_firestore: ^3.0.3
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is
   # activated in the `analysis_options.yaml` file located at the root of your

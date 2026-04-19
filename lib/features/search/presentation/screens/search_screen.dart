@@ -170,9 +170,9 @@ class _SearchScreenState extends State<SearchScreen> {
       itemBuilder: (context, index) {
         final fetchResult = provider.results[index];
         final book = fetchResult.toBook();
-
         return BookCard(
           book: book,
+          isCatalogView: true,
           onTap: () {
             Navigator.push(
               context,
@@ -180,6 +180,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 builder: (context) => BookDetailScreen(
                   book: book,
                   isOwner: false,
+                  isCatalogView: true,
                 ),
               ),
             );

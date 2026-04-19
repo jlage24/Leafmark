@@ -35,6 +35,7 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
     try {
       _user = await _repo.register(email, password, displayName, username);
+      notifyListeners();
       return true;
     } on FirebaseAuthException catch (e) {
       _errorMessage = _parseError(e.code);

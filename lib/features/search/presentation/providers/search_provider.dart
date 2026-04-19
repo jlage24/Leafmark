@@ -60,7 +60,18 @@ class SearchProvider extends ChangeNotifier {
       // The UI will now handle _results.isEmpty natively without treating it as an error.
 
     } catch (e) {
-      _errorMessage = 'Failed to fetch books. Please try again.';
+      if (e is BookFetchException) {
+        final msg = e.message.toLowerCase();
+        if (msg.contains('503') || msg.contains('service unavailable')) {
+          _errorMessage = 'The book service is temporarily unavailable. Please try again in a moment.';
+        } else if (msg.contains('network') || msg.contains('timeout')) {
+          _errorMessage = 'No internet connection. Please check your network.';
+        } else {
+          _errorMessage = 'Failed to fetch books. Please try again.';
+        }
+      } else {
+        _errorMessage = 'An unexpected error occurred. Please try again.';
+      }
     } finally {
       _isLoading = false;
       notifyListeners();

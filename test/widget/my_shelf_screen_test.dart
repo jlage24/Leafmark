@@ -1,8 +1,8 @@
+import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:network_image_mock/network_image_mock.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:leafmark/features/books/domain/models/book.dart';
 import 'package:leafmark/features/books/presentation/providers/book_shelf_provider.dart';
 import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dart';
@@ -35,8 +35,10 @@ class FakeAuthProvider extends ChangeNotifier implements AuthProvider {
 }
 
 void main() {
+  late FakeFirebaseFirestore fakeFirestore;
+
   setUp(() {
-    SharedPreferences.setMockInitialValues({});
+    fakeFirestore = FakeFirebaseFirestore();
   });
 
   Book makeBook(String id, {String title = 'Test Book'}) => Book(
@@ -60,9 +62,12 @@ void main() {
     );
   }
 
+  BookShelfProvider makeProvider() =>
+      BookShelfProvider(firestore: fakeFirestore);
+
   group('MyShelfScreen - empty state', () {
     testWidgets('shows empty state message when shelf is empty', (tester) async {
-      final provider = BookShelfProvider();
+      final provider = makeProvider();
 
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(buildShelf(provider));
@@ -73,7 +78,7 @@ void main() {
     });
 
     testWidgets('shows AppBar with My Shelf title', (tester) async {
-      final provider = BookShelfProvider();
+      final provider = makeProvider();
 
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(buildShelf(provider));
@@ -86,7 +91,7 @@ void main() {
 
   group('MyShelfScreen - books list', () {
     testWidgets('renders book title when shelf has a book', (tester) async {
-      final provider = BookShelfProvider();
+      final provider = makeProvider();
       await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Nineteen Eighty-Four'));
 
@@ -99,7 +104,7 @@ void main() {
     });
 
     testWidgets('renders all books when multiple are added', (tester) async {
-      final provider = BookShelfProvider();
+      final provider = makeProvider();
       await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Book One'));
       await provider.addBook(makeBook('2', title: 'Book Two'));
@@ -116,7 +121,7 @@ void main() {
     });
 
     testWidgets('empty state is not shown when shelf has books', (tester) async {
-      final provider = BookShelfProvider();
+      final provider = makeProvider();
       await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Some Book'));
 
@@ -134,7 +139,7 @@ void main() {
 
   group('MyShelfScreen - delete flow', () {
     testWidgets('long press opens bottom sheet with book title', (tester) async {
-      final provider = BookShelfProvider();
+      final provider = makeProvider();
       await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Animal Farm'));
 
@@ -152,7 +157,7 @@ void main() {
     });
 
     testWidgets('tapping Cancel closes the bottom sheet', (tester) async {
-      final provider = BookShelfProvider();
+      final provider = makeProvider();
       await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Animal Farm'));
 
@@ -172,7 +177,7 @@ void main() {
     });
 
     testWidgets('tapping Remove deletes book and shows snackbar', (tester) async {
-      final provider = BookShelfProvider();
+      final provider = makeProvider();
       await provider.loadBooks('test-uid');
       await provider.addBook(makeBook('1', title: 'Animal Farm'));
 
@@ -195,7 +200,7 @@ void main() {
 
   group('App bootstrap', () {
     testWidgets('BookShelfProvider is accessible from widget tree', (tester) async {
-      final provider = BookShelfProvider();
+      final provider = makeProvider();
 
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(buildShelf(provider));

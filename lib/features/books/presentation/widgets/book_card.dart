@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
 import '../../domain/models/book.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
 class BookCard extends StatelessWidget {
   final Book book;
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
+  final bool isCatalogView;
 
   const BookCard({
     super.key,
     required this.book,
     required this.onTap,
     this.onLongPress,
+    this.isCatalogView = false,
   });
 
   @override
@@ -26,12 +29,19 @@ class BookCard extends StatelessWidget {
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(4),
           child: book.coverUrl != null
-              ? Image.network(
-            book.coverUrl!,
+              ? CachedNetworkImage(
+            imageUrl: book.coverUrl!,
             width: 50,
             height: 75,
             fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) =>
+            placeholder: (context, url) => const SizedBox(
+              width: 50,
+              height: 75,
+              child: Center(
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            ),
+            errorWidget: (context, url, error) =>
             const Icon(Icons.book, size: 50),
           )
               : const Icon(Icons.book, size: 50),
@@ -48,16 +58,19 @@ class BookCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(book.authors, maxLines: 1, overflow: TextOverflow.ellipsis),
-              const SizedBox(height: 4),
-              Text(
-                'Condition: ${book.condition.label}',
-                style: TextStyle(color: Colors.grey[600], fontSize: 12),
-              ),
+              // only show condition if not in catalog view
+              if (!isCatalogView) ...[
+                const SizedBox(height: 4),
+                Text(
+                  'Condition: ${book.condition.label}',
+                  style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                ),
+              ],
             ],
           ),
         ),
         trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-        isThreeLine: true,
+        isThreeLine: !isCatalogView,
       ),
     );
   }

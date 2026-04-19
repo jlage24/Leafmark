@@ -16,6 +16,20 @@ class GoogleBooksService {
   GoogleBooksService({http.Client? client})
       : _client = client ?? http.Client();
 
+  Future<http.Response> _getWithRetry(Uri uri, {int maxAttempts = 3}) async {
+    int attempt = 0;
+    while (true) {
+      attempt++;
+      final response = await _client.get(uri).timeout(const Duration(seconds: 10));
+      if (response.statusCode != 503 || attempt >= maxAttempts) {
+        return response;
+      }
+      // Exponential backoff: 1s, 2s, 4s...
+      final delay = Duration(seconds: 1 << (attempt - 1));
+      await Future.delayed(delay);
+    }
+  }
+
   Future<BookFetchResult?> fetchByIsbn(String isbn) async {
     final uri = Uri.https('www.googleapis.com', '/books/v1/volumes', {
       'q': 'isbn:$isbn',
@@ -24,7 +38,7 @@ class GoogleBooksService {
 
     final http.Response response;
     try {
-      response = await _client.get(uri).timeout(const Duration(seconds: 10));
+      response = await _getWithRetry(uri);
     } catch (e) {
       throw BookFetchException('Network error: $e');
     }
@@ -74,7 +88,7 @@ class GoogleBooksService {
 
     final http.Response response;
     try {
-      response = await _client.get(uri).timeout(const Duration(seconds: 10));
+      response = await _getWithRetry(uri);
     } catch (e) {
       throw BookFetchException('Network error: $e');
     }

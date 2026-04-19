@@ -17,7 +17,7 @@ void main() {
       coverUrl: 'https://example.com/cover.jpg',
     );
 
-    testWidgets('Should display the book title.', (tester) async {
+    testWidgets('Should display book tittle', (tester) async {
       await mockNetworkImagesFor(() async {
         await tester.pumpWidget(
           MaterialApp(
@@ -27,7 +27,8 @@ void main() {
           ),
         );
 
-        expect(find.text('Livro de TeShould display text indicating that chat is coming soon.ste'), findsOneWidget);
+        // O texto aqui tem de ser exatamente igual ao title do teu testBook
+        expect(find.text('Livro de Teste'), findsOneWidget);
       });
     });
 
@@ -45,7 +46,7 @@ void main() {
       });
     });
 
-    testWidgets('tap no card should trigger a callback onTap', (tester) async {
+    testWidgets('tap, no card should trigger a callback onTap', (tester) async {
       bool tapped = false;
 
       await mockNetworkImagesFor(() async {

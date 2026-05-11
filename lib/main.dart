@@ -6,6 +6,7 @@ import 'core/app_theme.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/presentation/screens/splash_screen.dart';
 import 'features/books/presentation/providers/book_shelf_provider.dart';
+import 'features/chat/presentation/providers/chat_provider.dart';
 import 'features/search/presentation/providers/search_provider.dart';
 import 'features/swaps/presentation/providers/swap_provider.dart';
 
@@ -26,6 +27,11 @@ class LeafMarkApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => BookShelfProvider()),
         ChangeNotifierProvider(create: (_) => SwapProvider()),
         ChangeNotifierProvider(create: (_) => SearchProvider()),
+        ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
+          create: (ctx) => ChatProvider(auth: ctx.read<AuthProvider>()),
+          update: (ctx, auth, previous) =>
+          previous ?? ChatProvider(auth: auth),
+        ),
       ],
       child: MaterialApp(
         title: 'LeafMark',

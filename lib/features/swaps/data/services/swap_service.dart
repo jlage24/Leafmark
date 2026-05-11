@@ -7,7 +7,7 @@ class SwapService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _collection = 'swap_requests';
 
-  Future<void> createSwapRequest(SwapRequest request) async {
+  Future<String> createSwapRequest(SwapRequest request) async {
     final existing = await _db.collection(_collection)
         .where('bookWantedId', isEqualTo: request.bookWantedId)
         .where('requesterId', isEqualTo: request.requesterId)
@@ -17,7 +17,9 @@ class SwapService {
     if (existing.docs.isNotEmpty) {
       throw DuplicateSwapException();
     }
-    await _db.collection(_collection).add(request.toMap());
+
+    final doc = await _db.collection(_collection).add(request.toMap());
+    return doc.id;
   }
 
   Future<void> updateStatus(String id, SwapStatus status) async {

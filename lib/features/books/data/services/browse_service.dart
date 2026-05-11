@@ -16,4 +16,29 @@ class BrowseService {
         .map((doc) => Book.fromJson(doc.data()))
         .toList());
   }
+
+  Future<Book?> fetchBook(String ownerId, String bookId) async {
+    try {
+      final doc = await _firestore
+          .collection('users')
+          .doc(ownerId)
+          .collection('shelf')
+          .doc(bookId)
+          .get();
+      if (!doc.exists) return null;
+      return Book.fromJson({...doc.data()!, 'id': doc.id});
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<String?> fetchDisplayName(String uid) async {
+    try {
+      final doc = await _firestore.collection('users').doc(uid).get();
+      if (!doc.exists) return null;
+      return doc.data()?['displayName'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
 }

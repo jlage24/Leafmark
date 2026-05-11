@@ -5,6 +5,7 @@ import '../../domain/models/book.dart';
 class BookShelfProvider extends ChangeNotifier {
   final FirebaseFirestore _db;
   String? _uid;
+  String? _ownerName;
 
   List<Book> _books = [];
   List<Book> get books => List.unmodifiable(_books);
@@ -14,8 +15,9 @@ class BookShelfProvider extends ChangeNotifier {
   BookShelfProvider({FirebaseFirestore? firestore})
       : _db = firestore ?? FirebaseFirestore.instance;
 
-  Future<void> loadBooks(String uid) async {
+  Future<void> loadBooks(String uid, String? ownerName) async {
     _uid = uid;
+    _ownerName = ownerName;
     final snapshot = await _db.collection(_collectionPath).get();
     _books = snapshot.docs
         .map((doc) => Book.fromJson({...doc.data(), 'id': doc.id}))
@@ -24,13 +26,20 @@ class BookShelfProvider extends ChangeNotifier {
   }
 
   Future<void> addBook(Book book) async {
+    final bookWithOwner = book.copyWith(
+      ownerId: _uid,
+      ownerName: _ownerName,
+    );
     if (_uid == null) {
-      _books.add(book);
+      _books.add(bookWithOwner);
       notifyListeners();
       return;
     }
-    await _db.collection(_collectionPath).doc(book.id).set(book.toJson());
-    _books.add(book);
+    await _db
+        .collection(_collectionPath)
+        .doc(bookWithOwner.id)
+        .set(bookWithOwner.toJson());
+    _books.add(bookWithOwner);
     notifyListeners();
   }
 
@@ -44,6 +53,7 @@ class BookShelfProvider extends ChangeNotifier {
 
   Future<void> clearBooks() async {
     _uid = null;
+    _ownerName = null;
     _books = [];
     notifyListeners();
   }

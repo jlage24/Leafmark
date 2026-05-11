@@ -27,5 +27,9 @@ service cloud.firestore {
       allow delete: if request.auth != null
         && request.auth.uid == resource.data.requesterId;
     }
+
+    match /{path=**}/shelf/{bookId} {
+        allow read: if request.auth != null;
+    }
   }
 }

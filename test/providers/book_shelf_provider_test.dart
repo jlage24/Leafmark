@@ -30,7 +30,7 @@ void main() {
 
     test('loadBooks with no persisted data results in empty shelf', () async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       expect(provider.books, isEmpty);
     });
   });
@@ -38,21 +38,21 @@ void main() {
   group('BookShelfProvider - addBook', () {
     test('adds a book and shelf grows', () async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1'));
       expect(provider.books.length, 1);
     });
 
     test('added book is retrievable by id', () async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1'));
       expect(provider.books.first.id, '1');
     });
 
     test('multiple books can be added', () async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1'));
       await provider.addBook(makeBook('2'));
       await provider.addBook(makeBook('3'));
@@ -61,7 +61,7 @@ void main() {
 
     test('books list is unmodifiable', () async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1'));
       expect(
             () => (provider.books as dynamic).add(makeBook('2')),
@@ -73,7 +73,7 @@ void main() {
   group('BookShelfProvider - removeBook', () {
     test('removes book by id', () async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1'));
       await provider.removeBook('1');
       expect(provider.books, isEmpty);
@@ -81,7 +81,7 @@ void main() {
 
     test('removing non-existent id does not throw', () async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1'));
       await expectLater(provider.removeBook('ghost-id'), completes);
       expect(provider.books.length, 1);
@@ -89,7 +89,7 @@ void main() {
 
     test('only the targeted book is removed', () async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1'));
       await provider.addBook(makeBook('2'));
       await provider.removeBook('1');
@@ -101,25 +101,25 @@ void main() {
   group('BookShelfProvider - persistence', () {
     test('books survive a provider reload', () async {
       final provider1 = makeProvider();
-      await provider1.loadBooks('test-uid');
+      await provider1.loadBooks('test-uid', null);
       await provider1.addBook(makeBook('1'));
       await provider1.addBook(makeBook('2'));
 
       final provider2 = BookShelfProvider(firestore: fakeFirestore);
-      await provider2.loadBooks('test-uid');
+      await provider2.loadBooks('test-uid', null);
       expect(provider2.books.length, 2);
       expect(provider2.books.map((b) => b.id), containsAll(['1', '2']));
     });
 
     test('removed books are not reloaded', () async {
       final provider1 = makeProvider();
-      await provider1.loadBooks('test-uid');
+      await provider1.loadBooks('test-uid', null);
       await provider1.addBook(makeBook('1'));
       await provider1.addBook(makeBook('2'));
       await provider1.removeBook('1');
 
       final provider2 = BookShelfProvider(firestore: fakeFirestore);
-      await provider2.loadBooks('test-uid');
+      await provider2.loadBooks('test-uid', null);
       expect(provider2.books.length, 1);
       expect(provider2.books.first.id, '2');
     });
@@ -128,7 +128,7 @@ void main() {
   group('BookShelfProvider - clearBooks', () {
     test('clears all books in memory', () async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1'));
       await provider.addBook(makeBook('2'));
       await provider.clearBooks();

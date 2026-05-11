@@ -20,8 +20,9 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final uid = context.read<AuthProvider>().user?.uid;
+      final displayName = context.read<AuthProvider>().user?.displayName;
       if (uid == null) return;
-      context.read<BookShelfProvider>().loadBooks(uid);
+      context.read<BookShelfProvider>().loadBooks(uid, displayName);
     });
   }
 

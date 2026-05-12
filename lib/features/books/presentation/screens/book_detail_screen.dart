@@ -6,6 +6,7 @@ import '../../../swaps/presentation/providers/swap_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../swaps/data/services/swap_service.dart';
 import '../../../chat/presentation/providers/chat_provider.dart';
+import '../../../chat/presentation/screens/chat_screen.dart';
 import '../providers/book_shelf_provider.dart';
 
 class BookDetailScreen extends StatelessWidget {

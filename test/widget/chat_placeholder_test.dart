@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:leafmark/features/chat/presentation/screens/chat_placeholder_screen.dart';
+import 'package:leafmark/features/chat/presentation/screens/chat_screen.dart';
 
 void main() {
   group('ChatPlaceholderScreen', () {

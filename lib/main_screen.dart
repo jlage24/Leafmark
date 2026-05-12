@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'features/books/presentation/screens/browse_screen.dart';
 import 'features/books/presentation/screens/isbn_scanner_screen.dart';
 import 'features/auth/presentation/screens/profile_screen.dart';
-import 'features/chat/presentation/screens/chat_placeholder_screen.dart';
+import 'features/chat/presentation/screens/chat_list_screen.dart';
 import 'features/search/presentation/screens/search_screen.dart';
 
 class MainScreen extends StatefulWidget {
@@ -18,14 +18,13 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _screens = const [
     BrowseScreen(),
     SearchScreen(),
-    SizedBox.shrink(), // Add Book — handled via _onTabTapped
-    ChatPlaceholderScreen(),
+    SizedBox.shrink(),
+    ChatListScreen(),
     ProfileScreen(),
   ];
 
   void _onTabTapped(int index) {
     if (index == 2) {
-      // Add Book tab → open scanner directly
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const IsbnScannerScreen()),

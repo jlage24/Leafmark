@@ -110,4 +110,14 @@ class ChatService {
       case MessageType.text: return '';
     }
   }
+
+  Future<String?> fetchDisplayName(String uid) async {
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+      if (!doc.exists) return null;
+      return doc.data()?['displayName'] as String?;
+    } catch (_) {
+      return null;
+    }
+  }
 }

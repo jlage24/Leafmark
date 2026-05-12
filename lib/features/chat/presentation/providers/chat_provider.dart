@@ -70,4 +70,7 @@ class ChatProvider extends ChangeNotifier {
 
   Future<void> updateChatStatus(String swapId, ChatStatus status) =>
       _service.updateChatStatus(swapId, status);
+
+  Future<String?> fetchDisplayName(String uid) =>
+      _service.fetchDisplayName(uid);
 }

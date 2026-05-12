@@ -21,6 +21,7 @@ class AuthRepository {
           username: data?['username'] ?? '',
           bio: data?['bio'] as String?,
           profilePictureUrl: data?['profilePictureUrl'] as String?,
+          bannerPictureUrl: data?['bannerPictureUrl'] as String?,
           favoriteAuthors: List<String>.from(data?['favoriteAuthors'] ?? []),
           rating: (data?['rating'] as num?)?.toDouble() ?? 0.0,
         );
@@ -111,12 +112,21 @@ class AuthRepository {
     required String uid,
     String? bio,
     String? profilePictureUrl,
+    String? bannerPictureUrl,
     List<String>? favoriteAuthors,
+    String? favoriteBookTitle,
+    String? favoriteBookAuthor,
+    String? favoriteBookCoverUrl,
   }) async {
     final Map<String, dynamic> updates = {};
     if (bio != null) updates['bio'] = bio;
     if (profilePictureUrl != null) updates['profilePictureUrl'] = profilePictureUrl;
+    if (bannerPictureUrl != null) updates['bannerPictureUrl'] = bannerPictureUrl;
     if (favoriteAuthors != null) updates['favoriteAuthors'] = favoriteAuthors;
+
+    if (favoriteBookTitle != null) updates['favoriteBookTitle'] = favoriteBookTitle;
+    if (favoriteBookAuthor != null) updates['favoriteBookAuthor'] = favoriteBookAuthor;
+    if (favoriteBookCoverUrl != null) updates['favoriteBookCoverUrl'] = favoriteBookCoverUrl;
 
     if (updates.isNotEmpty) {
       await _db.collection('users').doc(uid).update(updates);

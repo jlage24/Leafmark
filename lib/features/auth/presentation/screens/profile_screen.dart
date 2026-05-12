@@ -14,6 +14,15 @@ class ProfileScreen extends StatelessWidget {
     await context.read<AuthProvider>().logout();
   }
 
+  Widget _bookPlaceholder() => Container(
+    width: 64, height: 92,
+    decoration: BoxDecoration(
+        color: Colors.grey[200],
+        borderRadius: BorderRadius.circular(6)
+    ),
+    child: const Icon(Icons.book, color: Colors.grey),
+  );
+
   @override
   Widget build(BuildContext context) {
     final user      = context.watch<AuthProvider>().user;
@@ -33,8 +42,16 @@ class ProfileScreen extends StatelessWidget {
               Container(
                 height: 120,
                 width: double.infinity,
-                color: AppTheme.primary,
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary,
+                  image: user?.bannerPictureUrl != null && user!.bannerPictureUrl!.isNotEmpty
+                      ? DecorationImage(
+                    image: NetworkImage(user.bannerPictureUrl!),
+                    fit: BoxFit.cover,
+                  )
+                      : null,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -101,7 +118,6 @@ class ProfileScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
 
-                // --- NOVA SECÇÃO: Bio ---
                 if (user?.bio != null && user!.bio!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
@@ -111,11 +127,37 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 ],
 
-                // --- NOVA SECÇÃO: Autores Favoritos ---
-                if (user?.favoriteAuthors != null && user!.favoriteAuthors!.isNotEmpty) ...[
-                  const SizedBox(height: 16),
+                const SizedBox(height: 24),
+                Row(
+                  children: [
+                    _StatCard(label: 'Books',  value: '${shelf.books.length}'),
+                    const SizedBox(width: 8),
+                    _StatCard(label: 'Swaps',  value: '—'),
+                    const SizedBox(width: 8),
+                    _StatCard(
+                        label: 'Rating',
+                        value: user?.rating != null && user!.rating > 0
+                            ? user.rating.toStringAsFixed(1)
+                            : '—'
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+
+          // --- FAVORITE AUTHORS ---
+          if (user?.favoriteAuthors != null && user!.favoriteAuthors!.isNotEmpty) ...[
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Favorite Authors', style: textTheme.titleSmall),
+                  const SizedBox(height: 12),
                   Wrap(
-                    alignment: WrapAlignment.center,
                     spacing: 8,
                     runSpacing: 8,
                     children: user.favoriteAuthors!.map((author) {
@@ -127,27 +169,54 @@ class ProfileScreen extends StatelessWidget {
                     }).toList(),
                   ),
                 ],
-
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    _StatCard(label: 'Books',  value: '${shelf.books.length}'),
-                    const SizedBox(width: 8),
-                    _StatCard(label: 'Swaps',  value: '—'),
-                    const SizedBox(width: 8),
-                    // O trustScore será tratado pelo Membro B, mas já preparamos a UI
-                    _StatCard(
-                        label: 'Rating',
-                        value: user?.trustScore != null && user!.trustScore > 0
-                            ? user.trustScore.toStringAsFixed(1)
-                            : '—'
-                    ),
-                  ],
-                ),
-              ],
+              ),
             ),
-          ),
-          const SizedBox(height: 24),
+          ],
+
+          // --- FAVORITE BOOK ---
+          if (user?.favoriteBookTitle != null && user!.favoriteBookTitle!.isNotEmpty) ...[
+            const Divider(),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Favorite Book', style: textTheme.titleSmall),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: user.favoriteBookCoverUrl != null && user.favoriteBookCoverUrl!.isNotEmpty
+                            ? Image.network(
+                            user.favoriteBookCoverUrl!,
+                            width: 64,
+                            height: 92,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_,__,___) => _bookPlaceholder()
+                        )
+                            : _bookPlaceholder(),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(user.favoriteBookTitle!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            const SizedBox(height: 4),
+                            if (user.favoriteBookAuthor != null)
+                              Text(user.favoriteBookAuthor!, style: TextStyle(color: Colors.grey[700], fontSize: 14)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const Divider(),
           _MenuItem(
             iconData:    Icons.menu_book_outlined,

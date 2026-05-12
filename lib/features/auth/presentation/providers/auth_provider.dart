@@ -69,7 +69,11 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> updateProfile({
     String? bio,
     String? profilePictureUrl,
+    String? bannerPictureUrl,
     List<String>? favoriteAuthors,
+    String? favoriteBookTitle,
+    String? favoriteBookAuthor,
+    String? favoriteBookCoverUrl,
   }) async {
     if (_user == null) return false;
     _errorMessage = null;
@@ -79,13 +83,23 @@ class AuthProvider extends ChangeNotifier {
         uid: _user!.uid,
         bio: bio,
         profilePictureUrl: profilePictureUrl,
+        bannerPictureUrl: bannerPictureUrl,
         favoriteAuthors: favoriteAuthors,
-      );
+        favoriteBookTitle: favoriteBookTitle,
+        favoriteBookAuthor: favoriteBookAuthor,
+        favoriteBookCoverUrl: favoriteBookCoverUrl,
+      ).timeout(const Duration(seconds: 5), onTimeout: () {
+        throw Exception("Network timeout.");
+      });
 
       _user = _user!.copyWith(
         bio: bio,
         profilePictureUrl: profilePictureUrl,
+        bannerPictureUrl: bannerPictureUrl,
         favoriteAuthors: favoriteAuthors,
+        favoriteBookTitle: favoriteBookTitle,
+        favoriteBookAuthor: favoriteBookAuthor,
+        favoriteBookCoverUrl: favoriteBookCoverUrl,
       );
       notifyListeners();
       return true;

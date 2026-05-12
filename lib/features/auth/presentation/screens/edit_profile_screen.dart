@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:leafmark/core/cloudinary_service.dart';
 import 'package:leafmark/features/auth/presentation/providers/auth_provider.dart';
 import 'package:leafmark/features/search/presentation/providers/search_provider.dart';
 import 'package:leafmark/features/books/data/services/google_books_service.dart';
@@ -72,7 +72,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   void _showImageOptions({required bool isBanner}) {
     showModalBottomSheet(
       context: context,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
       builder: (ctx) => SafeArea(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -80,12 +81,18 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             ListTile(
               leading: const Icon(Icons.photo_library),
               title: const Text('Gallery'),
-              onTap: () { Navigator.pop(ctx); _pickImage(ImageSource.gallery, isBanner: isBanner); },
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.gallery, isBanner: isBanner);
+              },
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt),
               title: const Text('Camera'),
-              onTap: () { Navigator.pop(ctx); _pickImage(ImageSource.camera, isBanner: isBanner); },
+              onTap: () {
+                Navigator.pop(ctx);
+                _pickImage(ImageSource.camera, isBanner: isBanner);
+              },
             ),
           ],
         ),
@@ -96,20 +103,24 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _isSaving = true);
+
     final auth = context.read<AuthProvider>();
+    final uid = auth.user!.uid;
 
     String? photoUrl = _currentPhotoUrl;
     if (_selectedImage != null) {
-      final ref = FirebaseStorage.instance.ref().child('users/${auth.user!.uid}/profile.jpg');
-      await ref.putFile(_selectedImage!);
-      photoUrl = await ref.getDownloadURL();
+      photoUrl = await CloudinaryService.uploadImage(
+        _selectedImage!,
+        'leafmark/users/$uid',
+      );
     }
 
     String? bannerUrl = _currentBannerUrl;
     if (_selectedBanner != null) {
-      final ref = FirebaseStorage.instance.ref().child('users/${auth.user!.uid}/banner.jpg');
-      await ref.putFile(_selectedBanner!);
-      bannerUrl = await ref.getDownloadURL();
+      bannerUrl = await CloudinaryService.uploadImage(
+        _selectedBanner!,
+        'leafmark/users/$uid',
+      );
     }
 
     await auth.updateProfile(
@@ -121,7 +132,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       favoriteBookAuthor: _favBookAuthor,
       favoriteBookCoverUrl: _favBookCoverUrl,
     );
-    if (mounted) Navigator.pop(context);
+
+    if (!mounted) return;
+    Navigator.pop(context);
   }
 
   void _openSearchModal(bool isAuthor) {
@@ -139,7 +152,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             onSelect: (title, author, cover) {
               setState(() {
                 if (isAuthor) {
-                  if (!_favoriteAuthors.contains(author)) _favoriteAuthors.add(author);
+                  if (!_favoriteAuthors.contains(author)) {
+                    _favoriteAuthors.add(author);
+                  }
                 } else {
                   _favBookTitle = title;
                   _favBookAuthor = author;
@@ -172,12 +187,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     GestureDetector(
                       onTap: () => _showImageOptions(isBanner: true),
                       child: Container(
-                        height: 120, width: double.infinity,
+                        height: 120,
+                        width: double.infinity,
                         decoration: BoxDecoration(
-                          color: AppTheme.primary, borderRadius: BorderRadius.circular(16),
+                          color: AppTheme.primary,
+                          borderRadius: BorderRadius.circular(16),
                           image: _selectedBanner != null
-                              ? DecorationImage(image: FileImage(_selectedBanner!), fit: BoxFit.cover)
-                              : (_currentBannerUrl != null ? DecorationImage(image: NetworkImage(_currentBannerUrl!), fit: BoxFit.cover) : null),
+                              ? DecorationImage(
+                              image: FileImage(_selectedBanner!),
+                              fit: BoxFit.cover)
+                              : (_currentBannerUrl != null
+                              ? DecorationImage(
+                              image: NetworkImage(_currentBannerUrl!),
+                              fit: BoxFit.cover)
+                              : null),
                         ),
                       ),
                     ),
@@ -186,11 +209,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       child: GestureDetector(
                         onTap: () => _showImageOptions(isBanner: false),
                         child: CircleAvatar(
-                          radius: 46, backgroundColor: AppTheme.background,
+                          radius: 46,
+                          backgroundColor: AppTheme.background,
                           child: CircleAvatar(
-                            radius: 42, backgroundColor: AppTheme.primaryLight,
-                            backgroundImage: _selectedImage != null ? FileImage(_selectedImage!) : (_currentPhotoUrl != null ? NetworkImage(_currentPhotoUrl!) : null),
-                            child: _selectedImage == null && _currentPhotoUrl == null ? const Icon(Icons.camera_alt) : null,
+                            radius: 42,
+                            backgroundColor: AppTheme.primaryLight,
+                            backgroundImage: _selectedImage != null
+                                ? FileImage(_selectedImage!)
+                                : (_currentPhotoUrl != null
+                                ? NetworkImage(_currentPhotoUrl!)
+                                : null),
+                            child: _selectedImage == null &&
+                                _currentPhotoUrl == null
+                                ? const Icon(Icons.camera_alt)
+                                : null,
                           ),
                         ),
                       ),
@@ -199,38 +231,43 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              LeafmarkTextField(controller: _bioController, label: 'Bio', maxLines: 3),
+              LeafmarkTextField(
+                  controller: _bioController, label: 'Bio', maxLines: 3),
               const SizedBox(height: 24),
-
-              Text('Favorite Authors (Top 3)', style: Theme.of(context).textTheme.titleSmall),
+              Text('Favorite Authors (Top 3)',
+                  style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
               if (_favoriteAuthors.length < 3)
                 OutlinedButton.icon(
                   onPressed: () => _openSearchModal(true),
                   icon: const Icon(Icons.person_search),
                   label: const Text('Search Author'),
-                  style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+                  style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50)),
                 ),
               Wrap(
                 spacing: 8,
-                children: _favoriteAuthors.map((a) => Chip(
+                children: _favoriteAuthors
+                    .map((a) => Chip(
                   label: Text(a),
-                  onDeleted: () => setState(() => _favoriteAuthors.remove(a)),
-                )).toList(),
+                  onDeleted: () =>
+                      setState(() => _favoriteAuthors.remove(a)),
+                ))
+                    .toList(),
               ),
-
               const SizedBox(height: 24),
               const Divider(),
               const SizedBox(height: 16),
-
-              Text('Favorite Book', style: Theme.of(context).textTheme.titleSmall),
+              Text('Favorite Book',
+                  style: Theme.of(context).textTheme.titleSmall),
               const SizedBox(height: 8),
-
               if (_favBookTitle != null)
                 Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
                   child: ListTile(
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(4),
                       child: _favBookCoverUrl != null
@@ -239,15 +276,19 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         width: 40,
                         height: 60,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.book, size: 40),
+                        // FIX: unnecessary_underscores
+                        errorBuilder: (context, error, stack) =>
+                        const Icon(Icons.book, size: 40),
                       )
                           : const Icon(Icons.book, size: 40),
                     ),
-                    title: Text(_favBookTitle!, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: Text(_favBookAuthor ?? '', maxLines: 1, overflow: TextOverflow.ellipsis),
+                    title: Text(_favBookTitle!,
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
+                    subtitle: Text(_favBookAuthor ?? '',
+                        maxLines: 1, overflow: TextOverflow.ellipsis),
                     trailing: IconButton(
                       icon: const Icon(Icons.edit, size: 20),
-                        onPressed: () => _openSearchModal(false),
+                      onPressed: () => _openSearchModal(false),
                     ),
                   ),
                 )
@@ -256,15 +297,21 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   onPressed: () => _openSearchModal(false),
                   icon: const Icon(Icons.search),
                   label: const Text('Search Favorite Book'),
-                  style: OutlinedButton.styleFrom(minimumSize: const Size(double.infinity, 50)),
+                  style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50)),
                 ),
-
               const SizedBox(height: 48),
               SizedBox(
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _isSaving ? null : _saveProfile,
-                  child: _isSaving ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)) : const Text('Save Changes'),
+                  child: _isSaving
+                      ? const SizedBox(
+                      height: 20,
+                      width: 20,
+                      child: CircularProgressIndicator(
+                          color: Colors.white, strokeWidth: 2))
+                      : const Text('Save Changes'),
                 ),
               ),
             ],
@@ -290,10 +337,10 @@ class _SearchModalState extends State<_SearchModal> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
       final p = context.read<SearchProvider>();
       p.clearSearch();
-      // Define estritamente o tipo de pesquisa inicial
       p.setSearchType(widget.isAuthor ? SearchType.author : SearchType.title);
     });
   }
@@ -301,8 +348,8 @@ class _SearchModalState extends State<_SearchModal> {
   void _handleSearch(SearchProvider provider) {
     final query = _controller.text.trim();
     if (query.isNotEmpty) {
-      // Garante a 100% que não pesquisa por ISBN aqui
-      provider.setSearchType(widget.isAuthor ? SearchType.author : SearchType.title);
+      provider.setSearchType(
+          widget.isAuthor ? SearchType.author : SearchType.title);
       provider.performSearch(query);
       FocusScope.of(context).unfocus();
     }
@@ -313,33 +360,41 @@ class _SearchModalState extends State<_SearchModal> {
     final provider = context.watch<SearchProvider>();
 
     return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      padding:
+      EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
         height: MediaQuery.of(context).size.height * 0.7,
         decoration: BoxDecoration(
           color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+          borderRadius:
+          const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           children: [
             Container(
-              width: 40, height: 4, margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(color: Colors.grey[300], borderRadius: BorderRadius.circular(2)),
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2)),
             ),
             TextField(
               controller: _controller,
               autofocus: true,
               textInputAction: TextInputAction.search,
               decoration: InputDecoration(
-                // Textos atualizados conforme o teu pedido
-                hintText: widget.isAuthor ? 'Search by author name...' : 'Search by book title...',
+                hintText: widget.isAuthor
+                    ? 'Search by author name...'
+                    : 'Search by book title...',
                 prefixIcon: const Icon(Icons.search),
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.arrow_forward),
                   onPressed: () => _handleSearch(provider),
                 ),
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12)),
               ),
               onSubmitted: (_) => _handleSearch(provider),
             ),
@@ -351,15 +406,19 @@ class _SearchModalState extends State<_SearchModal> {
                   ? Center(
                 child: Text(
                   provider.errorMessage!,
-                  style: const TextStyle(color: Colors.red, fontSize: 16),
+                  style: const TextStyle(
+                      color: Colors.red, fontSize: 16),
                   textAlign: TextAlign.center,
                 ),
               )
                   : provider.results.isEmpty
                   ? Center(
                 child: Text(
-                  _controller.text.isEmpty ? 'Type to search' : 'No results found',
-                  style: const TextStyle(color: Colors.grey),
+                  _controller.text.isEmpty
+                      ? 'Type to search'
+                      : 'No results found',
+                  style:
+                  const TextStyle(color: Colors.grey),
                 ),
               )
                   : ListView.builder(
@@ -368,19 +427,35 @@ class _SearchModalState extends State<_SearchModal> {
                   final b = provider.results[i];
                   return ListTile(
                     leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
+                      borderRadius:
+                      BorderRadius.circular(4),
                       child: b.coverUrl != null
                           ? Image.network(
-                        b.coverUrl!, width: 40, height: 60, fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(Icons.book, size: 40),
+                        b.coverUrl!,
+                        width: 40,
+                        height: 60,
+                        fit: BoxFit.cover,
+                        // FIX: unnecessary_underscores
+                        errorBuilder: (context, error, stack) =>
+                        const Icon(Icons.book,
+                            size: 40),
                       )
-                          : const Icon(Icons.book, size: 40),
+                          : const Icon(Icons.book,
+                          size: 40),
                     ),
-                    title: Text(widget.isAuthor ? b.authors : b.title,
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(widget.isAuthor ? 'Known for: ${b.title}' : b.authors),
+                    title: Text(
+                        widget.isAuthor
+                            ? b.authors
+                            : b.title,
+                        style: const TextStyle(
+                            fontWeight:
+                            FontWeight.bold)),
+                    subtitle: Text(widget.isAuthor
+                        ? 'Known for: ${b.title}'
+                        : b.authors),
                     onTap: () {
-                      widget.onSelect(b.title, b.authors, b.coverUrl);
+                      widget.onSelect(
+                          b.title, b.authors, b.coverUrl);
                       Navigator.of(context).pop();
                     },
                   );

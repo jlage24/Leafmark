@@ -11,7 +11,6 @@ class AuthRepository {
       if (user == null) {
         yield null;
       } else {
-        // searches for the username in the Firestore database
         final doc = await _db.collection('users').doc(user.uid).get();
         final data = doc.data();
         yield AppUser(
@@ -24,12 +23,14 @@ class AuthRepository {
           bannerPictureUrl: data?['bannerPictureUrl'] as String?,
           favoriteAuthors: List<String>.from(data?['favoriteAuthors'] ?? []),
           rating: (data?['rating'] as num?)?.toDouble() ?? 0.0,
+          favoriteBookTitle: data?['favoriteBookTitle'] as String?,
+          favoriteBookAuthor: data?['favoriteBookAuthor'] as String?,
+          favoriteBookCoverUrl: data?['favoriteBookCoverUrl'] as String?,
         );
       }
     }
   }
 
-  /// Returns true if the username is already taken.
   Future<bool> isUsernameTaken(String username) async {
     final doc = await _db
         .collection('usernames')
@@ -103,8 +104,12 @@ class AuthRepository {
       username: data?['username'] ?? '',
       bio: data?['bio'] as String?,
       profilePictureUrl: data?['profilePictureUrl'] as String?,
+      bannerPictureUrl: data?['bannerPictureUrl'] as String?,
       favoriteAuthors: List<String>.from(data?['favoriteAuthors'] ?? []),
       rating: (data?['rating'] as num?)?.toDouble() ?? 0.0,
+      favoriteBookTitle: data?['favoriteBookTitle'] as String?,
+      favoriteBookAuthor: data?['favoriteBookAuthor'] as String?,
+      favoriteBookCoverUrl: data?['favoriteBookCoverUrl'] as String?,
     );
   }
 
@@ -123,7 +128,6 @@ class AuthRepository {
     if (profilePictureUrl != null) updates['profilePictureUrl'] = profilePictureUrl;
     if (bannerPictureUrl != null) updates['bannerPictureUrl'] = bannerPictureUrl;
     if (favoriteAuthors != null) updates['favoriteAuthors'] = favoriteAuthors;
-
     if (favoriteBookTitle != null) updates['favoriteBookTitle'] = favoriteBookTitle;
     if (favoriteBookAuthor != null) updates['favoriteBookAuthor'] = favoriteBookAuthor;
     if (favoriteBookCoverUrl != null) updates['favoriteBookCoverUrl'] = favoriteBookCoverUrl;

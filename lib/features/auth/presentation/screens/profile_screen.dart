@@ -15,18 +15,17 @@ class ProfileScreen extends StatelessWidget {
   }
 
   Widget _bookPlaceholder() => Container(
-    width: 64, height: 92,
+    width: 64,
+    height: 92,
     decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(6)
-    ),
+        color: Colors.grey[200], borderRadius: BorderRadius.circular(6)),
     child: const Icon(Icons.book, color: Colors.grey),
   );
 
   @override
   Widget build(BuildContext context) {
-    final user      = context.watch<AuthProvider>().user;
-    final shelf     = context.watch<BookShelfProvider>();
+    final user = context.watch<AuthProvider>().user;
+    final shelf = context.watch<BookShelfProvider>();
     final textTheme = Theme.of(context).textTheme;
     final initial = user?.displayName.isNotEmpty == true
         ? user!.displayName[0].toUpperCase()
@@ -45,7 +44,8 @@ class ProfileScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                 decoration: BoxDecoration(
                   color: AppTheme.primary,
-                  image: user?.bannerPictureUrl != null && user!.bannerPictureUrl!.isNotEmpty
+                  image: user?.bannerPictureUrl != null &&
+                      user!.bannerPictureUrl!.isNotEmpty
                       ? DecorationImage(
                     image: NetworkImage(user.bannerPictureUrl!),
                     fit: BoxFit.cover,
@@ -82,10 +82,12 @@ class ProfileScreen extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 36,
                   backgroundColor: AppTheme.primaryLight,
-                  backgroundImage: user?.profilePictureUrl != null && user!.profilePictureUrl!.isNotEmpty
+                  backgroundImage: user?.profilePictureUrl != null &&
+                      user!.profilePictureUrl!.isNotEmpty
                       ? NetworkImage(user.profilePictureUrl!)
                       : null,
-                  child: user?.profilePictureUrl == null || user!.profilePictureUrl!.isEmpty
+                  child: user?.profilePictureUrl == null ||
+                      user!.profilePictureUrl!.isEmpty
                       ? Text(
                     initial,
                     style: const TextStyle(
@@ -117,7 +119,6 @@ class ProfileScreen extends StatelessWidget {
                   style: textTheme.bodySmall,
                   textAlign: TextAlign.center,
                 ),
-
                 if (user?.bio != null && user!.bio!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
@@ -126,19 +127,18 @@ class ProfileScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ],
-
                 const SizedBox(height: 24),
                 Row(
                   children: [
-                    _StatCard(label: 'Books',  value: '${shelf.books.length}'),
+                    _StatCard(label: 'Books', value: '${shelf.books.length}'),
                     const SizedBox(width: 8),
-                    _StatCard(label: 'Swaps',  value: '—'),
+                    _StatCard(label: 'Swaps', value: '—'),
                     const SizedBox(width: 8),
                     _StatCard(
-                        label: 'Rating',
-                        value: user?.rating != null && user!.rating > 0
-                            ? user.rating.toStringAsFixed(1)
-                            : '—'
+                      label: 'Rating',
+                      value: user?.rating != null && user!.rating > 0
+                          ? user.rating.toStringAsFixed(1)
+                          : '—',
                     ),
                   ],
                 ),
@@ -147,11 +147,13 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // --- FAVORITE AUTHORS ---
-          if (user?.favoriteAuthors != null && user!.favoriteAuthors!.isNotEmpty) ...[
+          // FIX: unnecessary_non_null_assertion — favoriteAuthors is non-nullable List<String>
+          if (user?.favoriteAuthors != null &&
+              user!.favoriteAuthors.isNotEmpty) ...[
             const Divider(),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -160,10 +162,12 @@ class ProfileScreen extends StatelessWidget {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    children: user.favoriteAuthors!.map((author) {
+                    // FIX: unnecessary_non_null_assertion
+                    children: user.favoriteAuthors.map((author) {
                       return Chip(
                         label: Text(author),
-                        backgroundColor: AppTheme.primaryLight.withValues(alpha: 0.5),
+                        backgroundColor:
+                        AppTheme.primaryLight.withValues(alpha: 0.5),
                         side: BorderSide.none,
                       );
                     }).toList(),
@@ -173,11 +177,12 @@ class ProfileScreen extends StatelessWidget {
             ),
           ],
 
-          // --- FAVORITE BOOK ---
-          if (user?.favoriteBookTitle != null && user!.favoriteBookTitle!.isNotEmpty) ...[
+          if (user?.favoriteBookTitle != null &&
+              user!.favoriteBookTitle!.isNotEmpty) ...[
             const Divider(),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -188,13 +193,15 @@ class ProfileScreen extends StatelessWidget {
                     children: [
                       ClipRRect(
                         borderRadius: BorderRadius.circular(6),
-                        child: user.favoriteBookCoverUrl != null && user.favoriteBookCoverUrl!.isNotEmpty
+                        child: user.favoriteBookCoverUrl != null &&
+                            user.favoriteBookCoverUrl!.isNotEmpty
                             ? Image.network(
-                            user.favoriteBookCoverUrl!,
-                            width: 64,
-                            height: 92,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_,__,___) => _bookPlaceholder()
+                          user.favoriteBookCoverUrl!,
+                          width: 64,
+                          height: 92,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stack) =>
+                              _bookPlaceholder(),
                         )
                             : _bookPlaceholder(),
                       ),
@@ -203,10 +210,18 @@ class ProfileScreen extends StatelessWidget {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Text(user.favoriteBookTitle!, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                            Text(
+                              user.favoriteBookTitle!,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
                             const SizedBox(height: 4),
                             if (user.favoriteBookAuthor != null)
-                              Text(user.favoriteBookAuthor!, style: TextStyle(color: Colors.grey[700], fontSize: 14)),
+                              Text(
+                                user.favoriteBookAuthor!,
+                                style: TextStyle(
+                                    color: Colors.grey[700], fontSize: 14),
+                              ),
                           ],
                         ),
                       ),
@@ -219,11 +234,11 @@ class ProfileScreen extends StatelessWidget {
 
           const Divider(),
           _MenuItem(
-            iconData:    Icons.menu_book_outlined,
+            iconData: Icons.menu_book_outlined,
             iconBgColor: const Color(0xFFEAF3DE),
-            iconColor:   const Color(0xFF3B6D11),
-            title:       'My Shelf',
-            subtitle:    '${shelf.books.length} books available',
+            iconColor: const Color(0xFF3B6D11),
+            title: 'My Shelf',
+            subtitle: '${shelf.books.length} books available',
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MyShelfScreen()),
@@ -231,12 +246,12 @@ class ProfileScreen extends StatelessWidget {
           ),
           const Divider(),
           _MenuItem(
-            iconData:    Icons.logout,
+            iconData: Icons.logout,
             iconBgColor: const Color(0xFFFCEBEB),
-            iconColor:   const Color(0xFFA32D2D),
-            title:       'Logout',
-            titleColor:  const Color(0xFFA32D2D),
-            onTap:       () => _logout(context),
+            iconColor: const Color(0xFFA32D2D),
+            title: 'Logout',
+            titleColor: const Color(0xFFA32D2D),
+            onTap: () => _logout(context),
           ),
           const SizedBox(height: 32),
         ],
@@ -282,12 +297,12 @@ class _StatCard extends StatelessWidget {
 }
 
 class _MenuItem extends StatelessWidget {
-  final IconData  iconData;
-  final Color     iconBgColor;
-  final Color     iconColor;
-  final String    title;
-  final Color?    titleColor;
-  final String?   subtitle;
+  final IconData iconData;
+  final Color iconBgColor;
+  final Color iconColor;
+  final String title;
+  final Color? titleColor;
+  final String? subtitle;
   final VoidCallback onTap;
 
   const _MenuItem({
@@ -303,7 +318,8 @@ class _MenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      contentPadding:
+      const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
       leading: Container(
         width: 36,
         height: 36,
@@ -315,12 +331,14 @@ class _MenuItem extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: titleColor,
-        ),
+        style: Theme.of(context)
+            .textTheme
+            .titleSmall
+            ?.copyWith(color: titleColor),
       ),
       subtitle: subtitle != null
-          ? Text(subtitle!, style: Theme.of(context).textTheme.bodySmall)
+          ? Text(subtitle!,
+          style: Theme.of(context).textTheme.bodySmall)
           : null,
       trailing: subtitle != null
           ? const Icon(Icons.chevron_right, size: 18)

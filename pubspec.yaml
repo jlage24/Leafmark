@@ -34,9 +34,8 @@ dependencies:
   mobile_scanner: ^5.1.1
 
   image_picker: ^1.1.2
-  firebase_storage: ^12.4.10
 
-  # HTTP requests (Google Books API)
+  # HTTP requests (Google Books API & Cloudinary)
   http: ^1.2.1
 
   # JSON serialization

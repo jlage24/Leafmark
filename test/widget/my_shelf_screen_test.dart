@@ -32,6 +32,17 @@ class FakeAuthProvider extends ChangeNotifier implements AuthProvider {
 
   @override
   Future<void> logout() async {}
+
+  @override
+  Future<bool> updateProfile({
+    String? bio,
+    String? profilePictureUrl,
+    String? bannerPictureUrl,
+    List<String>? favoriteAuthors,
+    String? favoriteBookTitle,
+    String? favoriteBookAuthor,
+    String? favoriteBookCoverUrl,
+  }) async => true;
 }
 
 void main() {
@@ -176,7 +187,7 @@ void main() {
       expect(find.text('Animal Farm'), findsOneWidget);
     });
 
-    testWidgets('tapping Remove deletes book and shows snackbar', (tester) async {
+    testWidgets('tapping Remove deletes book and shows snack bar', (tester) async {
       final provider = makeProvider();
       await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1', title: 'Animal Farm'));

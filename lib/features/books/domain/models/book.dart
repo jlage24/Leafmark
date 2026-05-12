@@ -7,8 +7,9 @@ class Book {
   final BookCondition condition;
   final String? notes;
   final DateTime addedAt;
-  final String? ownerName; // optional — only set for browse/dummy books
+  final String? ownerName;
   final String? ownerId;
+  final String? lockedBySwapId;
 
   const Book({
     required this.id,
@@ -21,7 +22,10 @@ class Book {
     required this.addedAt,
     this.ownerName,
     this.ownerId,
+    this.lockedBySwapId,
   });
+
+  bool get isLocked => lockedBySwapId != null;
 
   Map<String, dynamic> toJson() => {
     'id': id,
@@ -34,6 +38,7 @@ class Book {
     'addedAt': addedAt.toIso8601String(),
     'ownerName': ownerName,
     'ownerId': ownerId,
+    'lockedBySwapId': lockedBySwapId,
   };
 
   factory Book.fromJson(Map<String, dynamic> json) => Book(
@@ -49,6 +54,7 @@ class Book {
     addedAt: DateTime.parse(json['addedAt'] as String),
     ownerName: json['ownerName'] as String?,
     ownerId: json['ownerId'] as String?,
+    lockedBySwapId: json['lockedBySwapId'] as String?,
   );
 
   Book copyWith({
@@ -62,6 +68,7 @@ class Book {
     DateTime? addedAt,
     String? ownerName,
     String? ownerId,
+    Object? lockedBySwapId = _sentinel,
   }) =>
       Book(
         id: id ?? this.id,
@@ -74,6 +81,9 @@ class Book {
         addedAt: addedAt ?? this.addedAt,
         ownerName: ownerName ?? this.ownerName,
         ownerId: ownerId ?? this.ownerId,
+        lockedBySwapId: lockedBySwapId == _sentinel
+            ? this.lockedBySwapId
+            : lockedBySwapId as String?,
       );
 
   @override
@@ -86,6 +96,8 @@ class Book {
   @override
   String toString() => 'Book(id: $id, title: $title, isbn: $isbn)';
 }
+
+const Object _sentinel = Object();
 
 enum BookCondition {
   mint('Mint'),

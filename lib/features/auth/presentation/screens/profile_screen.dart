@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../../../../features/books/presentation/providers/book_shelf_provider.dart';
 import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dart';
-import '../../../../features/swaps/presentation/screens/swap_requests_screen.dart';
 import '../../../../core/app_theme.dart';
 
 class ProfileScreen extends StatelessWidget {
@@ -25,7 +24,6 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       body: ListView(
         children: [
-          // ── Hero header ──────────────────────────────────────────────────
           Stack(
             clipBehavior: Clip.none,
             alignment: Alignment.bottomCenter,
@@ -48,14 +46,11 @@ class ProfileScreen extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.edit_outlined, size: 20),
                       color: AppTheme.primaryLight,
-                      onPressed: () {
-                        // TODO: edit profile
-                      },
+                      onPressed: () {},
                     ),
                   ],
                 ),
               ),
-              // avatar
               Positioned(
                 bottom: -36,
                 child: CircleAvatar(
@@ -74,7 +69,6 @@ class ProfileScreen extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 48),
-          // ── Name and username ──────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24),
             child: Column(
@@ -93,8 +87,6 @@ class ProfileScreen extends StatelessWidget {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 20),
-
-                // ── Stats ────────────────────────────────────────────────────
                 Row(
                   children: [
                     _StatCard(label: 'Books',  value: '${shelf.books.length}'),
@@ -122,18 +114,6 @@ class ProfileScreen extends StatelessWidget {
           ),
           const Divider(),
           _MenuItem(
-            iconData:    Icons.swap_horiz_rounded,
-            iconBgColor: const Color(0xFFE6F1FB),
-            iconColor:   const Color(0xFF185FA5),
-            title:       'Swap Requests',
-            subtitle:    'See pending requests',
-            onTap: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const SwapRequestsScreen()),
-            ),
-          ),
-          const Divider(),
-          _MenuItem(
             iconData:    Icons.logout,
             iconBgColor: const Color(0xFFFCEBEB),
             iconColor:   const Color(0xFFA32D2D),
@@ -141,7 +121,6 @@ class ProfileScreen extends StatelessWidget {
             titleColor:  const Color(0xFFA32D2D),
             onTap:       () => _logout(context),
           ),
-
           const SizedBox(height: 32),
         ],
       ),
@@ -166,15 +145,9 @@ class _StatCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(
-              value,
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+            Text(value, style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 2),
-            Text(
-              label,
-              style: Theme.of(context).textTheme.labelSmall,
-            ),
+            Text(label, style: Theme.of(context).textTheme.labelSmall),
           ],
         ),
       ),

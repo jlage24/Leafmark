@@ -17,6 +17,17 @@ class BrowseService {
         .toList());
   }
 
+  Stream<List<Book>> browseAvailableBooks(String currentUid) {
+    return FirebaseFirestore.instance
+        .collectionGroup('shelf')
+        .where('ownerId', isNotEqualTo: currentUid)
+        .where('lockedBySwapId', isNull: true)
+        .snapshots()
+        .map((snap) => snap.docs
+        .map((doc) => Book.fromJson({...doc.data(), 'id': doc.id}))
+        .toList());
+  }
+
   Future<Book?> fetchBook(String ownerId, String bookId) async {
     try {
       final doc = await _firestore

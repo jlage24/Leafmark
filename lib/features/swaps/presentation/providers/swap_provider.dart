@@ -10,11 +10,11 @@ class SwapProvider extends ChangeNotifier {
   Stream<List<SwapRequest>> incoming(String uid) => _service.incomingRequests(uid);
   Stream<List<SwapRequest>> outgoing(String uid) => _service.outgoingRequests(uid);
 
-  Future<void> sendRequest(SwapRequest request) async {
+  Future<String> sendRequest(SwapRequest request) async {
     _isLoading = true;
     notifyListeners();
     try {
-      await _service.createSwapRequest(request);
+      return await _service.createSwapRequest(request);
     } finally {
       _isLoading = false;
       notifyListeners();

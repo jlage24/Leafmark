@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/services/chat_service.dart';
@@ -8,11 +9,16 @@ class ChatProvider extends ChangeNotifier {
   final ChatService _service;
   final AuthProvider _auth;
 
+  // Typing timers — um por swapId para auto-clear após 3s sem teclar
+  final Map<String, Timer> _typingTimers = {};
+
   ChatProvider({ChatService? service, required AuthProvider auth})
       : _service = service ?? ChatService(),
         _auth = auth;
 
   String get _uid => _auth.user?.uid ?? '';
+
+  // ── Messages ──────────────────────────────────────────────────────────────
 
   Stream<List<ChatMessage>> getMessages(String swapId) =>
       _service.getMessages(swapId);
@@ -30,6 +36,8 @@ class ChatProvider extends ChangeNotifier {
     required String text,
   }) async {
     if (text.trim().isEmpty) return;
+    // Parar de indicar "typing" quando a mensagem é enviada
+    await stopTyping(swapId);
     final message = ChatMessage(
       id: '',
       senderId: _uid,
@@ -73,4 +81,52 @@ class ChatProvider extends ChangeNotifier {
 
   Future<String?> fetchDisplayName(String uid) =>
       _service.fetchDisplayName(uid);
+
+  // ── Typing indicator ──────────────────────────────────────────────────────
+
+  /// Chama quando o utilizador escreve um caractere no TextField.
+  /// Auto-cancela o "typing" após 3s de inatividade.
+  Future<void> onTyping(String swapId) async {
+    // Cancelar timer anterior se existir
+    _typingTimers[swapId]?.cancel();
+
+    await _service.setTyping(swapId, _uid, true);
+
+    _typingTimers[swapId] = Timer(const Duration(seconds: 3), () {
+      _service.setTyping(swapId, _uid, false);
+      _typingTimers.remove(swapId);
+    });
+  }
+
+  /// Chama explicitamente quando o utilizador sai do ecrã ou envia mensagem.
+  Future<void> stopTyping(String swapId) async {
+    _typingTimers[swapId]?.cancel();
+    _typingTimers.remove(swapId);
+    await _service.setTyping(swapId, _uid, false);
+  }
+
+  /// Stream de UIDs que estão a escrever neste chat (excluindo o próprio utilizador).
+  Stream<List<String>> typingStream(String swapId) {
+    return _service.typingStream(swapId).map(
+          (uids) => uids.where((uid) => uid != _uid).toList(),
+    );
+  }
+
+  // ── Read receipts ─────────────────────────────────────────────────────────
+
+  /// Marca o chat como lido para o utilizador atual.
+  /// Chama quando o ecrã é aberto ou voltamos ao primeiro plano.
+  Future<void> markRead(String swapId) => _service.markRead(swapId, _uid);
+
+  /// Stream do mapa { uid → lastReadAt } para este chat.
+  Stream<Map<String, DateTime>> lastReadStream(String swapId) =>
+      _service.lastReadStream(swapId);
+
+  @override
+  void dispose() {
+    for (final timer in _typingTimers.values) {
+      timer.cancel();
+    }
+    super.dispose();
+  }
 }

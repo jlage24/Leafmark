@@ -10,6 +10,9 @@ class BookShelfProvider extends ChangeNotifier {
   List<Book> _books = [];
   List<Book> get books => List.unmodifiable(_books);
 
+  List<Book> get availableBooks =>
+      _books.where((b) => !b.isLocked).toList();
+
   String get _collectionPath => 'users/$_uid/shelf';
 
   BookShelfProvider({FirebaseFirestore? firestore})
@@ -55,6 +58,38 @@ class BookShelfProvider extends ChangeNotifier {
     _uid = null;
     _ownerName = null;
     _books = [];
+    notifyListeners();
+  }
+
+  Future<void> lockBook({
+    required String bookOwnerId,
+    required String bookId,
+    required String swapId,
+  }) async {
+    await _db
+        .collection('users/$bookOwnerId/shelf')
+        .doc(bookId)
+        .update({'lockedBySwapId': swapId});
+
+    _updateLocalLock(bookId, swapId);
+  }
+
+  Future<void> unlockBook({
+    required String bookOwnerId,
+    required String bookId,
+  }) async {
+    await _db
+        .collection('users/$bookOwnerId/shelf')
+        .doc(bookId)
+        .update({'lockedBySwapId': FieldValue.delete()});
+
+    _updateLocalLock(bookId, null);
+  }
+
+  void _updateLocalLock(String bookId, String? swapId) {
+    final idx = _books.indexWhere((b) => b.id == bookId);
+    if (idx == -1) return;
+    _books[idx] = _books[idx].copyWith(lockedBySwapId: swapId);
     notifyListeners();
   }
 }

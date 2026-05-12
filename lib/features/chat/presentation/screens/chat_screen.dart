@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -6,8 +7,10 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../books/data/services/browse_service.dart';
 import '../../../books/domain/models/book.dart';
 import '../../../books/presentation/providers/book_shelf_provider.dart';
+import '../../data/services/chat_service.dart';
 import '../../domain/models/chat_message.dart';
 import '../../domain/models/chat_metadata.dart';
+import '../../../auth/presentation/screens/public_profile_screen.dart';
 
 class ChatScreen extends StatefulWidget {
   final String swapId;
@@ -25,12 +28,30 @@ class ChatScreen extends StatefulWidget {
   State<ChatScreen> createState() => _ChatScreenState();
 }
 
-class _ChatScreenState extends State<ChatScreen> {
+class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ChatProvider>().markRead(widget.swapId);
+    });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      context.read<ChatProvider>().markRead(widget.swapId);
+    }
+  }
+
+  @override
   void dispose() {
+    context.read<ChatProvider>().stopTyping(widget.swapId);
+    WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
@@ -65,14 +86,14 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _showCounterOfferSheet({required String bookWantedId}) {
-    final shelfBooks = context.read<BookShelfProvider>().books;
+    final shelfBooks = context.read<BookShelfProvider>().availableBooks;
     final currentUid = context.read<AuthProvider>().user?.uid ?? '';
 
     if (shelfBooks.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-          Text('You need books on your shelf to make a counter offer.'),
+          content: Text(
+              'You have no available books to offer. Books reserved for other swaps are hidden.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -126,7 +147,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         width: 36,
                         height: 52,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
+                        errorBuilder: (context, error, stackTrace) =>
                         const Icon(Icons.book, size: 36),
                       )
                           : const Icon(Icons.book, size: 36),
@@ -166,9 +187,35 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          widget.otherUserName,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        title: GestureDetector(
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PublicProfileScreen(
+                userId: widget.otherUserId,
+                displayName: widget.otherUserName,
+              ),
+            ),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                widget.otherUserName,
+                style: const TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right,
+                size: 16,
+                color: Theme.of(context)
+                    .colorScheme
+                    .onSurface
+                    .withValues(alpha: 0.4),
+              ),
+            ],
+          ),
         ),
       ),
       body: Column(
@@ -193,37 +240,74 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
                 if (_isAtBottom()) _scrollToBottom();
 
-                return ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.all(16),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) {
-                    final message = messages[index];
-                    final isMe = message.senderId == currentUid;
+                return StreamBuilder<Map<String, DateTime>>(
+                  stream: chatProvider.lastReadStream(widget.swapId),
+                  builder: (context, readSnap) {
+                    final lastReadAt = readSnap.data ?? {};
+                    final otherLastRead =
+                    lastReadAt[widget.otherUserId];
 
-                    if (message.type == MessageType.text) {
-                      return _TextBubble(message: message, isMe: isMe);
-                    }
+                    return ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.all(16),
+                      itemCount: messages.length,
+                      itemBuilder: (context, index) {
+                        final message = messages[index];
+                        final isMe = message.senderId == currentUid;
+                        final isLast = index == messages.length - 1;
+                        final isSeen = isMe &&
+                            isLast &&
+                            otherLastRead != null &&
+                            otherLastRead
+                                .isAfter(message.createdAt);
 
-                    return _ProposalCard(
-                      message: message,
-                      isMe: isMe,
-                      swapId: widget.swapId,
-                      currentUid: currentUid,
-                      otherUserId: widget.otherUserId,
-                      onCounter: isMe
-                          ? null
-                          : () => _showCounterOfferSheet(
-                        bookWantedId: message.bookOfferedId ?? '',
-                      ),
+                        if (message.type == MessageType.text) {
+                          return _TextBubble(
+                            message: message,
+                            isMe: isMe,
+                            showSeen: isSeen,
+                          );
+                        }
+
+                        return _ProposalCard(
+                          message: message,
+                          isMe: isMe,
+                          swapId: widget.swapId,
+                          currentUid: currentUid,
+                          otherUserId: widget.otherUserId,
+                          onCounter: isMe
+                              ? null
+                              : () => _showCounterOfferSheet(
+                            bookWantedId:
+                            message.bookOfferedId ?? '',
+                          ),
+                        );
+                      },
                     );
                   },
                 );
               },
             ),
           ),
+          StreamBuilder<List<String>>(
+            stream: chatProvider.typingStream(widget.swapId),
+            builder: (context, snap) {
+              final typing = snap.data ?? [];
+              if (typing.isEmpty) return const SizedBox.shrink();
+              return Padding(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: _TypingIndicator(),
+                ),
+              );
+            },
+          ),
+
           _InputBar(
             controller: _controller,
+            onChanged: () => chatProvider.onTyping(widget.swapId),
             onSend: _sendText,
             onCounterOffer: null,
           ),
@@ -233,57 +317,161 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 }
 
+class _TypingIndicator extends StatefulWidget {
+  @override
+  State<_TypingIndicator> createState() => _TypingIndicatorState();
+}
+
+class _TypingIndicatorState extends State<_TypingIndicator>
+    with TickerProviderStateMixin {
+  late final List<AnimationController> _controllers;
+  late final List<Animation<double>> _animations;
+
+  @override
+  void initState() {
+    super.initState();
+    _controllers = List.generate(
+      3,
+          (i) => AnimationController(
+        vsync: this,
+        duration: const Duration(milliseconds: 400),
+      ),
+    );
+    _animations = _controllers
+        .map((c) => Tween<double>(begin: 0, end: -6).animate(
+      CurvedAnimation(parent: c, curve: Curves.easeInOut),
+    ))
+        .toList();
+
+    for (int i = 0; i < 3; i++) {
+      Future.delayed(Duration(milliseconds: i * 150), () {
+        if (mounted) _controllers[i].repeat(reverse: true);
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    for (final c in _controllers) {
+      c.dispose();
+    }
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(16),
+          topRight: Radius.circular(16),
+          bottomRight: Radius.circular(16),
+          bottomLeft: Radius.circular(4),
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: List.generate(3, (i) {
+          return AnimatedBuilder(
+            animation: _animations[i],
+            builder: (context, child) => Transform.translate(
+              offset: Offset(0, _animations[i].value),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 2),
+                width: 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: color,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          );
+        }),
+      ),
+    );
+  }
+}
+
 class _TextBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isMe;
+  final bool showSeen;
 
-  const _TextBubble({required this.message, required this.isMe});
+  const _TextBubble({
+    required this.message,
+    required this.isMe,
+    this.showSeen = false,
+  });
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints:
-        BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
-        decoration: BoxDecoration(
-          color: isMe
-              ? colorScheme.primary
-              : colorScheme.surfaceContainerHighest,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 4),
-            bottomRight: Radius.circular(isMe ? 4 : 16),
+    return Column(
+      crossAxisAlignment:
+      isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      children: [
+        Align(
+          alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+          child: Container(
+            margin: const EdgeInsets.only(bottom: 2),
+            padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width * 0.72),
+            decoration: BoxDecoration(
+              color: isMe
+                  ? colorScheme.primary
+                  : colorScheme.surfaceContainerHighest,
+              borderRadius: BorderRadius.only(
+                topLeft: const Radius.circular(16),
+                topRight: const Radius.circular(16),
+                bottomLeft: Radius.circular(isMe ? 16 : 4),
+                bottomRight: Radius.circular(isMe ? 4 : 16),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  message.text ?? '',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: isMe ? Colors.white : colorScheme.onSurface,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  _formatTime(message.createdAt),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isMe
+                        ? Colors.white.withValues(alpha: 0.7)
+                        : colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              message.text ?? '',
-              style: TextStyle(
-                fontSize: 14,
-                color: isMe ? Colors.white : colorScheme.onSurface,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _formatTime(message.createdAt),
+        if (isMe)
+          Padding(
+            padding: const EdgeInsets.only(right: 4, bottom: 6),
+            child: Text(
+              showSeen ? '✓✓ Seen' : '✓ Sent',
               style: TextStyle(
                 fontSize: 10,
-                color: isMe
-                    ? Colors.white.withValues(alpha: 0.7)
-                    : colorScheme.onSurface.withValues(alpha: 0.5),
+                color: showSeen
+                    ? colorScheme.primary
+                    : colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ),
-          ],
-        ),
-      ),
+          ),
+      ],
     );
   }
 
@@ -360,7 +548,9 @@ class _ProposalCardState extends State<_ProposalCard> {
             children: [
               _BookMini(
                 bookId: widget.message.bookOfferedId ?? '',
-                ownerId: widget.isMe ? widget.currentUid : widget.otherUserId,
+                ownerId: widget.isMe
+                    ? widget.currentUid
+                    : widget.otherUserId,
                 browseService: _browseService,
               ),
               Padding(
@@ -370,7 +560,9 @@ class _ProposalCardState extends State<_ProposalCard> {
               ),
               _BookMini(
                 bookId: widget.message.bookWantedId ?? '',
-                ownerId: widget.isMe ? widget.otherUserId : widget.currentUid,
+                ownerId: widget.isMe
+                    ? widget.otherUserId
+                    : widget.currentUid,
                 browseService: _browseService,
               ),
             ],
@@ -379,6 +571,9 @@ class _ProposalCardState extends State<_ProposalCard> {
             const SizedBox(height: 12),
             _ActionButtons(
               swapId: widget.swapId,
+              message: widget.message,
+              currentUid: widget.currentUid,
+              otherUserId: widget.otherUserId,
               onCounter: widget.onCounter,
             ),
           ],
@@ -390,9 +585,64 @@ class _ProposalCardState extends State<_ProposalCard> {
 
 class _ActionButtons extends StatelessWidget {
   final String swapId;
+  final ChatMessage message;
+  final String currentUid;
+  final String otherUserId;
   final VoidCallback? onCounter;
 
-  const _ActionButtons({required this.swapId, this.onCounter});
+  const _ActionButtons({
+    required this.swapId,
+    required this.message,
+    required this.currentUid,
+    required this.otherUserId,
+    this.onCounter,
+  });
+
+  String get _bookOfferedId => message.bookOfferedId ?? '';
+  String get _bookOfferedOwnerId => otherUserId;
+  String get _bookWantedId => message.bookWantedId ?? '';
+  String get _bookWantedOwnerId => currentUid;
+
+  Future<void> _handleAccept(BuildContext context) async {
+    final chatService = ChatService();
+    try {
+      await chatService.acceptSwap(
+        swapId: swapId,
+        bookOfferedId: _bookOfferedId,
+        bookOfferedOwnerId: _bookOfferedOwnerId,
+        bookWantedId: _bookWantedId,
+        bookWantedOwnerId: _bookWantedOwnerId,
+      );
+    } on BookAlreadyLockedException {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+              '⚠️ One of these books is already reserved for another swap.'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Something went wrong: $e'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  Future<void> _handleReject(BuildContext context) async {
+    final chatService = ChatService();
+    await chatService.cancelSwap(
+      swapId: swapId,
+      bookOfferedId: _bookOfferedId,
+      bookOfferedOwnerId: _bookOfferedOwnerId,
+      bookWantedId: _bookWantedId,
+      bookWantedOwnerId: _bookWantedOwnerId,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -416,7 +666,7 @@ class _ActionButtons extends StatelessWidget {
             alignment: Alignment.center,
             child: Text(
               status == ChatStatus.completed
-                  ? '✅ Swap accepted'
+                  ? '✅ Swap accepted — books reserved'
                   : '❌ Swap rejected',
               style: TextStyle(
                 fontSize: 12,
@@ -439,9 +689,7 @@ class _ActionButtons extends StatelessWidget {
       children: [
         Expanded(
           child: OutlinedButton(
-            onPressed: () => context
-                .read<ChatProvider>()
-                .updateChatStatus(swapId, ChatStatus.cancelled),
+            onPressed: () => _handleReject(context),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red,
               side: const BorderSide(color: Colors.red),
@@ -459,9 +707,7 @@ class _ActionButtons extends StatelessWidget {
         const SizedBox(width: 8),
         Expanded(
           child: FilledButton(
-            onPressed: () => context
-                .read<ChatProvider>()
-                .updateChatStatus(swapId, ChatStatus.completed),
+            onPressed: () => _handleAccept(context),
             child: const Text('Accept'),
           ),
         ),
@@ -497,7 +743,7 @@ class _BookMini extends StatelessWidget {
                 width: 48,
                 height: 68,
                 fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _placeholder(),
+                errorBuilder: (context, error, stackTrace) => _placeholder(),
               )
                   : _placeholder(),
             ),
@@ -505,10 +751,10 @@ class _BookMini extends StatelessWidget {
             SizedBox(
               width: 80,
               child: Text(
-                book?.title ?? (snapshot.connectionState ==
-                    ConnectionState.waiting
-                    ? '...'
-                    : '—'),
+                book?.title ??
+                    (snapshot.connectionState == ConnectionState.waiting
+                        ? '...'
+                        : '—'),
                 style: const TextStyle(fontSize: 11),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -535,12 +781,13 @@ class _BookMini extends StatelessWidget {
 class _InputBar extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
-  // Null = botão desabilitado (sem contexto de proposta específica)
+  final VoidCallback onChanged;
   final VoidCallback? onCounterOffer;
 
   const _InputBar({
     required this.controller,
     required this.onSend,
+    required this.onChanged,
     required this.onCounterOffer,
   });
 
@@ -566,7 +813,6 @@ class _InputBar extends StatelessWidget {
               onPressed: onCounterOffer,
               icon: const Icon(Icons.swap_horiz_rounded),
               tooltip: 'Counter offer',
-              // Visualmente acinzentado quando desabilitado
               color: onCounterOffer != null
                   ? Theme.of(context).colorScheme.primary
                   : Theme.of(context)
@@ -578,6 +824,7 @@ class _InputBar extends StatelessWidget {
               child: TextField(
                 controller: controller,
                 textCapitalization: TextCapitalization.sentences,
+                onChanged: (_) => onChanged(),
                 decoration: InputDecoration(
                   hintText: 'Message...',
                   border: OutlineInputBorder(

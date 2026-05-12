@@ -56,7 +56,7 @@ class ChatListScreen extends StatelessWidget {
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: chats.length,
-            separatorBuilder: (_, __) =>
+            separatorBuilder: (context, index) =>
             const Divider(height: 1, indent: 72),
             itemBuilder: (context, index) {
               final chat = chats[index];

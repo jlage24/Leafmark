@@ -225,7 +225,7 @@ class BookDetailScreen extends StatelessWidget {
                           width: 36,
                           height: 52,
                           fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
+                          errorBuilder: (context, error, stackTrace) =>
                           const Icon(Icons.book, size: 36),
                         )
                             : const Icon(Icons.book, size: 36),

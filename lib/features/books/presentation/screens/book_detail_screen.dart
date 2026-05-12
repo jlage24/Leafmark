@@ -42,20 +42,23 @@ class BookDetailScreen extends StatelessWidget {
                 book.coverUrl!,
                 height: 220,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, _) => const _PlaceholderCover(),
+                errorBuilder: (context, error, _) =>
+                const _PlaceholderCover(),
               )
                   : const _PlaceholderCover(),
             ),
             const SizedBox(height: 24),
             Text(
               book.title,
-              style: textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              style: textTheme.headlineSmall
+                  ?.copyWith(fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 6),
             Text(
               book.authors,
-              style: textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+              style:
+              textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 20),
@@ -85,7 +88,9 @@ class BookDetailScreen extends StatelessWidget {
                   ),
               ],
             ),
-            if (!isCatalogView && book.notes != null && book.notes!.isNotEmpty) ...[
+            if (!isCatalogView &&
+                book.notes != null &&
+                book.notes!.isNotEmpty) ...[
               const SizedBox(height: 24),
               Container(
                 width: double.infinity,
@@ -93,18 +98,21 @@ class BookDetailScreen extends StatelessWidget {
                 decoration: BoxDecoration(
                   color: colorScheme.primary.withValues(alpha: 0.06),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: colorScheme.primary.withValues(alpha: 0.15)),
+                  border: Border.all(
+                      color: colorScheme.primary.withValues(alpha: 0.15)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.notes_rounded, size: 18, color: colorScheme.primary),
+                    Icon(Icons.notes_rounded,
+                        size: 18, color: colorScheme.primary),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
                         book.notes!,
                         style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface.withValues(alpha: 0.75),
+                          color: colorScheme.onSurface
+                              .withValues(alpha: 0.75),
                           fontStyle: FontStyle.italic,
                         ),
                       ),
@@ -132,13 +140,15 @@ class BookDetailScreen extends StatelessWidget {
                     : FilledButton.icon(
                   onPressed: swapProvider.isLoading
                       ? null
-                      : () => _showBookPickerSheet(context, authProvider),
+                      : () => _showBookPickerSheet(
+                      context, authProvider),
                   icon: swapProvider.isLoading
                       ? const SizedBox(
                       width: 20,
                       height: 20,
                       child: CircularProgressIndicator(
-                          strokeWidth: 2, color: Colors.white))
+                          strokeWidth: 2,
+                          color: Colors.white))
                       : const Icon(Icons.swap_horiz_rounded),
                   label: const Text('Request Swap'),
                 ),
@@ -151,13 +161,15 @@ class BookDetailScreen extends StatelessWidget {
     );
   }
 
-  void _showBookPickerSheet(BuildContext context, AuthProvider authProvider) {
+  void _showBookPickerSheet(
+      BuildContext context, AuthProvider authProvider) {
     final shelfBooks = context.read<BookShelfProvider>().books;
 
     if (shelfBooks.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('You need books on your shelf to propose a swap.'),
+          content:
+          Text('You need books on your shelf to propose a swap.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -187,15 +199,17 @@ class BookDetailScreen extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
                 child: Text(
                   'Which book do you want to offer?',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
               const Divider(height: 1),
               ConstrainedBox(
                 constraints: BoxConstraints(
-                  maxHeight: MediaQuery.of(context).size.height * 0.45,
+                  maxHeight:
+                  MediaQuery.of(context).size.height * 0.45,
                 ),
                 child: ListView.builder(
                   shrinkWrap: true,
@@ -220,7 +234,8 @@ class BookDetailScreen extends StatelessWidget {
                         offeredBook.title,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w500),
+                        style: const TextStyle(
+                            fontWeight: FontWeight.w500),
                       ),
                       subtitle: Text(offeredBook.condition.label),
                       onTap: () {
@@ -277,7 +292,11 @@ class BookDetailScreen extends StatelessWidget {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => ChatScreen(swapId: swapId, otherUserName: book.ownerName ?? ''),
+            builder: (_) => ChatScreen(
+              swapId: swapId,
+              otherUserName: book.ownerName ?? '',
+              otherUserId: book.ownerId ?? '',
+            ),
           ),
         );
       }
@@ -314,14 +333,19 @@ class BookDetailScreen extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: Icon(icon, color: iconColor, size: 54),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15)),
+        title:
+        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(message,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 15)),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           FilledButton(
-            style: FilledButton.styleFrom(minimumSize: const Size(120, 44)),
+            style: FilledButton.styleFrom(
+                minimumSize: const Size(120, 44)),
             onPressed: () {
               Navigator.pop(ctx);
               Navigator.pop(context);
@@ -335,10 +359,14 @@ class BookDetailScreen extends StatelessWidget {
 
   Color _conditionColor(BookCondition condition) {
     switch (condition) {
-      case BookCondition.mint: return Colors.green[700]!;
-      case BookCondition.good: return Colors.blue[700]!;
-      case BookCondition.fair: return Colors.orange[700]!;
-      case BookCondition.poor: return Colors.red[700]!;
+      case BookCondition.mint:
+        return Colors.green[700]!;
+      case BookCondition.good:
+        return Colors.blue[700]!;
+      case BookCondition.fair:
+        return Colors.orange[700]!;
+      case BookCondition.poor:
+        return Colors.red[700]!;
     }
   }
 }
@@ -348,7 +376,8 @@ class _MetaChip extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _MetaChip({required this.icon, required this.label, required this.color});
+  const _MetaChip(
+      {required this.icon, required this.label, required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -366,7 +395,10 @@ class _MetaChip extends StatelessWidget {
           const SizedBox(width: 6),
           Text(
             label,
-            style: TextStyle(fontSize: 13, fontWeight: FontWeight.w500, color: color),
+            style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: color),
           ),
         ],
       ),
@@ -383,7 +415,8 @@ class _PlaceholderCover extends StatelessWidget {
       height: 220,
       width: 150,
       color: Colors.grey[200],
-      child: const Icon(Icons.book_outlined, size: 64, color: Colors.grey),
+      child:
+      const Icon(Icons.book_outlined, size: 64, color: Colors.grey),
     );
   }
 }

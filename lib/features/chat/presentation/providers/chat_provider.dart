@@ -17,8 +17,7 @@ class ChatProvider extends ChangeNotifier {
   Stream<List<ChatMessage>> getMessages(String swapId) =>
       _service.getMessages(swapId);
 
-  Stream<List<ChatMetadata>> getChats() =>
-      _service.getChats(_uid);
+  Stream<List<ChatMetadata>> getChats() => _service.getChats(_uid);
 
   Future<void> createChat({
     required String swapId,
@@ -30,11 +29,12 @@ class ChatProvider extends ChangeNotifier {
     required String swapId,
     required String text,
   }) async {
+    if (text.trim().isEmpty) return;
     final message = ChatMessage(
       id: '',
       senderId: _uid,
       type: MessageType.text,
-      text: text,
+      text: text.trim(),
       createdAt: DateTime.now(),
     );
     await _service.sendMessage(swapId: swapId, message: message);

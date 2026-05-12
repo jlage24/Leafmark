@@ -14,12 +14,18 @@ class ChatService {
     required String swapId,
     required List<String> participantIds,
   }) async {
+    final docRef = _chats.doc(swapId);
+    final snap = await docRef.get();
+    if (snap.exists) return;
+
     final metadata = ChatMetadata(
       swapId: swapId,
       participantIds: participantIds,
       status: ChatStatus.active,
+      lastMessage: '📚 Swap proposal',
+      lastMessageAt: DateTime.now(),
     );
-    await _chats.doc(swapId).set(metadata.toMap());
+    await docRef.set(metadata.toMap());
   }
 
   Future<void> sendMessage({
@@ -89,26 +95,20 @@ class ChatService {
         .toList());
   }
 
+  /// Requer índice composto no Firestore: participantIds (Array) + lastMessageAt (Desc)
   Stream<List<ChatMetadata>> getChats(String uid) {
     return _chats
         .where('participantIds', arrayContains: uid)
         .orderBy('lastMessageAt', descending: true)
         .snapshots()
         .map((snap) => snap.docs
-        .map((doc) => ChatMetadata.fromMap(doc.data() as Map<String, dynamic>))
+        .map((doc) =>
+        ChatMetadata.fromMap(doc.data() as Map<String, dynamic>))
         .toList());
   }
 
   Future<void> updateChatStatus(String swapId, ChatStatus status) async {
     await _chats.doc(swapId).update({'status': status.name});
-  }
-
-  String _lastMessagePreview(MessageType type) {
-    switch (type) {
-      case MessageType.proposal: return '📚 Swap proposal';
-      case MessageType.counterOffer: return '🔄 Counter offer';
-      case MessageType.text: return '';
-    }
   }
 
   Future<String?> fetchDisplayName(String uid) async {
@@ -118,6 +118,17 @@ class ChatService {
       return doc.data()?['displayName'] as String?;
     } catch (_) {
       return null;
+    }
+  }
+
+  String _lastMessagePreview(MessageType type) {
+    switch (type) {
+      case MessageType.proposal:
+        return '📚 Swap proposal';
+      case MessageType.counterOffer:
+        return '🔄 Counter offer';
+      case MessageType.text:
+        return '';
     }
   }
 }

@@ -32,7 +32,10 @@ class ChatListScreen extends StatelessWidget {
                   Icon(
                     Icons.chat_bubble_outline,
                     size: 64,
-                    color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.4),
+                    color: Theme.of(context)
+                        .colorScheme
+                        .primary
+                        .withValues(alpha: 0.4),
                   ),
                   const SizedBox(height: 16),
                   Text(
@@ -53,16 +56,13 @@ class ChatListScreen extends StatelessWidget {
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
             itemCount: chats.length,
-            separatorBuilder: (_, __) => const Divider(height: 1, indent: 72),
+            separatorBuilder: (_, __) =>
+            const Divider(height: 1, indent: 72),
             itemBuilder: (context, index) {
               final chat = chats[index];
               final otherUid = chat.participantIds
                   .firstWhere((id) => id != currentUid, orElse: () => '');
-
-              return _ChatTile(
-                chat: chat,
-                otherUid: otherUid,
-              );
+              return _ChatTile(chat: chat, otherUid: otherUid);
             },
           );
         },
@@ -71,81 +71,86 @@ class ChatListScreen extends StatelessWidget {
   }
 }
 
-class _ChatTile extends StatelessWidget {
+class _ChatTile extends StatefulWidget {
   final ChatMetadata chat;
   final String otherUid;
 
   const _ChatTile({required this.chat, required this.otherUid});
 
   @override
-  Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+  State<_ChatTile> createState() => _ChatTileState();
+}
 
-    return FutureBuilder<String?>(
-      future: _fetchDisplayName(context),
-      builder: (context, snapshot) {
-        final name = snapshot.data ?? otherUid;
+class _ChatTileState extends State<_ChatTile> {
+  String? _displayName;
 
-        return ListTile(
-          leading: CircleAvatar(
-            backgroundColor: colorScheme.primaryContainer,
-            child: Text(
-              name.isNotEmpty ? name[0].toUpperCase() : '?',
-              style: TextStyle(
-                color: colorScheme.onPrimaryContainer,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          title: Text(
-            name,
-            style: const TextStyle(fontWeight: FontWeight.w600),
-          ),
-          subtitle: Text(
-            chat.lastMessage ?? 'Swap proposal',
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6)),
-          ),
-          trailing: chat.lastMessageAt != null
-              ? Text(
-            _formatTime(chat.lastMessageAt!),
-            style: TextStyle(
-              fontSize: 11,
-              color: colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
-          )
-              : null,
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => ChatScreen(
-                  swapId: chat.swapId,
-                  otherUserName: name,
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
+  @override
+  void initState() {
+    super.initState();
+    _loadDisplayName();
   }
 
-  Future<String?> _fetchDisplayName(BuildContext context) async {
-    try {
-      final doc = await context
-          .read<ChatProvider>()
-          .fetchDisplayName(otherUid);
-      return doc;
-    } catch (_) {
-      return null;
-    }
+  Future<void> _loadDisplayName() async {
+    final name = await context
+        .read<ChatProvider>()
+        .fetchDisplayName(widget.otherUid);
+    if (mounted) setState(() => _displayName = name);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final name = _displayName ?? widget.otherUid;
+
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: colorScheme.primaryContainer,
+        child: Text(
+          name.isNotEmpty ? name[0].toUpperCase() : '?',
+          style: TextStyle(
+            color: colorScheme.onPrimaryContainer,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+      title: Text(
+        name,
+        style: const TextStyle(fontWeight: FontWeight.w600),
+      ),
+      subtitle: Text(
+        widget.chat.lastMessage ?? 'Swap proposal',
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        style: TextStyle(
+            color: colorScheme.onSurface.withValues(alpha: 0.6)),
+      ),
+      trailing: widget.chat.lastMessageAt != null
+          ? Text(
+        _formatTime(widget.chat.lastMessageAt!),
+        style: TextStyle(
+          fontSize: 11,
+          color: colorScheme.onSurface.withValues(alpha: 0.5),
+        ),
+      )
+          : null,
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChatScreen(
+            swapId: widget.chat.swapId,
+            otherUserName: name,
+            otherUserId: widget.otherUid,
+          ),
+        ),
+      ),
+    );
   }
 
   String _formatTime(DateTime dt) {
     final now = DateTime.now();
-    if (dt.year == now.year && dt.month == now.month && dt.day == now.day) {
+    if (dt.year == now.year &&
+        dt.month == now.month &&
+        dt.day == now.day) {
       final h = dt.hour.toString().padLeft(2, '0');
       final m = dt.minute.toString().padLeft(2, '0');
       return '$h:$m';

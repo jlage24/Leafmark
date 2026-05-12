@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../providers/chat_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../books/data/services/browse_service.dart';
@@ -11,11 +12,13 @@ import '../../domain/models/chat_metadata.dart';
 class ChatScreen extends StatefulWidget {
   final String swapId;
   final String otherUserName;
+  final String otherUserId;
 
   const ChatScreen({
     super.key,
     required this.swapId,
     required this.otherUserName,
+    required this.otherUserId,
   });
 
   @override
@@ -31,6 +34,12 @@ class _ChatScreenState extends State<ChatScreen> {
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  bool _isAtBottom() {
+    if (!_scrollController.hasClients) return true;
+    final pos = _scrollController.position;
+    return pos.pixels >= pos.maxScrollExtent - 80;
   }
 
   void _scrollToBottom() {
@@ -49,21 +58,21 @@ class _ChatScreenState extends State<ChatScreen> {
     final text = _controller.text.trim();
     if (text.isEmpty) return;
     _controller.clear();
-    await context.read<ChatProvider>().sendText(
-      swapId: widget.swapId,
-      text: text,
-    );
+    await context
+        .read<ChatProvider>()
+        .sendText(swapId: widget.swapId, text: text);
     _scrollToBottom();
   }
 
-  void _showCounterOfferSheet() {
+  void _showCounterOfferSheet({required String bookWantedId}) {
     final shelfBooks = context.read<BookShelfProvider>().books;
     final currentUid = context.read<AuthProvider>().user?.uid ?? '';
 
     if (shelfBooks.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('You need books on your shelf to make a counter offer.'),
+          content:
+          Text('You need books on your shelf to make a counter offer.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -92,9 +101,10 @@ class _ChatScreenState extends State<ChatScreen> {
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               child: Text(
                 'Which book do you want to offer?',
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context)
+                    .textTheme
+                    .titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
               ),
             ),
             const Divider(height: 1),
@@ -134,7 +144,7 @@ class _ChatScreenState extends State<ChatScreen> {
                         swapId: widget.swapId,
                         bookOfferedId: offeredBook.id,
                         bookOfferedOwnerId: currentUid,
-                        bookWantedId: offeredBook.id,
+                        bookWantedId: bookWantedId,
                       );
                       _scrollToBottom();
                     },
@@ -156,12 +166,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(widget.otherUserName,
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-          ],
+        title: Text(
+          widget.otherUserName,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
       body: Column(
@@ -175,7 +182,16 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
 
                 final messages = snapshot.data ?? [];
-                _scrollToBottom();
+
+                if (messages.isEmpty) {
+                  return const Center(
+                    child: Text(
+                      'No messages yet.\nStart the conversation! 📚',
+                      textAlign: TextAlign.center,
+                    ),
+                  );
+                }
+                if (_isAtBottom()) _scrollToBottom();
 
                 return ListView.builder(
                   controller: _scrollController,
@@ -194,6 +210,12 @@ class _ChatScreenState extends State<ChatScreen> {
                       isMe: isMe,
                       swapId: widget.swapId,
                       currentUid: currentUid,
+                      otherUserId: widget.otherUserId,
+                      onCounter: isMe
+                          ? null
+                          : () => _showCounterOfferSheet(
+                        bookWantedId: message.bookOfferedId ?? '',
+                      ),
                     );
                   },
                 );
@@ -203,7 +225,7 @@ class _ChatScreenState extends State<ChatScreen> {
           _InputBar(
             controller: _controller,
             onSend: _sendText,
-            onCounterOffer: _showCounterOfferSheet,
+            onCounterOffer: null,
           ),
         ],
       ),
@@ -226,9 +248,8 @@ class _TextBubble extends StatelessWidget {
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.72,
-        ),
+        constraints:
+        BoxConstraints(maxWidth: MediaQuery.of(context).size.width * 0.72),
         decoration: BoxDecoration(
           color: isMe
               ? colorScheme.primary
@@ -273,24 +294,34 @@ class _TextBubble extends StatelessWidget {
   }
 }
 
-class _ProposalCard extends StatelessWidget {
+class _ProposalCard extends StatefulWidget {
   final ChatMessage message;
   final bool isMe;
   final String swapId;
   final String currentUid;
+  final String otherUserId;
+  final VoidCallback? onCounter;
 
   const _ProposalCard({
     required this.message,
     required this.isMe,
     required this.swapId,
     required this.currentUid,
+    required this.otherUserId,
+    this.onCounter,
   });
+
+  @override
+  State<_ProposalCard> createState() => _ProposalCardState();
+}
+
+class _ProposalCardState extends State<_ProposalCard> {
+  final BrowseService _browseService = BrowseService();
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final browseService = BrowseService();
-    final isProposal = message.type == MessageType.proposal;
+    final isProposal = widget.message.type == MessageType.proposal;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -298,27 +329,39 @@ class _ProposalCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+        border:
+        Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            isProposal ? 'Swap proposal' : 'Counter offer',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
+          Row(children: [
+            Icon(
+              isProposal
+                  ? Icons.swap_horiz_rounded
+                  : Icons.replay_rounded,
+              size: 15,
               color: colorScheme.primary,
-              letterSpacing: 0.5,
             ),
-          ),
+            const SizedBox(width: 6),
+            Text(
+              isProposal ? 'Swap proposal' : 'Counter offer',
+              style: TextStyle(
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: colorScheme.primary,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ]),
           const SizedBox(height: 10),
           Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               _BookMini(
-                bookId: message.bookOfferedId ?? '',
-                ownerId: message.bookOfferedOwnerId ?? '',
-                browseService: browseService,
+                bookId: widget.message.bookOfferedId ?? '',
+                ownerId: widget.isMe ? widget.currentUid : widget.otherUserId,
+                browseService: _browseService,
               ),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -326,39 +369,17 @@ class _ProposalCard extends StatelessWidget {
                     color: colorScheme.primary, size: 24),
               ),
               _BookMini(
-                bookId: message.bookWantedId ?? '',
-                ownerId: isMe ? (message.bookOfferedOwnerId ?? '') : currentUid,
-                browseService: browseService,
-                fallbackOwnerId: isMe ? null : currentUid,
+                bookId: widget.message.bookWantedId ?? '',
+                ownerId: widget.isMe ? widget.otherUserId : widget.currentUid,
+                browseService: _browseService,
               ),
             ],
           ),
-          if (!isMe) ...[
+          if (!widget.isMe) ...[
             const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: () => context
-                        .read<ChatProvider>()
-                        .updateChatStatus(swapId, ChatStatus.cancelled),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
-                    ),
-                    child: const Text('Reject'),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilledButton(
-                    onPressed: () => context
-                        .read<ChatProvider>()
-                        .updateChatStatus(swapId, ChatStatus.completed),
-                    child: const Text('Accept'),
-                  ),
-                ),
-              ],
+            _ActionButtons(
+              swapId: widget.swapId,
+              onCounter: widget.onCounter,
             ),
           ],
         ],
@@ -367,17 +388,97 @@ class _ProposalCard extends StatelessWidget {
   }
 }
 
+class _ActionButtons extends StatelessWidget {
+  final String swapId;
+  final VoidCallback? onCounter;
+
+  const _ActionButtons({required this.swapId, this.onCounter});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<DocumentSnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('chats')
+          .doc(swapId)
+          .snapshots(),
+      builder: (context, snap) {
+        if (!snap.hasData || !snap.data!.exists) {
+          return _buttons(context, ChatStatus.active);
+        }
+
+        final data = snap.data!.data() as Map<String, dynamic>;
+        final status = ChatStatus.values.byName(
+          data['status'] as String? ?? 'active',
+        );
+
+        if (status != ChatStatus.active) {
+          return Align(
+            alignment: Alignment.center,
+            child: Text(
+              status == ChatStatus.completed
+                  ? '✅ Swap accepted'
+                  : '❌ Swap rejected',
+              style: TextStyle(
+                fontSize: 12,
+                color: status == ChatStatus.completed
+                    ? Colors.green[700]
+                    : Colors.red[700],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          );
+        }
+
+        return _buttons(context, status);
+      },
+    );
+  }
+
+  Widget _buttons(BuildContext context, ChatStatus status) {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: () => context
+                .read<ChatProvider>()
+                .updateChatStatus(swapId, ChatStatus.cancelled),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red),
+            ),
+            child: const Text('Reject'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: OutlinedButton(
+            onPressed: onCounter,
+            child: const Text('Counter'),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: FilledButton(
+            onPressed: () => context
+                .read<ChatProvider>()
+                .updateChatStatus(swapId, ChatStatus.completed),
+            child: const Text('Accept'),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _BookMini extends StatelessWidget {
   final String bookId;
   final String ownerId;
   final BrowseService browseService;
-  final String? fallbackOwnerId;
 
   const _BookMini({
     required this.bookId,
     required this.ownerId,
     required this.browseService,
-    this.fallbackOwnerId,
   });
 
   @override
@@ -404,7 +505,10 @@ class _BookMini extends StatelessWidget {
             SizedBox(
               width: 80,
               child: Text(
-                book?.title ?? '...',
+                book?.title ?? (snapshot.connectionState ==
+                    ConnectionState.waiting
+                    ? '...'
+                    : '—'),
                 style: const TextStyle(fontSize: 11),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -417,23 +521,22 @@ class _BookMini extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() {
-    return Container(
-      width: 48,
-      height: 68,
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: const Icon(Icons.book, color: Colors.grey),
-    );
-  }
+  Widget _placeholder() => Container(
+    width: 48,
+    height: 68,
+    decoration: BoxDecoration(
+      color: Colors.grey[200],
+      borderRadius: BorderRadius.circular(6),
+    ),
+    child: const Icon(Icons.book, color: Colors.grey),
+  );
 }
 
 class _InputBar extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
-  final VoidCallback onCounterOffer;
+  // Null = botão desabilitado (sem contexto de proposta específica)
+  final VoidCallback? onCounterOffer;
 
   const _InputBar({
     required this.controller,
@@ -449,7 +552,10 @@ class _InputBar extends StatelessWidget {
         color: Theme.of(context).colorScheme.surface,
         border: Border(
           top: BorderSide(
-            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+            color: Theme.of(context)
+                .colorScheme
+                .outline
+                .withValues(alpha: 0.2),
           ),
         ),
       ),
@@ -460,6 +566,13 @@ class _InputBar extends StatelessWidget {
               onPressed: onCounterOffer,
               icon: const Icon(Icons.swap_horiz_rounded),
               tooltip: 'Counter offer',
+              // Visualmente acinzentado quando desabilitado
+              color: onCounterOffer != null
+                  ? Theme.of(context).colorScheme.primary
+                  : Theme.of(context)
+                  .colorScheme
+                  .onSurface
+                  .withValues(alpha: 0.3),
             ),
             Expanded(
               child: TextField(

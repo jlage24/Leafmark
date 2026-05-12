@@ -66,6 +66,37 @@ class AuthProvider extends ChangeNotifier {
 
   Future<void> logout() => _repo.logout();
 
+  Future<bool> updateProfile({
+    String? bio,
+    String? profilePictureUrl,
+    List<String>? favoriteAuthors,
+  }) async {
+    if (_user == null) return false;
+    _errorMessage = null;
+
+    try {
+      await _repo.updateProfile(
+        uid: _user!.uid,
+        bio: bio,
+        profilePictureUrl: profilePictureUrl,
+        favoriteAuthors: favoriteAuthors,
+      );
+
+      _user = _user!.copyWith(
+        bio: bio,
+        profilePictureUrl: profilePictureUrl,
+        favoriteAuthors: favoriteAuthors,
+      );
+      notifyListeners();
+      return true;
+
+    } catch (e) {
+      _errorMessage = 'Failed to update profile. Try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
   String _parseError(String code) {
     switch (code) {
       case 'user-not-found':

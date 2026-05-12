@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../../../../features/books/presentation/providers/book_shelf_provider.dart';
 import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dart';
 import '../../../../core/app_theme.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -13,14 +14,23 @@ class ProfileScreen extends StatelessWidget {
     await context.read<AuthProvider>().logout();
   }
 
+  Widget _bookPlaceholder() => Container(
+    width: 64,
+    height: 92,
+    decoration: BoxDecoration(
+        color: Colors.grey[200], borderRadius: BorderRadius.circular(6)),
+    child: const Icon(Icons.book, color: Colors.grey),
+  );
+
   @override
   Widget build(BuildContext context) {
-    final user      = context.watch<AuthProvider>().user;
-    final shelf     = context.watch<BookShelfProvider>();
+    final user = context.watch<AuthProvider>().user;
+    final shelf = context.watch<BookShelfProvider>();
     final textTheme = Theme.of(context).textTheme;
     final initial = user?.displayName.isNotEmpty == true
         ? user!.displayName[0].toUpperCase()
         : '?';
+
     return Scaffold(
       body: ListView(
         children: [
@@ -31,8 +41,17 @@ class ProfileScreen extends StatelessWidget {
               Container(
                 height: 120,
                 width: double.infinity,
-                color: AppTheme.primary,
                 padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                decoration: BoxDecoration(
+                  color: AppTheme.primary,
+                  image: user?.bannerPictureUrl != null &&
+                      user!.bannerPictureUrl!.isNotEmpty
+                      ? DecorationImage(
+                    image: NetworkImage(user.bannerPictureUrl!),
+                    fit: BoxFit.cover,
+                  )
+                      : null,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -46,7 +65,14 @@ class ProfileScreen extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.edit_outlined, size: 20),
                       color: AppTheme.primaryLight,
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -56,14 +82,21 @@ class ProfileScreen extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 36,
                   backgroundColor: AppTheme.primaryLight,
-                  child: Text(
+                  backgroundImage: user?.profilePictureUrl != null &&
+                      user!.profilePictureUrl!.isNotEmpty
+                      ? NetworkImage(user.profilePictureUrl!)
+                      : null,
+                  child: user?.profilePictureUrl == null ||
+                      user!.profilePictureUrl!.isEmpty
+                      ? Text(
                     initial,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w500,
                       color: AppTheme.primary,
                     ),
-                  ),
+                  )
+                      : null,
                 ),
               ),
             ],
@@ -86,27 +119,126 @@ class ProfileScreen extends StatelessWidget {
                   style: textTheme.bodySmall,
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 20),
+                if (user?.bio != null && user!.bio!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    user.bio!,
+                    style: textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+                const SizedBox(height: 24),
                 Row(
                   children: [
-                    _StatCard(label: 'Books',  value: '${shelf.books.length}'),
+                    _StatCard(label: 'Books', value: '${shelf.books.length}'),
                     const SizedBox(width: 8),
-                    _StatCard(label: 'Swaps',  value: '—'),
+                    _StatCard(label: 'Swaps', value: '—'),
                     const SizedBox(width: 8),
-                    _StatCard(label: 'Rating', value: '—'),
+                    _StatCard(
+                      label: 'Rating',
+                      value: user?.rating != null && user!.rating > 0
+                          ? user.rating.toStringAsFixed(1)
+                          : '—',
+                    ),
                   ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 24),
+
+          // FIX: unnecessary_non_null_assertion — favoriteAuthors is non-nullable List<String>
+          if (user?.favoriteAuthors != null &&
+              user!.favoriteAuthors.isNotEmpty) ...[
+            const Divider(),
+            Padding(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Favorite Authors', style: textTheme.titleSmall),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    // FIX: unnecessary_non_null_assertion
+                    children: user.favoriteAuthors.map((author) {
+                      return Chip(
+                        label: Text(author),
+                        backgroundColor:
+                        AppTheme.primaryLight.withValues(alpha: 0.5),
+                        side: BorderSide.none,
+                      );
+                    }).toList(),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          if (user?.favoriteBookTitle != null &&
+              user!.favoriteBookTitle!.isNotEmpty) ...[
+            const Divider(),
+            Padding(
+              padding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Favorite Book', style: textTheme.titleSmall),
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(6),
+                        child: user.favoriteBookCoverUrl != null &&
+                            user.favoriteBookCoverUrl!.isNotEmpty
+                            ? Image.network(
+                          user.favoriteBookCoverUrl!,
+                          width: 64,
+                          height: 92,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stack) =>
+                              _bookPlaceholder(),
+                        )
+                            : _bookPlaceholder(),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              user.favoriteBookTitle!,
+                              style: const TextStyle(
+                                  fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
+                            const SizedBox(height: 4),
+                            if (user.favoriteBookAuthor != null)
+                              Text(
+                                user.favoriteBookAuthor!,
+                                style: TextStyle(
+                                    color: Colors.grey[700], fontSize: 14),
+                              ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+
           const Divider(),
           _MenuItem(
-            iconData:    Icons.menu_book_outlined,
+            iconData: Icons.menu_book_outlined,
             iconBgColor: const Color(0xFFEAF3DE),
-            iconColor:   const Color(0xFF3B6D11),
-            title:       'My Shelf',
-            subtitle:    '${shelf.books.length} books available',
+            iconColor: const Color(0xFF3B6D11),
+            title: 'My Shelf',
+            subtitle: '${shelf.books.length} books available',
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MyShelfScreen()),
@@ -114,12 +246,12 @@ class ProfileScreen extends StatelessWidget {
           ),
           const Divider(),
           _MenuItem(
-            iconData:    Icons.logout,
+            iconData: Icons.logout,
             iconBgColor: const Color(0xFFFCEBEB),
-            iconColor:   const Color(0xFFA32D2D),
-            title:       'Logout',
-            titleColor:  const Color(0xFFA32D2D),
-            onTap:       () => _logout(context),
+            iconColor: const Color(0xFFA32D2D),
+            title: 'Logout',
+            titleColor: const Color(0xFFA32D2D),
+            onTap: () => _logout(context),
           ),
           const SizedBox(height: 32),
         ],
@@ -145,7 +277,16 @@ class _StatCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(value, style: Theme.of(context).textTheme.titleMedium),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (label == 'Rating' && value != '—')
+                  const Icon(Icons.star, size: 16, color: AppTheme.accent),
+                if (label == 'Rating' && value != '—')
+                  const SizedBox(width: 4),
+                Text(value, style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
             const SizedBox(height: 2),
             Text(label, style: Theme.of(context).textTheme.labelSmall),
           ],
@@ -156,12 +297,12 @@ class _StatCard extends StatelessWidget {
 }
 
 class _MenuItem extends StatelessWidget {
-  final IconData  iconData;
-  final Color     iconBgColor;
-  final Color     iconColor;
-  final String    title;
-  final Color?    titleColor;
-  final String?   subtitle;
+  final IconData iconData;
+  final Color iconBgColor;
+  final Color iconColor;
+  final String title;
+  final Color? titleColor;
+  final String? subtitle;
   final VoidCallback onTap;
 
   const _MenuItem({
@@ -177,7 +318,8 @@ class _MenuItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
+      contentPadding:
+      const EdgeInsets.symmetric(horizontal: 24, vertical: 4),
       leading: Container(
         width: 36,
         height: 36,
@@ -189,12 +331,14 @@ class _MenuItem extends StatelessWidget {
       ),
       title: Text(
         title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: titleColor,
-        ),
+        style: Theme.of(context)
+            .textTheme
+            .titleSmall
+            ?.copyWith(color: titleColor),
       ),
       subtitle: subtitle != null
-          ? Text(subtitle!, style: Theme.of(context).textTheme.bodySmall)
+          ? Text(subtitle!,
+          style: Theme.of(context).textTheme.bodySmall)
           : null,
       trailing: subtitle != null
           ? const Icon(Icons.chevron_right, size: 18)

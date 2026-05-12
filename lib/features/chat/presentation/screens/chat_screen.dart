@@ -31,26 +31,28 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
+  late final ChatProvider _chatProvider;
 
   @override
   void initState() {
     super.initState();
+    _chatProvider = context.read<ChatProvider>();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ChatProvider>().markRead(widget.swapId);
+      _chatProvider.markRead(widget.swapId);
     });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      context.read<ChatProvider>().markRead(widget.swapId);
+      _chatProvider.markRead(widget.swapId);
     }
   }
 
   @override
   void dispose() {
-    context.read<ChatProvider>().stopTyping(widget.swapId);
+    _chatProvider.stopTyping(widget.swapId);
     WidgetsBinding.instance.removeObserver(this);
     _controller.dispose();
     _scrollController.dispose();

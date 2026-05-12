@@ -33,7 +33,9 @@ dependencies:
   # Barcode scanning
   mobile_scanner: ^5.1.1
 
-  # HTTP requests (Google Books API)
+  image_picker: ^1.1.2
+
+  # HTTP requests (Google Books API & Cloudinary)
   http: ^1.2.1
 
   # JSON serialization

@@ -19,6 +19,10 @@ class AuthRepository {
           email: user.email!,
           displayName: data?['displayName'] ?? user.displayName ?? '',
           username: data?['username'] ?? '',
+          bio: data?['bio'] as String?,
+          profilePictureUrl: data?['profilePictureUrl'] as String?,
+          favoriteAuthors: List<String>.from(data?['favoriteAuthors'] ?? []),
+          rating: (data?['rating'] as num?)?.toDouble() ?? 0.0,
         );
       }
     }
@@ -66,6 +70,10 @@ class AuthRepository {
       'email': user.email,
       'displayName': user.displayName,
       'username': user.username,
+      'bio': null,
+      'profilePictureUrl': null,
+      'favoriteAuthors': [],
+      'rating': 0.0,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
@@ -92,7 +100,27 @@ class AuthRepository {
       email: cred.user!.email!,
       displayName: data?['displayName'] ?? cred.user!.displayName ?? '',
       username: data?['username'] ?? '',
+      bio: data?['bio'] as String?,
+      profilePictureUrl: data?['profilePictureUrl'] as String?,
+      favoriteAuthors: List<String>.from(data?['favoriteAuthors'] ?? []),
+      rating: (data?['rating'] as num?)?.toDouble() ?? 0.0,
     );
+  }
+
+  Future<void> updateProfile({
+    required String uid,
+    String? bio,
+    String? profilePictureUrl,
+    List<String>? favoriteAuthors,
+  }) async {
+    final Map<String, dynamic> updates = {};
+    if (bio != null) updates['bio'] = bio;
+    if (profilePictureUrl != null) updates['profilePictureUrl'] = profilePictureUrl;
+    if (favoriteAuthors != null) updates['favoriteAuthors'] = favoriteAuthors;
+
+    if (updates.isNotEmpty) {
+      await _db.collection('users').doc(uid).update(updates);
+    }
   }
 
   Future<void> logout() => _auth.signOut();

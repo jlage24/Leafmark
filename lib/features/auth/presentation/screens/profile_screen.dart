@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../../../../features/books/presentation/providers/book_shelf_provider.dart';
 import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dart';
 import '../../../../core/app_theme.dart';
+import 'edit_profile_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -21,6 +22,7 @@ class ProfileScreen extends StatelessWidget {
     final initial = user?.displayName.isNotEmpty == true
         ? user!.displayName[0].toUpperCase()
         : '?';
+
     return Scaffold(
       body: ListView(
         children: [
@@ -46,7 +48,14 @@ class ProfileScreen extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.edit_outlined, size: 20),
                       color: AppTheme.primaryLight,
-                      onPressed: () {},
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const EditProfileScreen(),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
@@ -56,14 +65,19 @@ class ProfileScreen extends StatelessWidget {
                 child: CircleAvatar(
                   radius: 36,
                   backgroundColor: AppTheme.primaryLight,
-                  child: Text(
+                  backgroundImage: user?.profilePictureUrl != null && user!.profilePictureUrl!.isNotEmpty
+                      ? NetworkImage(user.profilePictureUrl!)
+                      : null,
+                  child: user?.profilePictureUrl == null || user!.profilePictureUrl!.isEmpty
+                      ? Text(
                     initial,
-                    style: TextStyle(
+                    style: const TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w500,
                       color: AppTheme.primary,
                     ),
-                  ),
+                  )
+                      : null,
                 ),
               ),
             ],
@@ -86,6 +100,34 @@ class ProfileScreen extends StatelessWidget {
                   style: textTheme.bodySmall,
                   textAlign: TextAlign.center,
                 ),
+
+                // --- NOVA SECÇÃO: Bio ---
+                if (user?.bio != null && user!.bio!.isNotEmpty) ...[
+                  const SizedBox(height: 12),
+                  Text(
+                    user.bio!,
+                    style: textTheme.bodyMedium,
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+
+                // --- NOVA SECÇÃO: Autores Favoritos ---
+                if (user?.favoriteAuthors != null && user!.favoriteAuthors!.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: user.favoriteAuthors!.map((author) {
+                      return Chip(
+                        label: Text(author),
+                        backgroundColor: AppTheme.primaryLight.withValues(alpha: 0.5),
+                        side: BorderSide.none,
+                      );
+                    }).toList(),
+                  ),
+                ],
+
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -93,7 +135,13 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     _StatCard(label: 'Swaps',  value: '—'),
                     const SizedBox(width: 8),
-                    _StatCard(label: 'Rating', value: '—'),
+                    // O trustScore será tratado pelo Membro B, mas já preparamos a UI
+                    _StatCard(
+                        label: 'Rating',
+                        value: user?.trustScore != null && user!.trustScore > 0
+                            ? user.trustScore.toStringAsFixed(1)
+                            : '—'
+                    ),
                   ],
                 ),
               ],
@@ -145,7 +193,16 @@ class _StatCard extends StatelessWidget {
         ),
         child: Column(
           children: [
-            Text(value, style: Theme.of(context).textTheme.titleMedium),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (label == 'Rating' && value != '—')
+                  const Icon(Icons.star, size: 16, color: AppTheme.accent),
+                if (label == 'Rating' && value != '—')
+                  const SizedBox(width: 4),
+                Text(value, style: Theme.of(context).textTheme.titleMedium),
+              ],
+            ),
             const SizedBox(height: 2),
             Text(label, style: Theme.of(context).textTheme.labelSmall),
           ],

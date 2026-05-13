@@ -89,48 +89,8 @@ class ChatService {
     await sendMessage(swapId: swapId, message: message);
   }
 
-  Future<void> acceptSwap({
-    required String swapId,
-    required String bookOfferedId,
-    required String bookOfferedOwnerId,
-    required String bookWantedId,
-    required String bookWantedOwnerId,
-  }) async {
-    final offeredSnap = await _db
-        .collection('users/$bookOfferedOwnerId/shelf')
-        .doc(bookOfferedId)
-        .get();
-    final wantedSnap = await _db
-        .collection('users/$bookWantedOwnerId/shelf')
-        .doc(bookWantedId)
-        .get();
-
-    final offeredLock =
-    offeredSnap.data()?['lockedBySwapId'] as String?;
-    final wantedLock =
-    wantedSnap.data()?['lockedBySwapId'] as String?;
-
-    if (offeredLock != null && offeredLock != swapId) {
-      throw BookAlreadyLockedException(bookOfferedId);
-    }
-    if (wantedLock != null && wantedLock != swapId) {
-      throw BookAlreadyLockedException(bookWantedId);
-    }
-
-    final batch = _db.batch();
-
-    batch.update(_chats.doc(swapId), {'status': ChatStatus.completed.name});
-
-    batch.update(
-      _db.collection('users/$bookOfferedOwnerId/shelf').doc(bookOfferedId),
-      {'lockedBySwapId': swapId},
-    );
-    batch.update(
-      _db.collection('users/$bookWantedOwnerId/shelf').doc(bookWantedId),
-      {'lockedBySwapId': swapId},
-    );
-
-    await batch.commit();
+  Future<void> acceptSwap({required String swapId}) async {
+    await _chats.doc(swapId).update({'status': ChatStatus.completed.name});
   }
 
   Future<void> confirmPhysicalExchange({

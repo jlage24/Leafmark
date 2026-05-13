@@ -708,22 +708,7 @@ class _ActionButtons extends StatelessWidget {
   Future<void> _handleAccept(BuildContext context) async {
     final chatService = ChatService();
     try {
-      await chatService.acceptSwap(
-        swapId: swapId,
-        bookOfferedId: _bookOfferedId,
-        bookOfferedOwnerId: _bookOfferedOwnerId,
-        bookWantedId: _bookWantedId,
-        bookWantedOwnerId: _bookWantedOwnerId,
-      );
-    } on BookAlreadyLockedException {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-              '⚠️ One of these books is already reserved for another swap.'),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      await chatService.acceptSwap(swapId: swapId);
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

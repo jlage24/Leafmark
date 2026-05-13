@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/app_theme.dart';
 import '../../../books/domain/models/book.dart';
 import '../../../books/presentation/screens/book_detail_screen.dart';
 import '../../../ratings/data/services/rating_service.dart';
 import '../../../ratings/domain/models/rating.dart';
+import '../../../ratings/presentation/providers/rating_provider.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
@@ -176,7 +179,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             const SizedBox(width: 8),
 
                             StreamBuilder<List<Rating>>(
-                              stream: RatingService().getRatingsForUser(widget.userId),
+                              stream: context.read<RatingProvider>().getRatingsForUser(widget.userId),
                               builder: (context, snapshot) {
                                 String ratingValue = '—';
 

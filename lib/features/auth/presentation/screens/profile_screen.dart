@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../ratings/presentation/providers/rating_provider.dart';
 import '../providers/auth_provider.dart';
 import '../../../../features/books/presentation/providers/book_shelf_provider.dart';
 import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dart';
@@ -138,7 +139,7 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(width: 8),
 
                     StreamBuilder<List<Rating>>(
-                      stream: RatingService().getRatingsForUser(user?.uid ?? ''),
+                      stream: context.read<RatingProvider>().getRatingsForUser(user?.uid ?? ''),
                       builder: (context, snapshot) {
                         String ratingValue = '—';
 

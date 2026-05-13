@@ -29,7 +29,7 @@ class Rating {
       'rating': rating,
       'bookConditionRating': bookConditionRating,
       'comment': comment,
-      'createdAt': Timestamp.fromDate(createdAt), // Firestore requires Timestamp
+      'createdAt': FieldValue.serverTimestamp(),
     };
   }
 
@@ -40,7 +40,7 @@ class Rating {
       reviewerId: data['reviewerId'] ?? '',
       revieweeId: data['revieweeId'] ?? '',
       swapId: data['swapId'] ?? '',
-      rating: data['ratings']?.toInt() ?? 0,
+      rating: data['rating']?.toInt() ?? 0,
       bookConditionRating: data['bookConditionRating']?.toInt() ?? 0,
       comment: data['comment'],
       createdAt: (data['createdAt'] as Timestamp).toDate(), // Convert back to DateTime

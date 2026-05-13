@@ -41,6 +41,9 @@ class RatingProvider extends ChangeNotifier {
       return false;
     }
   }
+  Stream<List<Rating>> getRatingsForUser(String uid) {
+      return _ratingService.getRatingsForUser(uid);
+  }
 
   // Checks if the current user has already rated this swap
   Future<bool> hasRated(String swapId, String reviewerId) async {

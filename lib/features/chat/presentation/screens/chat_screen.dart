@@ -34,11 +34,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   final _controller = TextEditingController();
   final _scrollController = ScrollController();
   late final ChatProvider _chatProvider;
+  late Future<bool> _hasRatedFuture;
 
   @override
   void initState() {
     super.initState();
     _chatProvider = context.read<ChatProvider>();
+    final currentUid = context.read<AuthProvider>().user?.uid ?? '';
+    _hasRatedFuture = context.read<RatingProvider>().hasRated(widget.swapId, currentUid);
+
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _chatProvider.markRead(widget.swapId);
@@ -335,7 +339,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
               if (status == ChatStatus.completed) {
                 return FutureBuilder<bool>(
-                  future: context.read<RatingProvider>().hasRated(widget.swapId, currentUid),
+                  future: _hasRatedFuture,
                   builder: (context, ratingSnap) {
                     final hasRated = ratingSnap.data ?? false;
 
@@ -364,8 +368,8 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                         ),
                       ),
                       child: FilledButton.icon(
-                        onPressed: () {
-                          Navigator.push(
+                        onPressed: () async {
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (_) => RateExchangeScreen(
@@ -374,6 +378,12 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               ),
                             ),
                           );
+                          // Atualiza o Future caso o utilizador tenha submetido o rating
+                          if (mounted) {
+                            setState(() {
+                              _hasRatedFuture = context.read<RatingProvider>().hasRated(widget.swapId, currentUid);
+                            });
+                          }
                         },
                         icon: const Icon(Icons.star),
                         label: const Text('Rate this exchange'),

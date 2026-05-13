@@ -144,7 +144,7 @@ class ProfileScreen extends StatelessWidget {
 
                         if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                           final ratings = snapshot.data!;
-                          final totalStars = ratings.fold<int>(0, (sum, item) => sum + item.rating);
+                          final totalStars = ratings.fold<int>(0, (total, item) => total + item.rating);
                           final average = totalStars / ratings.length;
                           ratingValue = average.toStringAsFixed(1);
                         }

@@ -6,7 +6,6 @@ import '../../../../features/books/presentation/providers/book_shelf_provider.da
 import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dart';
 import '../../../../core/app_theme.dart';
 import 'edit_profile_screen.dart';
-import '../../../ratings/data/services/rating_service.dart';
 import '../../../ratings/domain/models/rating.dart';
 
 class ProfileScreen extends StatelessWidget {

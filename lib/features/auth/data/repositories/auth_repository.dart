@@ -22,7 +22,7 @@ class AuthRepository {
           profilePictureUrl: data?['profilePictureUrl'] as String?,
           bannerPictureUrl: data?['bannerPictureUrl'] as String?,
           favoriteAuthors: List<String>.from(data?['favoriteAuthors'] ?? []),
-          rating: (data?['rating'] as num?)?.toDouble() ?? 0.0,
+          rating: (data?['ratings'] as num?)?.toDouble() ?? 0.0,
           favoriteBookTitle: data?['favoriteBookTitle'] as String?,
           favoriteBookAuthor: data?['favoriteBookAuthor'] as String?,
           favoriteBookCoverUrl: data?['favoriteBookCoverUrl'] as String?,
@@ -75,7 +75,7 @@ class AuthRepository {
       'bio': null,
       'profilePictureUrl': null,
       'favoriteAuthors': [],
-      'rating': 0.0,
+      'ratings': 0.0,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
@@ -106,7 +106,7 @@ class AuthRepository {
       profilePictureUrl: data?['profilePictureUrl'] as String?,
       bannerPictureUrl: data?['bannerPictureUrl'] as String?,
       favoriteAuthors: List<String>.from(data?['favoriteAuthors'] ?? []),
-      rating: (data?['rating'] as num?)?.toDouble() ?? 0.0,
+      rating: (data?['ratings'] as num?)?.toDouble() ?? 0.0,
       favoriteBookTitle: data?['favoriteBookTitle'] as String?,
       favoriteBookAuthor: data?['favoriteBookAuthor'] as String?,
       favoriteBookCoverUrl: data?['favoriteBookCoverUrl'] as String?,

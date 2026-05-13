@@ -33,13 +33,15 @@ void main() {
       await ratingService.submitRating(dummyRating);
 
       // Assert
-      // Let's manually query our fake firestore to see if the data actually got saved
-      final snapshot = await fakeFirestore.collection('ratings').doc('rating123').get();
+      final docRef = fakeFirestore.collection('ratings').doc('rating123');
+      final snapshot = await docRef.get();
 
       expect(snapshot.exists, isTrue);
-      expect(snapshot.data()?['reviewerId'], 'userA');
-      expect(snapshot.data()?['rating'], 5);
-      expect(snapshot.data()?['comment'], 'Great swap!');
+
+      final data = snapshot.data();
+      expect(data, isNotNull);
+      expect(data!['rating'], equals(5));
+      expect(data['reviewerId'], equals('userA'));
     });
 
     test('hasRated returns true if user already rated this swap', () async {

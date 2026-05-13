@@ -26,7 +26,7 @@ class Rating {
       'reviewerId': reviewerId,
       'revieweeId': revieweeId,
       'swapId': swapId,
-      'ratings': rating,
+      'rating': rating,
       'bookConditionRating': bookConditionRating,
       'comment': comment,
       'createdAt': Timestamp.fromDate(createdAt), // Firestore requires Timestamp

@@ -11,6 +11,8 @@ import '../../data/services/chat_service.dart';
 import '../../domain/models/chat_message.dart';
 import '../../domain/models/chat_metadata.dart';
 import '../../../auth/presentation/screens/public_profile_screen.dart';
+import '../../../../features/ratings/presentation/screens/rate_exchange_screen.dart';
+import '../../../../features/ratings/presentation/providers/rating_provider.dart';
 
 class ChatScreen extends StatefulWidget {
   final String swapId;
@@ -182,6 +184,15 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     );
   }
 
+  Widget _buildStandardInputBar(ChatProvider chatProvider) {
+    return _InputBar(
+      controller: _controller,
+      onChanged: () => chatProvider.onTyping(widget.swapId),
+      onSend: _sendText,
+      onCounterOffer: null,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final currentUid = context.read<AuthProvider>().user?.uid ?? '';
@@ -307,11 +318,90 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             },
           ),
 
-          _InputBar(
-            controller: _controller,
-            onChanged: () => chatProvider.onTyping(widget.swapId),
-            onSend: _sendText,
-            onCounterOffer: null,
+          StreamBuilder<DocumentSnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('chats')
+                .doc(widget.swapId)
+                .snapshots(),
+            builder: (context, chatSnap) {
+              if (!chatSnap.hasData || !chatSnap.data!.exists) {
+                return _buildStandardInputBar(chatProvider);
+              }
+
+              final data = chatSnap.data!.data() as Map<String, dynamic>;
+              final status = ChatStatus.values.byName(
+                data['status'] as String? ?? 'active',
+              );
+
+              if (status == ChatStatus.completed) {
+                return FutureBuilder<bool>(
+                  future: context.read<RatingProvider>().hasRated(widget.swapId, currentUid),
+                  builder: (context, ratingSnap) {
+                    final hasRated = ratingSnap.data ?? false;
+
+                    if (hasRated) {
+                      return Container(
+                        padding: const EdgeInsets.all(16),
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                        child: const Center(
+                          child: Text(
+                            'You have already rated this exchange. Thank you!',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      );
+                    }
+
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).colorScheme.surface,
+                        border: Border(
+                          top: BorderSide(
+                            color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2),
+                          ),
+                        ),
+                      ),
+                      child: FilledButton.icon(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => RateExchangeScreen(
+                                swapId: widget.swapId,
+                                revieweeId: widget.otherUserId,
+                              ),
+                            ),
+                          );
+                        },
+                        icon: const Icon(Icons.star),
+                        label: const Text('Rate this exchange'),
+                        style: FilledButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                      ),
+                    );
+                  },
+                );
+              } else if (status == ChatStatus.cancelled) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  color: Theme.of(context).colorScheme.errorContainer,
+                  child: Center(
+                    child: Text(
+                      'This swap request was rejected.',
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.onErrorContainer),
+                    ),
+                  ),
+                );
+              }
+
+              // If active, show the normal text input
+              return _buildStandardInputBar(chatProvider);
+            },
           ),
         ],
       ),

@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../core/app_theme.dart';
 import '../../../books/domain/models/book.dart';
 import '../../../books/presentation/screens/book_detail_screen.dart';
+import '../../../ratings/data/services/rating_service.dart';
+import '../../../ratings/domain/models/rating.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
@@ -164,8 +166,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       future: _shelfCountFuture,
                       builder: (context, shelfSnap) {
                         final count = shelfSnap.data ?? 0;
-                        final trustScore =
-                            (data?['trustScore'] as num?)?.toDouble() ?? 0.0;
                         return Row(
                           children: [
                             _StatCard(
@@ -174,11 +174,21 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             const SizedBox(width: 8),
                             _StatCard(label: 'Swaps', value: '—'),
                             const SizedBox(width: 8),
-                            _StatCard(
-                              label: 'Rating',
-                              value: trustScore > 0
-                                  ? trustScore.toStringAsFixed(1)
-                                  : '—',
+
+                            StreamBuilder<List<Rating>>(
+                              stream: RatingService().getRatingsForUser(widget.userId),
+                              builder: (context, snapshot) {
+                                String ratingValue = '—';
+
+                                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                                  final ratings = snapshot.data!;
+                                  final totalStars = ratings.fold<int>(0, (sum, item) => sum + item.rating);
+                                  final average = totalStars / ratings.length;
+                                  ratingValue = average.toStringAsFixed(1);
+                                }
+
+                                return _StatCard(label: 'Rating', value: ratingValue);
+                              },
                             ),
                           ],
                         );

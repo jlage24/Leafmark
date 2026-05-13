@@ -5,6 +5,8 @@ import '../../../../features/books/presentation/providers/book_shelf_provider.da
 import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dart';
 import '../../../../core/app_theme.dart';
 import 'edit_profile_screen.dart';
+import '../../../ratings/data/services/rating_service.dart';
+import '../../../ratings/domain/models/rating.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -134,11 +136,21 @@ class ProfileScreen extends StatelessWidget {
                     const SizedBox(width: 8),
                     _StatCard(label: 'Swaps', value: '—'),
                     const SizedBox(width: 8),
-                    _StatCard(
-                      label: 'Rating',
-                      value: user?.rating != null && user!.rating > 0
-                          ? user.rating.toStringAsFixed(1)
-                          : '—',
+
+                    StreamBuilder<List<Rating>>(
+                      stream: RatingService().getRatingsForUser(user?.uid ?? ''),
+                      builder: (context, snapshot) {
+                        String ratingValue = '—';
+
+                        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                          final ratings = snapshot.data!;
+                          final totalStars = ratings.fold<int>(0, (sum, item) => sum + item.rating);
+                          final average = totalStars / ratings.length;
+                          ratingValue = average.toStringAsFixed(1);
+                        }
+
+                        return _StatCard(label: 'Rating', value: ratingValue);
+                      },
                     ),
                   ],
                 ),
@@ -147,7 +159,6 @@ class ProfileScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // FIX: unnecessary_non_null_assertion — favoriteAuthors is non-nullable List<String>
           if (user?.favoriteAuthors != null &&
               user!.favoriteAuthors.isNotEmpty) ...[
             const Divider(),
@@ -162,7 +173,6 @@ class ProfileScreen extends StatelessWidget {
                   Wrap(
                     spacing: 8,
                     runSpacing: 8,
-                    // FIX: unnecessary_non_null_assertion
                     children: user.favoriteAuthors.map((author) {
                       return Chip(
                         label: Text(author),

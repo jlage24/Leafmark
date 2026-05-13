@@ -62,5 +62,11 @@ service cloud.firestore {
       }
     }
 
+    match /ratings/{ratingId} {
+      allow create: if request.auth != null && request.auth.uid == request.resource.data.reviewerId; [cite: 57]
+      allow read: if request.auth != null; [cite: 57]
+      allow update, delete: if false; [cite: 57]
+    }
+
   }
 }

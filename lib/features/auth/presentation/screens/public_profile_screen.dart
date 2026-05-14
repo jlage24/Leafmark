@@ -9,6 +9,8 @@ import '../../../ratings/presentation/providers/rating_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../reports/data/services/report_service.dart';
 import '../../../reports/domain/models/report.dart';
+import '../../../wishlist/domain/models/wishlist_item.dart';
+import '../../../wishlist/presentation/providers/wishlist_provider.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
@@ -92,8 +94,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            Text('Report user',
-                style: Theme.of(context).textTheme.titleMedium),
+            Text('Report user', style: Theme.of(context).textTheme.titleMedium),
             const SizedBox(height: 4),
             Text(
               'Why are you reporting this profile?',
@@ -103,13 +104,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
             ...reasons.map(
                   (reason) => ListTile(
                 contentPadding: EdgeInsets.zero,
-                title: Text(reason,
-                    style: Theme.of(context).textTheme.bodyMedium),
+                title: Text(reason, style: Theme.of(context).textTheme.bodyMedium),
                 trailing: const Icon(Icons.chevron_right, size: 18),
                 onTap: () async {
                   Navigator.pop(context);
-                  final uid =
-                      context.read<AuthProvider>().user?.uid ?? '';
+                  final uid = context.read<AuthProvider>().user?.uid ?? '';
                   await ReportService().submitReport(Report(
                     reporterId: uid,
                     reportedUid: widget.userId,
@@ -118,9 +117,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   ));
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Report submitted. Thank you.'),
-                      ),
+                      const SnackBar(content: Text('Report submitted. Thank you.')),
                     );
                   }
                 },
@@ -161,6 +158,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           return ListView(
             padding: const EdgeInsets.only(bottom: 32),
             children: [
+              // ── Banner + Avatar ──────────────────────────────────────
               Stack(
                 clipBehavior: Clip.none,
                 alignment: Alignment.bottomCenter,
@@ -232,6 +230,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               ),
               const SizedBox(height: 48),
 
+              // ── Nome, username, bio, stats ───────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
@@ -263,20 +262,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             const SizedBox(width: 8),
                             _StatCard(label: 'Swaps', value: '—'),
                             const SizedBox(width: 8),
-
                             StreamBuilder<List<Rating>>(
-                              stream: context.read<RatingProvider>().getRatingsForUser(widget.userId),
+                              stream: context
+                                  .read<RatingProvider>()
+                                  .getRatingsForUser(widget.userId),
                               builder: (context, snapshot) {
                                 String ratingValue = '—';
-
-                                if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+                                if (snapshot.hasData &&
+                                    snapshot.data!.isNotEmpty) {
                                   final ratings = snapshot.data!;
-                                  final totalStars = ratings.fold<int>(0, (total, item) => total + item.rating);
-                                  final average = totalStars / ratings.length;
-                                  ratingValue = average.toStringAsFixed(1);
+                                  final totalStars = ratings.fold<int>(
+                                      0, (t, r) => t + r.rating);
+                                  ratingValue =
+                                      (totalStars / ratings.length)
+                                          .toStringAsFixed(1);
                                 }
-
-                                return _StatCard(label: 'Rating', value: ratingValue);
+                                return _StatCard(
+                                    label: 'Rating', value: ratingValue);
                               },
                             ),
                           ],
@@ -288,11 +290,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               ),
               const SizedBox(height: 24),
 
+              // ── Favorite Authors ─────────────────────────────────────
               if (favoriteAuthors.isNotEmpty) ...[
                 const Divider(),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 16),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -304,8 +307,8 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         children: favoriteAuthors
                             .map((author) => Chip(
                           label: Text(author),
-                          backgroundColor: AppTheme.primaryLight
-                              .withValues(alpha: 0.5),
+                          backgroundColor:
+                          AppTheme.primaryLight.withValues(alpha: 0.5),
                           side: BorderSide.none,
                         ))
                             .toList(),
@@ -315,11 +318,12 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 ),
               ],
 
+              // ── Favorite Book ────────────────────────────────────────
               if (favBookTitle != null && favBookTitle.isNotEmpty) ...[
                 const Divider(),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 24, vertical: 16),
+                  padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -367,14 +371,23 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 ),
               ],
 
+              // ── Available Books ──────────────────────────────────────
               const Divider(),
               Padding(
                 padding:
                 const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                child:
-                Text('Available books', style: textTheme.titleSmall),
+                child: Text('Available books', style: textTheme.titleSmall),
               ),
               _ShelfPreview(userId: widget.userId),
+
+              // ── Wishlist (read-only) ─────────────────────────────────
+              const Divider(),
+              Padding(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                child: Text('Wishlist', style: textTheme.titleSmall),
+              ),
+              _WishlistPreview(userId: widget.userId),
             ],
           );
         },
@@ -382,6 +395,62 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     );
   }
 }
+
+// ── Wishlist Preview ───────────────────────────────────────────────────────────
+
+class _WishlistPreview extends StatelessWidget {
+  final String userId;
+  const _WishlistPreview({required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<WishlistItem>>(
+      stream: context.read<WishlistProvider>().getWishlist(userId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final items = snapshot.data ?? [];
+
+        if (items.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              'No books on the wishlist yet.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          );
+        }
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: items.length,
+          itemBuilder: (context, i) {
+            final item = items[i];
+            return ListTile(
+              contentPadding: const EdgeInsets.symmetric(horizontal: 8),
+              leading: const Icon(Icons.bookmark_outline, size: 18),
+              title: Text(item.title,
+                  style: Theme.of(context).textTheme.bodyMedium),
+              subtitle: item.authors.isNotEmpty
+                  ? Text(item.authors.join(', '),
+                  style: Theme.of(context).textTheme.bodySmall)
+                  : null,
+            );
+          },
+        );
+      },
+    );
+  }
+}
+
+// ── Shelf Preview ──────────────────────────────────────────────────────────────
 
 class _ShelfPreview extends StatefulWidget {
   final String userId;
@@ -410,8 +479,7 @@ class _ShelfPreviewState extends State<_ShelfPreview> {
     width: 64,
     height: 92,
     decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(6)),
+        color: Colors.grey[200], borderRadius: BorderRadius.circular(6)),
     child: const Icon(Icons.book, color: Colors.grey),
   );
 
@@ -488,6 +556,8 @@ class _ShelfPreviewState extends State<_ShelfPreview> {
     );
   }
 }
+
+// ── Stat Card ──────────────────────────────────────────────────────────────────
 
 class _StatCard extends StatelessWidget {
   final String label;

@@ -22,6 +22,11 @@ service cloud.firestore {
       allow read: if request.auth != null;
     }
 
+    match /users/{uid}/wishlist/{itemId} {
+      allow read:  if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
     match /swap_requests/{requestId} {
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.requesterId;
@@ -63,10 +68,18 @@ service cloud.firestore {
     }
 
     match /ratings/{ratingId} {
-          allow create: if request.auth != null && request.auth.uid == request.resource.data.reviewerId;
-          allow read: if request.auth != null;
-          allow update, delete: if false;
-        }
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.reviewerId;
+      allow read: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    match /reports/{reportId} {
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.reporterId;
+      allow read: if false;
+      allow update, delete: if false;
+    }
 
   }
 }

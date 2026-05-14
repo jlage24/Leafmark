@@ -8,6 +8,7 @@ import '../../../../core/app_theme.dart';
 import 'edit_profile_screen.dart';
 import '../../../ratings/domain/models/rating.dart';
 import '../../../swaps/presentation/screens/exchange_history_screen.dart';
+import '../../../wishlist/presentation/screens/wishlist_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -265,6 +266,22 @@ class ProfileScreen extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const ExchangeHistoryScreen()),
+            ),
+          ),
+          const Divider(),
+          _MenuItem(
+            iconData: Icons.bookmark_outline,
+            iconBgColor: const Color(0xFFF3EAF5),
+            iconColor: const Color(0xFF7A3BA1),
+            title: 'My Wishlist',
+            subtitle: 'Books you\'re looking for',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => WishlistScreen(
+                  uid: user?.uid ?? '',
+                ),
+              ),
             ),
           ),
           const Divider(),

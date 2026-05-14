@@ -6,6 +6,9 @@ import '../../../books/domain/models/book.dart';
 import '../../../books/presentation/screens/book_detail_screen.dart';
 import '../../../ratings/domain/models/rating.dart';
 import '../../../ratings/presentation/providers/rating_provider.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../reports/data/services/report_service.dart';
+import '../../../reports/domain/models/report.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
@@ -58,6 +61,77 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
     child: const Icon(Icons.book, color: Colors.grey),
   );
 
+  void _showReportSheet(BuildContext context) {
+    const reasons = [
+      'Spam',
+      'Inappropriate behavior',
+      'Fake account',
+      'Other',
+    ];
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (_) => Padding(
+        padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 36,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text('Report user',
+                style: Theme.of(context).textTheme.titleMedium),
+            const SizedBox(height: 4),
+            Text(
+              'Why are you reporting this profile?',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 12),
+            ...reasons.map(
+                  (reason) => ListTile(
+                contentPadding: EdgeInsets.zero,
+                title: Text(reason,
+                    style: Theme.of(context).textTheme.bodyMedium),
+                trailing: const Icon(Icons.chevron_right, size: 18),
+                onTap: () async {
+                  Navigator.pop(context);
+                  final uid =
+                      context.read<AuthProvider>().user?.uid ?? '';
+                  await ReportService().submitReport(Report(
+                    reporterId: uid,
+                    reportedUid: widget.userId,
+                    reason: reason,
+                    createdAt: DateTime.now(),
+                  ));
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Report submitted. Thank you.'),
+                      ),
+                    );
+                  }
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -103,19 +177,33 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           : null,
                     ),
                     padding: const EdgeInsets.fromLTRB(16, 32, 16, 0),
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.3),
-                          shape: BoxShape.circle,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.arrow_back_ios_new,
+                                size: 18, color: Colors.white),
+                            onPressed: () => Navigator.pop(context),
+                          ),
                         ),
-                        child: IconButton(
-                          icon: const Icon(Icons.arrow_back_ios_new,
-                              size: 18, color: Colors.white),
-                          onPressed: () => Navigator.pop(context),
+                        Container(
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.3),
+                            shape: BoxShape.circle,
+                          ),
+                          child: IconButton(
+                            icon: const Icon(Icons.flag_outlined,
+                                size: 18, color: Colors.white),
+                            tooltip: 'Report user',
+                            onPressed: () => _showReportSheet(context),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ),
                   Positioned(

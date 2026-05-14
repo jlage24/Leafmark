@@ -99,7 +99,7 @@ class _HistoryTile extends StatelessWidget {
                     width: 60,
                     height: 90,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _placeholder(),
+                    errorBuilder: (context, error, stackTrace) => _placeholder(),
                   )
                       : _placeholder(),
                 ),

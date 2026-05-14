@@ -378,7 +378,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                               ),
                             ),
                           );
-                          // Atualiza o Future caso o utilizador tenha submetido o rating
                           if (mounted) {
                             setState(() {
                               _hasRatedFuture = context.read<RatingProvider>().hasRated(widget.swapId, currentUid);

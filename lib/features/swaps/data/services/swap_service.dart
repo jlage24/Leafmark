@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rxdart/rxdart.dart';
 import '../../domain/models/swap_request.dart';
 
 class DuplicateSwapException implements Exception {}
@@ -48,5 +49,31 @@ class SwapService {
         .map((snap) => snap.docs
         .map((doc) => SwapRequest.fromMap(doc.data(), doc.id))
         .toList());
+  }
+
+  Stream<List<SwapRequest>> exchangeHistory(String uid) {
+    final asRequester = _db
+        .collection(_collection)
+        .where('requesterId', isEqualTo: uid)
+        .where('status', isEqualTo: SwapStatus.accepted.name)
+        .snapshots()
+        .map((s) => s.docs
+        .map((d) => SwapRequest.fromMap(d.data(), d.id))
+        .toList());
+
+    final asOwner = _db
+        .collection(_collection)
+        .where('ownerId', isEqualTo: uid)
+        .where('status', isEqualTo: SwapStatus.accepted.name)
+        .snapshots()
+        .map((s) => s.docs
+        .map((d) => SwapRequest.fromMap(d.data(), d.id))
+        .toList());
+
+    return Rx.combineLatest2(asRequester, asOwner, (a, b) {
+      final merged = [...a, ...b];
+      merged.sort((x, y) => y.createdAt.compareTo(x.createdAt));
+      return merged;
+    });
   }
 }

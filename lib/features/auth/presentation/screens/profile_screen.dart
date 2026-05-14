@@ -7,6 +7,7 @@ import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dar
 import '../../../../core/app_theme.dart';
 import 'edit_profile_screen.dart';
 import '../../../ratings/domain/models/rating.dart';
+import '../../../swaps/presentation/screens/exchange_history_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -252,6 +253,18 @@ class ProfileScreen extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MyShelfScreen()),
+            ),
+          ),
+          const Divider(),
+          _MenuItem(
+            iconData: Icons.history,
+            iconBgColor: const Color(0xFFE8F0FA),
+            iconColor: const Color(0xFF2A5BA8),
+            title: 'Exchange History',
+            subtitle: 'Your completed swaps',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ExchangeHistoryScreen()),
             ),
           ),
           const Divider(),

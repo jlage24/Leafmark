@@ -127,9 +127,25 @@ class WishlistScreen extends StatelessWidget {
         child: BookSearchModal(
           isAuthor: false,
           onSelect: (title, authors, coverUrl) async {
-            final providerUid =
-                context.read<AuthProvider>().user?.uid ?? '';
-            await context.read<WishlistProvider>().addItem(
+            final providerUid = context.read<AuthProvider>().user?.uid ?? '';
+            final wishlistProvider = context.read<WishlistProvider>();
+            final messenger = ScaffoldMessenger.of(context);
+
+            // Verify duplicate
+            final current = await wishlistProvider.getWishlist(providerUid).first;
+
+            final alreadyExists = current.any(
+                  (item) => item.title.toLowerCase() == title.toLowerCase(),
+            );
+
+            if (alreadyExists) {
+              messenger.showSnackBar(
+                SnackBar(content: Text('"$title" is already on your wishlist.')),
+              );
+              return;
+            }
+
+            await wishlistProvider.addItem(
               providerUid,
               WishlistItem(
                 id: '',

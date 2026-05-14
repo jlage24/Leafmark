@@ -9,6 +9,7 @@ import '../../../ratings/presentation/providers/rating_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../reports/data/services/report_service.dart';
 import '../../../reports/domain/models/report.dart';
+import '../../../swaps/presentation/providers/swap_provider.dart';
 import '../../../wishlist/domain/models/wishlist_item.dart';
 import '../../../wishlist/presentation/providers/wishlist_provider.dart';
 
@@ -106,21 +107,32 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 contentPadding: EdgeInsets.zero,
                 title: Text(reason, style: Theme.of(context).textTheme.bodyMedium),
                 trailing: const Icon(Icons.chevron_right, size: 18),
-                onTap: () async {
-                  Navigator.pop(context);
-                  final uid = context.read<AuthProvider>().user?.uid ?? '';
-                  await ReportService().submitReport(Report(
-                    reporterId: uid,
-                    reportedUid: widget.userId,
-                    reason: reason,
-                    createdAt: DateTime.now(),
-                  ));
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Report submitted. Thank you.')),
-                    );
-                  }
-                },
+                    onTap: () async {
+                      Navigator.pop(context);
+                      final uid = context.read<AuthProvider>().user?.uid ?? '';
+                      try {
+                        await ReportService().submitReport(Report(
+                          reporterId: uid,
+                          reportedUid: widget.userId,
+                          reason: reason,
+                          createdAt: DateTime.now(),
+                        ));
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Report submitted. Thank you.')),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Failed to submit report. Please try again.'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        }
+                      }
+                    },
               ),
             ),
           ],
@@ -260,7 +272,15 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                 label: 'Books',
                                 value: shelfSnap.hasData ? '$count' : '…'),
                             const SizedBox(width: 8),
-                            _StatCard(label: 'Swaps', value: '—'),
+                            StreamBuilder<int>(
+                              stream: context.read<SwapProvider>().exchangeCount(widget.userId),
+                              builder: (context, snapshot) {
+                                return _StatCard(
+                                  label: 'Swaps',
+                                  value: snapshot.hasData ? '${snapshot.data}' : '—',
+                                );
+                              },
+                            ),
                             const SizedBox(width: 8),
                             StreamBuilder<List<Rating>>(
                               stream: context

@@ -62,7 +62,11 @@ class ChatListScreen extends StatelessWidget {
               final chat = chats[index];
               final otherUid = chat.participantIds
                   .firstWhere((id) => id != currentUid, orElse: () => '');
-              return _ChatTile(chat: chat, otherUid: otherUid);
+              return _ChatTile(
+                key: ValueKey(chat.swapId),
+                chat: chat,
+                otherUid: otherUid,
+              );
             },
           );
         },
@@ -75,7 +79,7 @@ class _ChatTile extends StatefulWidget {
   final ChatMetadata chat;
   final String otherUid;
 
-  const _ChatTile({required this.chat, required this.otherUid});
+  const _ChatTile({super.key, required this.chat, required this.otherUid});
 
   @override
   State<_ChatTile> createState() => _ChatTileState();
@@ -83,18 +87,34 @@ class _ChatTile extends StatefulWidget {
 
 class _ChatTileState extends State<_ChatTile> {
   String? _displayName;
+  String? _photoUrl;
 
   @override
   void initState() {
     super.initState();
-    _loadDisplayName();
+    _loadUserInfo();
   }
 
-  Future<void> _loadDisplayName() async {
-    final name = await context
+  @override
+  void didUpdateWidget(_ChatTile oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.otherUid != widget.otherUid) {
+      _displayName = null;
+      _photoUrl = null;
+      _loadUserInfo();
+    }
+  }
+
+  Future<void> _loadUserInfo() async {
+    final info = await context
         .read<ChatProvider>()
-        .fetchDisplayName(widget.otherUid);
-    if (mounted) setState(() => _displayName = name);
+        .fetchUserInfo(widget.otherUid);
+    if (mounted) {
+      setState(() {
+        _displayName = info['displayName'];
+        _photoUrl = info['photoUrl'];
+      });
+    }
   }
 
   @override
@@ -105,13 +125,17 @@ class _ChatTileState extends State<_ChatTile> {
     return ListTile(
       leading: CircleAvatar(
         backgroundColor: colorScheme.primaryContainer,
-        child: Text(
+        backgroundImage:
+        _photoUrl != null ? NetworkImage(_photoUrl!) : null,
+        child: _photoUrl == null
+            ? Text(
           name.isNotEmpty ? name[0].toUpperCase() : '?',
           style: TextStyle(
             color: colorScheme.onPrimaryContainer,
             fontWeight: FontWeight.bold,
           ),
-        ),
+        )
+            : null,
       ),
       title: Text(
         name,
@@ -121,8 +145,8 @@ class _ChatTileState extends State<_ChatTile> {
         widget.chat.lastMessage ?? 'Swap proposal',
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-            color: colorScheme.onSurface.withValues(alpha: 0.6)),
+        style:
+        TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.6)),
       ),
       trailing: widget.chat.lastMessageAt != null
           ? Text(

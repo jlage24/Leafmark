@@ -158,7 +158,7 @@ class ChatService {
     return _chats
         .doc(swapId)
         .collection('messages')
-        .orderBy('createdAt', descending: false)
+        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snap) => snap.docs
         .map((doc) => ChatMessage.fromMap(doc.data(), doc.id))
@@ -176,14 +176,23 @@ class ChatService {
         .toList());
   }
 
-  Future<String?> fetchDisplayName(String uid) async {
+  Future<Map<String, String?>> fetchUserInfo(String uid) async {
     try {
       final doc = await _db.collection('users').doc(uid).get();
-      if (!doc.exists) return null;
-      return doc.data()?['displayName'] as String?;
+      if (!doc.exists) return {'displayName': null, 'photoUrl': null};
+      final data = doc.data()!;
+      return {
+        'displayName': data['displayName'] as String?,
+        'photoUrl': data['profilePictureUrl'] as String?,
+      };
     } catch (_) {
-      return null;
+      return {'displayName': null, 'photoUrl': null};
     }
+  }
+
+  Future<String?> fetchDisplayName(String uid) async {
+    final info = await fetchUserInfo(uid);
+    return info['displayName'];
   }
 
   String _lastMessagePreview(MessageType type) {
@@ -223,6 +232,13 @@ class ChatService {
   Future<void> markRead(String swapId, String uid) async {
     await _chats.doc(swapId).update({
       'lastReadAt.$uid': FieldValue.serverTimestamp(),
+    });
+  }
+
+  Stream<ChatMetadata?> chatStream(String swapId) {
+    return _chats.doc(swapId).snapshots().map((snap) {
+      if (!snap.exists) return null;
+      return ChatMetadata.fromMap(snap.data() as Map<String, dynamic>);
     });
   }
 

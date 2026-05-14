@@ -8,6 +8,7 @@ import 'package:leafmark/features/search/presentation/providers/search_provider.
 import 'package:leafmark/features/books/data/services/google_books_service.dart';
 import 'package:leafmark/core/app_theme.dart';
 import 'package:leafmark/core/leafmark_text_field.dart';
+import '../../../../core/widgets/book_search_modal.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -139,32 +140,29 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   void _openSearchModal(bool isAuthor) {
     final searchProvider = context.read<SearchProvider>();
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (modalContext) {
-        return ChangeNotifierProvider.value(
-          value: searchProvider,
-          child: _SearchModal(
-            isAuthor: isAuthor,
-            onSelect: (title, author, cover) {
-              setState(() {
-                if (isAuthor) {
-                  if (!_favoriteAuthors.contains(author)) {
-                    _favoriteAuthors.add(author);
-                  }
-                } else {
-                  _favBookTitle = title;
-                  _favBookAuthor = author;
-                  _favBookCoverUrl = cover;
+      builder: (modalContext) => ChangeNotifierProvider.value(
+        value: searchProvider,
+        child: BookSearchModal(
+          isAuthor: isAuthor,
+          onSelect: (title, authors, cover) {
+            setState(() {
+              if (isAuthor) {
+                if (!_favoriteAuthors.contains(authors)) {
+                  _favoriteAuthors.add(authors);
                 }
-              });
-            },
-          ),
-        );
-      },
+              } else {
+                _favBookTitle = title;
+                _favBookAuthor = authors;
+                _favBookCoverUrl = cover;
+              }
+            });
+          },
+        ),
+      ),
     );
   }
 

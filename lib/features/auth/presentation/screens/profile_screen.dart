@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../ratings/presentation/providers/rating_provider.dart';
+import '../../../swaps/presentation/providers/swap_provider.dart';
 import '../providers/auth_provider.dart';
 import '../../../../features/books/presentation/providers/book_shelf_provider.dart';
 import 'package:leafmark/features/books/presentation/screens/my_shelf_screen.dart';
 import '../../../../core/app_theme.dart';
 import 'edit_profile_screen.dart';
 import '../../../ratings/domain/models/rating.dart';
+import '../../../swaps/presentation/screens/exchange_history_screen.dart';
+import '../../../wishlist/presentation/screens/wishlist_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -134,7 +137,15 @@ class ProfileScreen extends StatelessWidget {
                   children: [
                     _StatCard(label: 'Books', value: '${shelf.books.length}'),
                     const SizedBox(width: 8),
-                    _StatCard(label: 'Swaps', value: '—'),
+                    StreamBuilder<int>(
+                      stream: context.read<SwapProvider>().exchangeCount(user?.uid ?? ''),
+                      builder: (context, snapshot) {
+                        return _StatCard(
+                          label: 'Swaps',
+                          value: snapshot.hasData ? '${snapshot.data}' : '—',
+                        );
+                      },
+                    ),
                     const SizedBox(width: 8),
 
                     StreamBuilder<List<Rating>>(
@@ -252,6 +263,34 @@ class ProfileScreen extends StatelessWidget {
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const MyShelfScreen()),
+            ),
+          ),
+          const Divider(),
+          _MenuItem(
+            iconData: Icons.history,
+            iconBgColor: const Color(0xFFE8F0FA),
+            iconColor: const Color(0xFF2A5BA8),
+            title: 'Exchange History',
+            subtitle: 'Your completed swaps',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const ExchangeHistoryScreen()),
+            ),
+          ),
+          const Divider(),
+          _MenuItem(
+            iconData: Icons.bookmark_outline,
+            iconBgColor: const Color(0xFFF3EAF5),
+            iconColor: const Color(0xFF7A3BA1),
+            title: 'My Wishlist',
+            subtitle: 'Books you\'re looking for',
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => WishlistScreen(
+                  uid: user?.uid ?? '',
+                ),
+              ),
             ),
           ),
           const Divider(),

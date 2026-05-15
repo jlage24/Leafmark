@@ -132,7 +132,7 @@ class ChatService {
     if (offeredSnap.data()?['lockedBySwapId'] == swapId) {
       batch.update(
         _db.collection('users/$bookOfferedOwnerId/shelf').doc(bookOfferedId),
-        {'lockedBySwapId': FieldValue.delete()},
+        {'lockedBySwapId': null},
       );
     }
 
@@ -143,7 +143,7 @@ class ChatService {
     if (wantedSnap.data()?['lockedBySwapId'] == swapId) {
       batch.update(
         _db.collection('users/$bookWantedOwnerId/shelf').doc(bookWantedId),
-        {'lockedBySwapId': FieldValue.delete()},
+        {'lockedBySwapId': null},
       );
     }
 

@@ -17,13 +17,32 @@ class SwapProvider extends ChangeNotifier {
     notifyListeners();
     try {
       return await _service.createSwapRequest(request);
+    } catch (e) {
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> accept(String id) => _service.updateStatus(id, SwapStatus.accepted);
-  Future<void> reject(String id) => _service.updateStatus(id, SwapStatus.rejected);
-  Future<void> cancel(String id) => _service.deleteRequest(id);
+  Future<void> accept(SwapRequest req) async {
+    try {
+      await _service.acceptSwapAndLockBooks(req);
+    } catch (e) {
+      debugPrint('Accept error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> reject(String id) async {
+    try {
+      await _service.updateStatus(id, SwapStatus.rejected);
+    } catch (e) { rethrow; }
+  }
+
+  Future<void> cancel(String id) async {
+    try {
+      await _service.deleteRequest(id);
+    } catch (e) { rethrow; }
+  }
 }

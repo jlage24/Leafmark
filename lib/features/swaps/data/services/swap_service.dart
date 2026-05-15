@@ -9,18 +9,52 @@ class SwapService {
   final String _collection = 'swap_requests';
 
   Future<String> createSwapRequest(SwapRequest request) async {
-    final existing = await _db.collection(_collection)
-        .where('bookWantedId', isEqualTo: request.bookWantedId)
-        .where('requesterId', isEqualTo: request.requesterId)
-        .where('status', isEqualTo: SwapStatus.pending.name)
-        .get(const GetOptions(source: Source.server));
+    return await _db.runTransaction<String>((transaction) async {
+      final query = await _db.collection(_collection)
+          .where('bookWantedId', isEqualTo: request.bookWantedId)
+          .where('requesterId', isEqualTo: request.requesterId)
+          .where('status', isEqualTo: SwapStatus.pending.name)
+          .get();
 
-    if (existing.docs.isNotEmpty) {
-      throw DuplicateSwapException();
+      if (query.docs.isNotEmpty) {
+        throw DuplicateSwapException();
+      }
+
+      final docRef = _db.collection(_collection).doc();
+      transaction.set(docRef, request.toMap());
+      return docRef.id;
+    });
+  }
+
+  Future<void> acceptSwapAndLockBooks(SwapRequest swap) async {
+    final batch = _db.batch();
+
+    final swapRef = _db.collection(_collection).doc(swap.id);
+    batch.update(swapRef, {'status': SwapStatus.accepted.name});
+
+    final offeredBookRef = _db.collection('users/${swap.requesterId}/shelf').doc(swap.bookOfferedId);
+    final wantedBookRef = _db.collection('users/${swap.ownerId}/shelf').doc(swap.bookWantedId);
+
+    batch.update(offeredBookRef, {'lockedBySwapId': swap.id});
+    batch.update(wantedBookRef, {'lockedBySwapId': swap.id});
+
+    final otherRequests = await _db.collection(_collection)
+        .where('status', isEqualTo: SwapStatus.pending.name)
+        .get();
+
+    for (var doc in otherRequests.docs) {
+      if (doc.id == swap.id) continue;
+
+      final data = doc.data();
+      final conflictsWithWanted = data['bookWantedId'] == swap.bookWantedId || data['bookOfferedId'] == swap.bookWantedId;
+      final conflictsWithOffered = data['bookWantedId'] == swap.bookOfferedId || data['bookOfferedId'] == swap.bookOfferedId;
+
+      if (conflictsWithWanted || conflictsWithOffered) {
+        batch.update(doc.reference, {'status': SwapStatus.rejected.name});
+      }
     }
 
-    final doc = await _db.collection(_collection).add(request.toMap());
-    return doc.id;
+    await batch.commit();
   }
 
   Future<void> updateStatus(String id, SwapStatus status) async {

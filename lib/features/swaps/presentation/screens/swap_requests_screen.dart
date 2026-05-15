@@ -141,19 +141,49 @@ class _RequestList extends StatelessWidget {
                                     ? [
                                   IconButton(
                                     icon: const Icon(Icons.check_circle, color: Colors.green, size: 30),
-                                    onPressed: () => swapP.accept(req.id),
                                     tooltip: 'Accept Request',
+                                    onPressed: () async {
+                                      try {
+                                        await swapP.accept(req);
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Failed to accept swap.')),
+                                          );
+                                        }
+                                      }
+                                    },
                                   ),
                                   IconButton(
                                     icon: const Icon(Icons.cancel, color: Colors.red, size: 30),
-                                    onPressed: () => swapP.reject(req.id),
                                     tooltip: 'Reject Request',
+                                    onPressed: () async {
+                                      try {
+                                        await swapP.reject(req.id);
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Failed to reject swap.')),
+                                          );
+                                        }
+                                      }
+                                    },
                                   ),
                                 ]
                                     : [
                                   TextButton(
-                                    onPressed: () => swapP.cancel(req.id),
                                     child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                                    onPressed: () async {
+                                      try {
+                                        await swapP.cancel(req.id);
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Failed to cancel swap.')),
+                                          );
+                                        }
+                                      }
+                                    },
                                   ),
                                 ],
                               ),

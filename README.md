@@ -17,6 +17,8 @@ It is organised by the following activities:
     * [Logical Architecture](#Logical-Architecture)
     * [Physical Architecture](#Physical-Architecture)
     * [Functional Prototype](#Functional-Prototype)
+* [Setup](#Setup)
+* [AI Usage](#AI-Usage)
 * [Project Management](#Project-Management)
     * [Sprint 0](#Sprint-0)
     * [Sprint 1](#Sprint-1)
@@ -63,6 +65,7 @@ Leafmark is a community-driven book exchange platform that makes trading books b
 - Google Books API is available and returns results for standard ISBN-10 and ISBN-13 codes; OpenLibrary is used as a cover fallback
 - Firebase services (Auth, Firestore, Storage) are available and correctly configured
 - Trust/safety features (peer ratings, report user, secure chat) are planned for upcoming sprints
+
 ---
 
 ## Requirements
@@ -120,7 +123,6 @@ Based on this feedback, the following backlog changes were made:
 
 ### Logical Architecture
 
-
 <p align="center">
   <img src="docs/diagrams/Logical-Architecture-UML.drawio.png" alt="Logical Architecture"/>
 </p>
@@ -137,7 +139,6 @@ Based on this feedback, the following backlog changes were made:
 
 ### Physical Architecture
 
-
 <p align="center">
   <img src="docs/diagrams/Physical-Architecture-UML.drawio.png" alt="Physical Architecture"/>
 </p>
@@ -152,7 +153,6 @@ Based on this feedback, the following backlog changes were made:
 - Mobile App → Firebase: SDK calls
 - Mobile App → Google Books API: HTTP requests
 
-
 ### Technology Justification
 
 Flutter was chosen because it enables cross-platform mobile development with a single codebase, which is especially valuable for a small team of five developers working under tight sprint deadlines. It allows rapid iteration and consistent UI development across platforms.
@@ -161,7 +161,7 @@ Firebase was chosen as the backend for LeafMark because it provides a fully mana
 
 For the current prototype (Sprint 0), local storage is sufficient to demonstrate the core functionality. However, Firebase will support future features such as user accounts, swap requests, and real-time interactions between users.
 
-Additionally, the Google Books API allows automatic retrieval of book data from ISBN codes, which is central to Leafmark’s core user flow and significantly simplifies the user experience.
+Additionally, the Google Books API allows automatic retrieval of book data from ISBN codes, which is central to Leafmark's core user flow and significantly simplifies the user experience.
 
 ### Functional Prototype
 
@@ -175,10 +175,92 @@ The functional prototype evolved across Sprint 0 and Sprint 1 to cover the full 
 
 ---
 
+## Setup
+
+Everything you need to run LeafMark locally after cloning the repo.
+
+### Prerequisites
+
+- [Flutter SDK](https://docs.flutter.dev/get-started/install) (version matching `pubspec.yaml`)
+- Android Studio with an Android emulator (API 21+), or a physical Android device
+- A Firebase project with Firestore, Auth and Storage enabled
+- A Google Books API key
+
+### 1. Clone the repo and install dependencies
+
+```bash
+git clone https://github.com/LEIC-ES-2025-26-2LEIC14/T4.git
+cd T4
+flutter pub get
+```
+
+### 2. Firebase configuration
+
+The `google-services.json` file is not committed to the repository. You need to get it from a team member or generate it yourself from the Firebase console.
+
+Place it at:
+```
+android/app/google-services.json
+```
+
+`firebase_options.dart` is committed and does not need to be recreated.
+
+### 3. Google Books API key
+
+Create a file called `.env` in the root of the project (same folder as `pubspec.yaml`):
+
+```
+GOOGLE_BOOKS_API_KEY=your_key_here
+```
+
+The `.env` file is in `.gitignore` and must never be committed. Each team member uses their own key. To get one:
+
+1. Go to [console.cloud.google.com](https://console.cloud.google.com)
+2. Create or select a project
+3. Go to **APIs & Services → Library**, search for **Books API** and enable it
+4. Go to **APIs & Services → Credentials → Create Credentials → API Key**
+5. Copy the key into your `.env`
+
+### 4. Run the app
+
+Always run with `--dart-define-from-file` so the API key is injected:
+
+```bash
+flutter run --dart-define-from-file=.env
+```
+
+If you use the Android Studio **▶️ button**, add this to **Edit Configurations → Additional run args**:
+
+```
+--dart-define-from-file=.env
+```
+
+### 5. Run the tests
+
+```bash
+flutter test
+```
+
+No additional setup needed — tests use `FakeFirebaseFirestore` and do not hit real Firebase.
+
+---
+
+## AI Usage
+
+All five team members used AI assistants during development. The tools used were **Claude** (primary), **Gemini**, **ChatGPT** and **Perplexity**.
+
+Claude was used the most, mainly for implementation guidance, architecture decisions, code review, and writing documentation. Gemini and ChatGPT were used for occasional second opinions on Flutter-specific questions. Perplexity was used mostly for quick lookups and research.
+
+AI was never used to blindly generate and commit code. Every suggestion was read, understood, and adapted to the project's architecture before being used. We treated the tools as a fast way to explore options, not as a replacement for thinking through the problem first.
+
+A full log of AI interactions is available in [`docs/ai_usage_log.md`](docs/ai_usage_log.md).
+
+---
+
 ## Project Management
 
 * Backlog management: Product backlog and Sprint backlog in a [GitHub Projects board](#);
-* Release management: [v0.1.0](../../releases/tag/v0.1.0), [v0.2.0](../../releases/tag/v0.2.0);
+* Release management: [v0.1.0](../../releases/tag/v0.1.0), [v0.2.0](../../releases/tag/v0.2.0), [v0.3.0](../../releases/tag/v0.3.0);
 * Sprint planning and retrospectives:
     * **Plans**: screenshots of GitHub Projects board at the beginning and end of each Sprint;
     * **Retrospectives**: meeting notes addressing:

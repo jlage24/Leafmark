@@ -129,14 +129,12 @@ Based on this feedback, the following backlog changes were made:
 **Package Descriptions and Dependencies:**
 
 - **UI Layer** — Responsible for user interaction: screens, widgets, navigation. Communicates with Business Logic.
-- **Business Logic Layer** — Contains use cases and state management. Coordinates between UI and Data Layer.
-- **Data Layer** — Handles data access and persistence. Uses Domain entities to structure the data.
-- **Domain Layer** — Defines core entities like `Book`, `User`, `SwapRequest`. Independent layer; does not depend on any other layer.
+- **Business Logic Layer** — Contains providers and state management. Handles all application logic and Firebase communication.
+- **Domain Layer** — Defines core entities like `Book`, `User`, `SwapRequest`, `Report`. Independent layer; does not depend on any other layer.
 
 **Dependencies (arrows in diagram):**
 - UI → Business Logic (uses)
-- Business Logic → Data (uses)
-- Data → Domain (uses)
+- Business Logic → Domain (uses)
 
 ### Physical Architecture
 

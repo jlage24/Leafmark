@@ -34,13 +34,20 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   String? _otherUserPhotoUrl;
   StreamSubscription? _messagesSubscription;
 
+  late final Stream<ChatMetadata?> _metaStream;
+  late final Stream<List<ChatMessage>> _messagesStream;
+
   @override
   void initState() {
     super.initState();
     _chatProvider = context.read<ChatProvider>();
     final currentUid = context.read<AuthProvider>().user?.uid ?? '';
+
     _hasRatedFuture =
         context.read<RatingProvider>().hasRated(widget.swapId, currentUid);
+
+    _metaStream = _chatProvider.chatStream(widget.swapId);
+    _messagesStream = _chatProvider.getMessages(widget.swapId);
 
     WidgetsBinding.instance.addObserver(this);
 
@@ -51,7 +58,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     _loadOtherUserPhoto();
 
-    _messagesSubscription = _chatProvider.getMessages(widget.swapId).listen((messages) {
+    _messagesSubscription = _messagesStream.listen((messages) {
       if (mounted && messages.isNotEmpty) {
         _chatProvider.markRead(widget.swapId);
       }
@@ -239,7 +246,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         ),
       ),
       body: StreamBuilder<ChatMetadata?>(
-        stream: _chatProvider.chatStream(widget.swapId),
+        stream: _metaStream,
         builder: (context, metaSnap) {
           final meta = metaSnap.data;
           final status = meta?.status ?? ChatStatus.active;
@@ -252,7 +259,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             children: [
               Expanded(
                 child: StreamBuilder<List<ChatMessage>>(
-                  stream: _chatProvider.getMessages(widget.swapId),
+                  stream: _messagesStream,
                   builder: (context, snapshot) {
                     if (snapshot.connectionState == ConnectionState.waiting) {
                       return const Center(child: CircularProgressIndicator());

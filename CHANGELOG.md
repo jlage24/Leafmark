@@ -6,6 +6,42 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
 
+## [0.3.0] - 2026-05-15 — Sprint 2 Release
+
+### Added
+- In-app chat system (Vinted-style) with swap proposals, counter-offers, typing indicators and read receipts
+- `ChatListScreen` as inbox in the bottom nav Chat tab
+- Book picker bottom sheet to select offered book before creating a swap
+- `PublicProfileScreen` accessible from chat with another user
+- User profile bio, profile photo and Top 3 Favourite Authors (Firestore-persisted)
+- `EditProfileScreen` with multiline bio, photo upload and author fields
+- Rating system — rate trading partner (1–5 stars) and book condition after a completed swap
+- `RateExchangeScreen` with duplicate submission prevention (`hasRated` guard)
+- Exchange history screen listing all successfully completed swaps with cover, title, partner and date
+- Report profile feature — flag suspicious users via bottom sheet (Spam / Inappropriate behaviour / Fake account / Other)
+- Public wishlist — users can create and share a list of books they want to acquire
+- `WishlistScreen` with long-press-to-delete and add by title/author/ISBN
+- Wishlist visible in read-only mode on `PublicProfileScreen`
+- Unit tests for `WishlistService` and `RatingService` using `FakeFirebaseFirestore`
+- UATs for rating flow and exchange history
+
+### Changed
+- `BrowseScreen` fully migrated from dummy data to Firestore via `collectionGroup('shelf')`
+- `SwapRequestsScreen` migrated from dummy data — now shows real cover, title and `displayName`
+- `BookShelfProvider.addBook` now persists `ownerId` and `ownerName` to Firestore
+- Swap request flow moved from `ProfileScreen` menu to Chat tab
+- `ProfileScreen` menu extended with Exchange History and My Wishlist entries
+- Made the suggested changes to the Logical Architecture UML
+
+### Removed
+- Dummy data from `BrowseScreen` and `SwapRequestsScreen` (fully replaced by Firestore)
+
+### Security
+- Firestore security rules added for `ratings`, `reports` and `users/{uid}/wishlist` collections
+
+### Known Limitations
+- GitHub Release asset upload still triggered manually due to org-level Actions permissions (403)
+
 ## [0.2.0] - 2026-04-19 — Sprint 1 Release
 
 ### Added

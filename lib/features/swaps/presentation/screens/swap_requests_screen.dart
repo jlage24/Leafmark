@@ -3,7 +3,8 @@ import 'package:provider/provider.dart';
 import '../../domain/models/swap_request.dart';
 import '../providers/swap_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
-import '../../../../data/dummy_data.dart';
+import '../../../books/data/services/browse_service.dart';
+import '../../../books/domain/models/book.dart';
 
 class SwapRequestsScreen extends StatefulWidget {
   const SwapRequestsScreen({super.key});
@@ -21,7 +22,6 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen> {
     super.initState();
     final uid = context.read<AuthProvider>().user?.uid ?? '';
     final provider = context.read<SwapProvider>();
-
     _incoming = provider.incoming(uid);
     _outgoing = provider.outgoing(uid);
   }
@@ -42,21 +42,14 @@ class _SwapRequestsScreenState extends State<SwapRequestsScreen> {
         ),
         body: TabBarView(
           children: [
-            _RequestList(
-              stream: _incoming,
-              isIncoming: true,
-            ),
-            _RequestList(
-              stream: _outgoing,
-              isIncoming: false,
-            ),
+            _RequestList(stream: _incoming, isIncoming: true),
+            _RequestList(stream: _outgoing, isIncoming: false),
           ],
         ),
       ),
     );
   }
 }
-
 
 class _RequestList extends StatelessWidget {
   final Stream<List<SwapRequest>> stream;
@@ -67,6 +60,7 @@ class _RequestList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final swapP = context.read<SwapProvider>();
+    final browseService = BrowseService();
 
     return StreamBuilder<List<SwapRequest>>(
       stream: stream,
@@ -90,83 +84,116 @@ class _RequestList extends StatelessWidget {
           itemCount: reqs.length,
           itemBuilder: (context, index) {
             final req = reqs[index];
-            final book = findBookById(req.bookWantedId);
-
-            final otherPerson = isIncoming
-                ? req.requesterId
-                : (book?.ownerName ?? req.ownerId);
-
-            return Card(
-              margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
-              child: Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Row(
-                  children: [
-                    // 1. Foto do Livro
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: book?.coverUrl != null
-                          ? Image.network(
-                        book!.coverUrl!,
-                        width: 60,
-                        height: 90,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => _placeholder(),
-                      )
-                          : _placeholder(),
-                    ),
-                    const SizedBox(width: 16),
-
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            book?.title ?? 'Unknown Book',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
+            return FutureBuilder<Book?>(
+              future: browseService.fetchBook(req.ownerId, req.bookWantedId),
+              builder: (context, bookSnapshot) {
+                final book = bookSnapshot.data;
+                return FutureBuilder<String?>(
+                  future: isIncoming
+                      ? browseService.fetchDisplayName(req.requesterId)
+                      : Future.value(book?.ownerName),
+                  builder: (context, nameSnapshot) {
+                    final name = nameSnapshot.data ?? (isIncoming ? req.requesterId : req.ownerId);
+                    return Card(
+                      margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+                      child: Padding(
+                        padding: const EdgeInsets.all(12.0),
+                        child: Row(
+                          children: [
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: book?.coverUrl != null
+                                  ? Image.network(
+                                book!.coverUrl!,
+                                width: 60,
+                                height: 90,
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => _placeholder(),
+                              )
+                                  : _placeholder(),
                             ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            isIncoming
-                                ? 'From: $otherPerson'
-                                : 'To: $otherPerson',
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                          const SizedBox(height: 8),
-                          _StatusBadge(status: req.status),
-                        ],
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    book?.title ?? 'Loading...',
+                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    isIncoming ? 'From: $name' : 'To: $name',
+                                    style: Theme.of(context).textTheme.bodySmall,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _StatusBadge(status: req.status),
+                                ],
+                              ),
+                            ),
+                            if (req.status == SwapStatus.pending)
+                              Column(
+                                children: isIncoming
+                                    ? [
+                                  IconButton(
+                                    icon: const Icon(Icons.check_circle, color: Colors.green, size: 30),
+                                    tooltip: 'Accept Request',
+                                    onPressed: () async {
+                                      try {
+                                        await swapP.accept(req);
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Failed to accept swap.')),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                  IconButton(
+                                    icon: const Icon(Icons.cancel, color: Colors.red, size: 30),
+                                    tooltip: 'Reject Request',
+                                    onPressed: () async {
+                                      try {
+                                        await swapP.reject(req.id);
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Failed to reject swap.')),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ]
+                                    : [
+                                  TextButton(
+                                    child: const Text('Cancel', style: TextStyle(color: Colors.red)),
+                                    onPressed: () async {
+                                      try {
+                                        await swapP.cancel(req.id);
+                                      } catch (e) {
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(content: Text('Failed to cancel swap.')),
+                                          );
+                                        }
+                                      }
+                                    },
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
                       ),
-                    ),
-
-                    if (req.status == SwapStatus.pending)
-                      Column(
-                        children: isIncoming
-                            ? [
-                          IconButton(
-                            icon: const Icon(Icons.check_circle, color: Colors.green, size: 30),
-                            onPressed: () => swapP.accept(req.id),
-                            tooltip: 'Accept Request',
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.cancel, color: Colors.red, size: 30),
-                            onPressed: () => swapP.reject(req.id),
-                            tooltip: 'Reject Request',
-                          ),
-                        ]
-                            : [
-                          TextButton(
-                            onPressed: () => swapP.cancel(req.id),
-                            child: const Text('Cancel', style: TextStyle(color: Colors.red)),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
+                    );
+                  },
+                );
+              },
             );
           },
         );
@@ -184,7 +211,6 @@ class _RequestList extends StatelessWidget {
   }
 }
 
-// Widget auxiliar para mostrar o badge de status (Accepted, Pending, Rejected)
 class _StatusBadge extends StatelessWidget {
   final SwapStatus status;
   const _StatusBadge({required this.status});

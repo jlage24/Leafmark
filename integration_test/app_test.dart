@@ -28,12 +28,12 @@ void main() {
   group('BookShelfProvider - Firestore integration', () {
     testWidgets('books added are persisted and reloadable', (tester) async {
       final provider1 = makeProvider();
-      await provider1.loadBooks('test-uid');
+      await provider1.loadBooks('test-uid', null);
       await provider1.addBook(makeBook('A'));
       await provider1.addBook(makeBook('B'));
 
       final provider2 = BookShelfProvider(firestore: fakeFirestore);
-      await provider2.loadBooks('test-uid');
+      await provider2.loadBooks('test-uid', null);
 
       expect(provider2.books.length, 2);
       expect(provider2.books.map((b) => b.id), containsAll(['A', 'B']));
@@ -41,13 +41,13 @@ void main() {
 
     testWidgets('add then remove persists correctly across reload', (tester) async {
       final provider1 = makeProvider();
-      await provider1.loadBooks('test-uid');
+      await provider1.loadBooks('test-uid', null);
       await provider1.addBook(makeBook('A'));
       await provider1.addBook(makeBook('B'));
       await provider1.removeBook('A');
 
       final provider2 = BookShelfProvider(firestore: fakeFirestore);
-      await provider2.loadBooks('test-uid');
+      await provider2.loadBooks('test-uid', null);
 
       expect(provider2.books.length, 1);
       expect(provider2.books.first.id, 'B');
@@ -55,7 +55,7 @@ void main() {
 
     testWidgets('all BookCondition values persist and reload correctly', (tester) async {
       final provider1 = makeProvider();
-      await provider1.loadBooks('test-uid');
+      await provider1.loadBooks('test-uid', null);
 
       for (final condition in BookCondition.values) {
         await provider1.addBook(Book(
@@ -69,7 +69,7 @@ void main() {
       }
 
       final provider2 = BookShelfProvider(firestore: fakeFirestore);
-      await provider2.loadBooks('test-uid');
+      await provider2.loadBooks('test-uid', null);
 
       for (final condition in BookCondition.values) {
         final match = provider2.books.firstWhere((b) => b.id == condition.name);
@@ -79,23 +79,23 @@ void main() {
 
     testWidgets('empty shelf persists as empty after reload', (tester) async {
       final provider1 = makeProvider();
-      await provider1.loadBooks('test-uid');
+      await provider1.loadBooks('test-uid', null);
       await provider1.addBook(makeBook('A'));
       await provider1.removeBook('A');
 
       final provider2 = BookShelfProvider(firestore: fakeFirestore);
-      await provider2.loadBooks('test-uid');
+      await provider2.loadBooks('test-uid', null);
 
       expect(provider2.books, isEmpty);
     });
 
     testWidgets('optional fields persist as null when not set', (tester) async {
       final provider1 = makeProvider();
-      await provider1.loadBooks('test-uid');
+      await provider1.loadBooks('test-uid', null);
       await provider1.addBook(makeBook('A'));
 
       final provider2 = BookShelfProvider(firestore: fakeFirestore);
-      await provider2.loadBooks('test-uid');
+      await provider2.loadBooks('test-uid', null);
 
       final book = provider2.books.first;
       expect(book.coverUrl, isNull);
@@ -105,7 +105,7 @@ void main() {
 
     testWidgets('optional fields persist correctly when set', (tester) async {
       final provider1 = makeProvider();
-      await provider1.loadBooks('test-uid');
+      await provider1.loadBooks('test-uid', null);
       await provider1.addBook(
         makeBook('A').copyWith(
           coverUrl: 'https://example.com/cover.jpg',
@@ -115,7 +115,7 @@ void main() {
       );
 
       final provider2 = BookShelfProvider(firestore: fakeFirestore);
-      await provider2.loadBooks('test-uid');
+      await provider2.loadBooks('test-uid', null);
 
       final book = provider2.books.first;
       expect(book.coverUrl, 'https://example.com/cover.jpg');
@@ -125,7 +125,7 @@ void main() {
 
     testWidgets('clearBooks empties the shelf in memory', (tester) async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('A'));
       await provider.addBook(makeBook('B'));
       await provider.clearBooks();

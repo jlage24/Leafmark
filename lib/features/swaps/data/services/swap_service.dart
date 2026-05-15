@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rxdart/rxdart.dart';
 import '../../domain/models/swap_request.dart';
 
 class DuplicateSwapException implements Exception {}
@@ -7,17 +8,53 @@ class SwapService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final String _collection = 'swap_requests';
 
-  Future<void> createSwapRequest(SwapRequest request) async {
-    final existing = await _db.collection(_collection)
-        .where('bookWantedId', isEqualTo: request.bookWantedId)
-        .where('requesterId', isEqualTo: request.requesterId)
-        .where('status', isEqualTo: SwapStatus.pending.name)
-        .get(const GetOptions(source: Source.server));
+  Future<String> createSwapRequest(SwapRequest request) async {
+    return await _db.runTransaction<String>((transaction) async {
+      final query = await _db.collection(_collection)
+          .where('bookWantedId', isEqualTo: request.bookWantedId)
+          .where('requesterId', isEqualTo: request.requesterId)
+          .where('status', isEqualTo: SwapStatus.pending.name)
+          .get();
 
-    if (existing.docs.isNotEmpty) {
-      throw DuplicateSwapException();
+      if (query.docs.isNotEmpty) {
+        throw DuplicateSwapException();
+      }
+
+      final docRef = _db.collection(_collection).doc();
+      transaction.set(docRef, request.toMap());
+      return docRef.id;
+    });
+  }
+
+  Future<void> acceptSwapAndLockBooks(SwapRequest swap) async {
+    final batch = _db.batch();
+
+    final swapRef = _db.collection(_collection).doc(swap.id);
+    batch.update(swapRef, {'status': SwapStatus.accepted.name});
+
+    final offeredBookRef = _db.collection('users/${swap.requesterId}/shelf').doc(swap.bookOfferedId);
+    final wantedBookRef = _db.collection('users/${swap.ownerId}/shelf').doc(swap.bookWantedId);
+
+    batch.update(offeredBookRef, {'lockedBySwapId': swap.id});
+    batch.update(wantedBookRef, {'lockedBySwapId': swap.id});
+
+    final otherRequests = await _db.collection(_collection)
+        .where('status', isEqualTo: SwapStatus.pending.name)
+        .get();
+
+    for (var doc in otherRequests.docs) {
+      if (doc.id == swap.id) continue;
+
+      final data = doc.data();
+      final conflictsWithWanted = data['bookWantedId'] == swap.bookWantedId || data['bookOfferedId'] == swap.bookWantedId;
+      final conflictsWithOffered = data['bookWantedId'] == swap.bookOfferedId || data['bookOfferedId'] == swap.bookOfferedId;
+
+      if (conflictsWithWanted || conflictsWithOffered) {
+        batch.update(doc.reference, {'status': SwapStatus.rejected.name});
+      }
     }
-    await _db.collection(_collection).add(request.toMap());
+
+    await batch.commit();
   }
 
   Future<void> updateStatus(String id, SwapStatus status) async {
@@ -46,5 +83,31 @@ class SwapService {
         .map((snap) => snap.docs
         .map((doc) => SwapRequest.fromMap(doc.data(), doc.id))
         .toList());
+  }
+
+  Stream<List<SwapRequest>> exchangeHistory(String uid) {
+    final asRequester = _db
+        .collection(_collection)
+        .where('requesterId', isEqualTo: uid)
+        .where('status', isEqualTo: SwapStatus.accepted.name)
+        .snapshots()
+        .map((s) => s.docs
+        .map((d) => SwapRequest.fromMap(d.data(), d.id))
+        .toList());
+
+    final asOwner = _db
+        .collection(_collection)
+        .where('ownerId', isEqualTo: uid)
+        .where('status', isEqualTo: SwapStatus.accepted.name)
+        .snapshots()
+        .map((s) => s.docs
+        .map((d) => SwapRequest.fromMap(d.data(), d.id))
+        .toList());
+
+    return Rx.combineLatest2(asRequester, asOwner, (a, b) {
+      final merged = [...a, ...b];
+      merged.sort((x, y) => y.createdAt.compareTo(x.createdAt));
+      return merged;
+    });
   }
 }

@@ -32,6 +32,17 @@ class FakeAuthProvider extends ChangeNotifier implements AuthProvider {
 
   @override
   Future<void> logout() async {}
+
+  @override
+  Future<bool> updateProfile({
+    String? bio,
+    String? profilePictureUrl,
+    String? bannerPictureUrl,
+    List<String>? favoriteAuthors,
+    String? favoriteBookTitle,
+    String? favoriteBookAuthor,
+    String? favoriteBookCoverUrl,
+  }) async => true;
 }
 
 void main() {
@@ -92,7 +103,7 @@ void main() {
   group('MyShelfScreen - books list', () {
     testWidgets('renders book title when shelf has a book', (tester) async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1', title: 'Nineteen Eighty-Four'));
 
       await mockNetworkImagesFor(() async {
@@ -105,7 +116,7 @@ void main() {
 
     testWidgets('renders all books when multiple are added', (tester) async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1', title: 'Book One'));
       await provider.addBook(makeBook('2', title: 'Book Two'));
       await provider.addBook(makeBook('3', title: 'Book Three'));
@@ -122,7 +133,7 @@ void main() {
 
     testWidgets('empty state is not shown when shelf has books', (tester) async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1', title: 'Some Book'));
 
       await mockNetworkImagesFor(() async {
@@ -140,7 +151,7 @@ void main() {
   group('MyShelfScreen - delete flow', () {
     testWidgets('long press opens bottom sheet with book title', (tester) async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1', title: 'Animal Farm'));
 
       await mockNetworkImagesFor(() async {
@@ -158,7 +169,7 @@ void main() {
 
     testWidgets('tapping Cancel closes the bottom sheet', (tester) async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1', title: 'Animal Farm'));
 
       await mockNetworkImagesFor(() async {
@@ -176,9 +187,9 @@ void main() {
       expect(find.text('Animal Farm'), findsOneWidget);
     });
 
-    testWidgets('tapping Remove deletes book and shows snackbar', (tester) async {
+    testWidgets('tapping Remove deletes book and shows snack bar', (tester) async {
       final provider = makeProvider();
-      await provider.loadBooks('test-uid');
+      await provider.loadBooks('test-uid', null);
       await provider.addBook(makeBook('1', title: 'Animal Farm'));
 
       await mockNetworkImagesFor(() async {

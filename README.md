@@ -109,8 +109,7 @@ Based on this feedback, the following backlog changes were made:
 <img src="docs/images/MyShelf-Mockup.png" alt="My Shelf screen" width="22%" />
 
 <img src="docs/images/Login-Mockup.png" alt="Login screen" width="22%" />
-<img src="docs/images/SwapRequests-Mockup.png" alt="Swap Requests screen" width="22%" />
-<img src="docs/images/RequestSent-Mockup.png" alt="Request Sent screen" width="22%" />
+<img src="docs/images/Chat-Mockup.png" alt="Chat screen" width="22%" />
 <img src="docs/images/Book-Mockup.png" alt="Book screen" width="22%" />
 
 </div>
@@ -129,14 +128,12 @@ Based on this feedback, the following backlog changes were made:
 **Package Descriptions and Dependencies:**
 
 - **UI Layer** — Responsible for user interaction: screens, widgets, navigation. Communicates with Business Logic.
-- **Business Logic Layer** — Contains use cases and state management. Coordinates between UI and Data Layer.
-- **Data Layer** — Handles data access and persistence. Uses Domain entities to structure the data.
-- **Domain Layer** — Defines core entities like `Book`, `User`, `SwapRequest`. Independent layer; does not depend on any other layer.
+- **Business Logic Layer** — Contains providers and state management. Handles all application logic and Firebase communication.
+- **Domain Layer** — Defines core entities like `Book`, `User`, `SwapRequest`, `Report`. Independent layer; does not depend on any other layer.
 
 **Dependencies (arrows in diagram):**
 - UI → Business Logic (uses)
-- Business Logic → Data (uses)
-- Data → Domain (uses)
+- Business Logic → Domain (uses)
 
 ### Physical Architecture
 
@@ -277,7 +274,55 @@ Sprint 1 focused on backend integration and core exchange features: user authent
 
 ### Sprint 2
 
-_[Add Sprint 2 planning screenshots and retrospective notes here.]_
+#### Planning
+
+<p align="center">
+  <img src="docs/images/sprint2_board_start.png" alt="Sprint 2 Board — Start"/>
+</p>
+
+Sprint 2 tackled the features that were missing for the app to feel real: chat, ratings, user profiles with actual content, and safety tools. We also cleared out all the dummy data — BrowseScreen and SwapRequestsScreen now read from Firestore.
+
+**Delivered:**
+- In-app chat with swap proposals, counter-offers, typing indicators and read receipts
+- `ChatListScreen` as the inbox in the Chat tab
+- Book picker bottom sheet before creating a swap
+- `PublicProfileScreen` reachable from any chat
+- Profile bio, photo and Top 3 Favourite Authors, with a new `EditProfileScreen`
+- Partner and book condition ratings after a completed swap, with a guard against double submission
+- Exchange history listing completed swaps with cover, title, partner and date
+- Report profile — flag users via a bottom sheet (Spam / Inappropriate behaviour / Fake account / Other)
+- Public wishlist, visible in read-only mode on `PublicProfileScreen`
+- `BrowseScreen` and `SwapRequestsScreen` fully migrated from dummy data to Firestore
+- Unit tests for `WishlistService` and `RatingService` with `FakeFirebaseFirestore`
+- UATs for the rating flow and exchange history
+
+**Release:** [v0.3.0](../../releases/tag/v0.3.0)
+
+#### Retrospective
+
+<p align="center">
+  <img src="docs/images/sprint2_board_end.png" alt="Sprint 2 Board — End"/>
+</p>
+
+✅ **Did well**
+- Delivered every Must Have and Should Have story in the sprint
+- Dummy data is gone — the app talks to real Firestore data end to end
+- The chat system (proposals, counter-offers, typing, read receipts) was the most complex feature so far and shipped cleanly
+- Started creating GitHub Issues for bugs found during development instead of fixing them silently — makes the work visible and traceable
+- Security rules extended to cover every new collection added this sprint
+
+🔁 **Do differently**
+- Better time management per feature — some stories took longer than expected and compressed the end of the sprint
+- Avoid starting two features at the same time when they touch the same files; we had merge conflicts that cost time and could have been avoided with a quick heads-up first
+
+❓ **Puzzles**
+- How `collectionGroup` queries will behave at scale — worth keeping an eye on read costs as the user base grows
+- Offline behaviour with real-time chat: what should the app show when there's no connection?
+
+📌 **Improvements for Sprint 3**
+- Filters on `BrowseScreen` (deferred twice now — has to ship)
+- Search UX redesign — currently surfaces books as swap listings, not as a discovery tool
+- Automate GitHub Release uploads once org permissions are sorted
 
 ### Sprint 3
 

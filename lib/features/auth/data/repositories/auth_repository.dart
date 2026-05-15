@@ -11,7 +11,6 @@ class AuthRepository {
       if (user == null) {
         yield null;
       } else {
-        // searches for the username in the Firestore database
         final doc = await _db.collection('users').doc(user.uid).get();
         final data = doc.data();
         yield AppUser(
@@ -19,12 +18,19 @@ class AuthRepository {
           email: user.email!,
           displayName: data?['displayName'] ?? user.displayName ?? '',
           username: data?['username'] ?? '',
+          bio: data?['bio'] as String?,
+          profilePictureUrl: data?['profilePictureUrl'] as String?,
+          bannerPictureUrl: data?['bannerPictureUrl'] as String?,
+          favoriteAuthors: List<String>.from(data?['favoriteAuthors'] ?? []),
+          rating: (data?['ratings'] as num?)?.toDouble() ?? 0.0,
+          favoriteBookTitle: data?['favoriteBookTitle'] as String?,
+          favoriteBookAuthor: data?['favoriteBookAuthor'] as String?,
+          favoriteBookCoverUrl: data?['favoriteBookCoverUrl'] as String?,
         );
       }
     }
   }
 
-  /// Returns true if the username is already taken.
   Future<bool> isUsernameTaken(String username) async {
     final doc = await _db
         .collection('usernames')
@@ -66,6 +72,10 @@ class AuthRepository {
       'email': user.email,
       'displayName': user.displayName,
       'username': user.username,
+      'bio': null,
+      'profilePictureUrl': null,
+      'favoriteAuthors': [],
+      'ratings': 0.0,
       'createdAt': FieldValue.serverTimestamp(),
     });
 
@@ -92,7 +102,39 @@ class AuthRepository {
       email: cred.user!.email!,
       displayName: data?['displayName'] ?? cred.user!.displayName ?? '',
       username: data?['username'] ?? '',
+      bio: data?['bio'] as String?,
+      profilePictureUrl: data?['profilePictureUrl'] as String?,
+      bannerPictureUrl: data?['bannerPictureUrl'] as String?,
+      favoriteAuthors: List<String>.from(data?['favoriteAuthors'] ?? []),
+      rating: (data?['ratings'] as num?)?.toDouble() ?? 0.0,
+      favoriteBookTitle: data?['favoriteBookTitle'] as String?,
+      favoriteBookAuthor: data?['favoriteBookAuthor'] as String?,
+      favoriteBookCoverUrl: data?['favoriteBookCoverUrl'] as String?,
     );
+  }
+
+  Future<void> updateProfile({
+    required String uid,
+    String? bio,
+    String? profilePictureUrl,
+    String? bannerPictureUrl,
+    List<String>? favoriteAuthors,
+    String? favoriteBookTitle,
+    String? favoriteBookAuthor,
+    String? favoriteBookCoverUrl,
+  }) async {
+    final Map<String, dynamic> updates = {};
+    if (bio != null) updates['bio'] = bio;
+    if (profilePictureUrl != null) updates['profilePictureUrl'] = profilePictureUrl;
+    if (bannerPictureUrl != null) updates['bannerPictureUrl'] = bannerPictureUrl;
+    if (favoriteAuthors != null) updates['favoriteAuthors'] = favoriteAuthors;
+    if (favoriteBookTitle != null) updates['favoriteBookTitle'] = favoriteBookTitle;
+    if (favoriteBookAuthor != null) updates['favoriteBookAuthor'] = favoriteBookAuthor;
+    if (favoriteBookCoverUrl != null) updates['favoriteBookCoverUrl'] = favoriteBookCoverUrl;
+
+    if (updates.isNotEmpty) {
+      await _db.collection('users').doc(uid).update(updates);
+    }
   }
 
   Future<void> logout() => _auth.signOut();

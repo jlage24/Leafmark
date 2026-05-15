@@ -9,19 +9,40 @@ class SwapProvider extends ChangeNotifier {
 
   Stream<List<SwapRequest>> incoming(String uid) => _service.incomingRequests(uid);
   Stream<List<SwapRequest>> outgoing(String uid) => _service.outgoingRequests(uid);
+  Stream<List<SwapRequest>> exchangeHistory(String uid) => _service.exchangeHistory(uid);
+  Stream<int> exchangeCount(String uid) => exchangeHistory(uid).map((list) => list.length);
 
-  Future<void> sendRequest(SwapRequest request) async {
+  Future<String> sendRequest(SwapRequest request) async {
     _isLoading = true;
     notifyListeners();
     try {
-      await _service.createSwapRequest(request);
+      return await _service.createSwapRequest(request);
+    } catch (e) {
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> accept(String id) => _service.updateStatus(id, SwapStatus.accepted);
-  Future<void> reject(String id) => _service.updateStatus(id, SwapStatus.rejected);
-  Future<void> cancel(String id) => _service.deleteRequest(id);
+  Future<void> accept(SwapRequest req) async {
+    try {
+      await _service.acceptSwapAndLockBooks(req);
+    } catch (e) {
+      debugPrint('Accept error: $e');
+      rethrow;
+    }
+  }
+
+  Future<void> reject(String id) async {
+    try {
+      await _service.updateStatus(id, SwapStatus.rejected);
+    } catch (e) { rethrow; }
+  }
+
+  Future<void> cancel(String id) async {
+    try {
+      await _service.deleteRequest(id);
+    } catch (e) { rethrow; }
+  }
 }

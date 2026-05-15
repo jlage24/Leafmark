@@ -67,10 +67,10 @@ class SearchProvider extends ChangeNotifier {
         } else if (msg.contains('network') || msg.contains('timeout')) {
           _errorMessage = 'No internet connection. Please check your network.';
         } else {
-          _errorMessage = 'Failed to fetch books. Please try again.';
+          _errorMessage = 'API Error: ${e.message}';
         }
       } else {
-        _errorMessage = 'An unexpected error occurred. Please try again.';
+        _errorMessage = 'An unexpected error occurred: $e';
       }
     } finally {
       _isLoading = false;

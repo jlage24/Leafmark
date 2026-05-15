@@ -89,10 +89,14 @@ class ChatProvider extends ChangeNotifier {
   // ── Typing indicator ──────────────────────────────────────────────────────
 
   Future<void> onTyping(String swapId) async {
+    if (!(_typingTimers[swapId]?.isActive ?? false)) {
+      await _service.setTyping(swapId, _uid, true);
+    }
+
     _typingTimers[swapId]?.cancel();
-    await _service.setTyping(swapId, _uid, true);
-    _typingTimers[swapId] = Timer(const Duration(seconds: 3), () {
-      _service.setTyping(swapId, _uid, false);
+
+    _typingTimers[swapId] = Timer(const Duration(seconds: 3), () async {
+      await _service.setTyping(swapId, _uid, false);
       _typingTimers.remove(swapId);
     });
   }

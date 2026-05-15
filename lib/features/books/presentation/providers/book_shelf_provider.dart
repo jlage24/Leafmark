@@ -81,8 +81,7 @@ class BookShelfProvider extends ChangeNotifier {
     await _db
         .collection('users/$bookOwnerId/shelf')
         .doc(bookId)
-        .update({'lockedBySwapId': FieldValue.delete()});
-
+        .update({'lockedBySwapId': null});
     _updateLocalLock(bookId, null);
   }
 

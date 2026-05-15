@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../../../core/app_theme.dart';
 import '../../../books/domain/models/book.dart';
 import '../../../books/presentation/screens/book_detail_screen.dart';
+import '../../../books/data/services/browse_service.dart';
 import '../../../ratings/domain/models/rating.dart';
 import '../../../ratings/presentation/providers/rating_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -107,32 +108,32 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 contentPadding: EdgeInsets.zero,
                 title: Text(reason, style: Theme.of(context).textTheme.bodyMedium),
                 trailing: const Icon(Icons.chevron_right, size: 18),
-                    onTap: () async {
-                      Navigator.pop(context);
-                      final uid = context.read<AuthProvider>().user?.uid ?? '';
-                      try {
-                        await ReportService().submitReport(Report(
-                          reporterId: uid,
-                          reportedUid: widget.userId,
-                          reason: reason,
-                          createdAt: DateTime.now(),
-                        ));
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Report submitted. Thank you.')),
-                          );
-                        }
-                      } catch (e) {
-                        if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Failed to submit report. Please try again.'),
-                              backgroundColor: Colors.redAccent,
-                            ),
-                          );
-                        }
-                      }
-                    },
+                onTap: () async {
+                  Navigator.pop(context);
+                  final uid = context.read<AuthProvider>().user?.uid ?? '';
+                  try {
+                    await ReportService().submitReport(Report(
+                      reporterId: uid,
+                      reportedUid: widget.userId,
+                      reason: reason,
+                      createdAt: DateTime.now(),
+                    ));
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Report submitted. Thank you.')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Failed to submit report. Please try again.'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                    }
+                  }
+                },
               ),
             ),
           ],
@@ -408,6 +409,15 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 child: Text('Wishlist', style: textTheme.titleSmall),
               ),
               _WishlistPreview(userId: widget.userId),
+
+              // ── Reviews ───────────────────────────────
+              const Divider(),
+              Padding(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                child: Text('Reviews', style: textTheme.titleSmall),
+              ),
+              _ReviewsPreview(userId: widget.userId),
             ],
           );
         },
@@ -571,6 +581,99 @@ class _ShelfPreviewState extends State<_ShelfPreview> {
               );
             },
           ),
+        );
+      },
+    );
+  }
+}
+
+// ── Reviews Preview ────────────────────────────────────────────────────────────
+
+class _ReviewsPreview extends StatelessWidget {
+  final String userId;
+  const _ReviewsPreview({required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Rating>>(
+      stream: context.read<RatingProvider>().getRatingsForUser(userId),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Padding(
+            padding: EdgeInsets.all(24),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final ratings = snapshot.data ?? [];
+        final reviews = ratings
+            .where((r) => r.comment != null && r.comment!.trim().isNotEmpty)
+            .toList();
+
+        if (reviews.isEmpty) {
+          return Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              'No written reviews yet.',
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          );
+        }
+
+        return ListView.separated(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          itemCount: reviews.length,
+          separatorBuilder: (context, index) => const Divider(height: 24),
+          itemBuilder: (context, i) {
+            final review = reviews[i];
+            return _ReviewTile(review: review);
+          },
+        );
+      },
+    );
+  }
+}
+
+class _ReviewTile extends StatelessWidget {
+  final Rating review;
+  const _ReviewTile({required this.review});
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<String?>(
+      future: BrowseService().fetchDisplayName(review.reviewerId),
+      builder: (context, snapshot) {
+        final reviewerName = snapshot.data ?? 'Anonymous';
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  reviewerName,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+                Row(
+                  children: List.generate(5, (index) {
+                    return Icon(
+                      index < review.rating ? Icons.star : Icons.star_border,
+                      size: 14,
+                      color: Colors.amber,
+                    );
+                  }),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              review.comment!,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
         );
       },
     );

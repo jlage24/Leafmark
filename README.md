@@ -80,6 +80,8 @@ Leafmark is a community-driven book exchange platform that makes trading books b
 
 A survey was conducted to validate assumptions and inform backlog prioritisation before Sprint 1 development began.
 
+**Survey Form:** [LeafMark User Research Survey](https://forms.gle/K4Gx3MkjVauMX4H49)
+
 **27 responses** were collected from potential users. Key findings:
 
 - **100%** had previously exchanged books informally, confirming real demand for a structured platform
@@ -90,6 +92,29 @@ A survey was conducted to validate assumptions and inform backlog prioritisation
 Based on this feedback, the following backlog changes were made:
 - **Peer-to-Peer Reliability Rating**, **Report Malicious Users**, and **In-App Secure Chat Messaging** were elevated to **Must Have**
 - **Blind Date with a Book** was moved from **Could Have** to **Should Have**
+
+### Survey Results
+
+<div align="center">
+
+<img src="docs/images/survey_result_1.png" width="70%" />
+<p><em>Survey result 1</em></p>
+
+<img src="docs/images/survey_result_2.png" width="70%" />
+<p><em>Survey result 2</em></p>
+
+<img src="docs/images/survey_result_3.png" width="70%" />
+<p><em>Survey result 3</em></p>
+
+<img src="docs/images/survey_result_4.png" width="70%" />
+<p><em>Survey result 4</em></p>
+
+<img src="docs/images/survey_result_5.png" width="70%" />
+<p><em>Survey result 5</em></p>
+
+</div>
+
+The survey results directly influenced backlog prioritisation and feature planning decisions throughout the project.
 
 ### Domain Model
 

@@ -35,18 +35,42 @@ class BookDetailScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10.0),
-              child: book.coverUrl != null
-                  ? Image.network(
-                book.coverUrl!,
-                height: 220,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, _) =>
-                const _PlaceholderCover(),
+            if (book.conditionPhotoUrls.isNotEmpty)
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: book.conditionPhotoUrls.map((url) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(10.0),
+                        child: Image.network(
+                          url,
+                          height: 220,
+                          width: 150,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, _) =>
+                          const _PlaceholderCover(),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
               )
-                  : const _PlaceholderCover(),
-            ),
+            else
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10.0),
+                child: book.coverUrl != null
+                    ? Image.network(
+                  book.coverUrl!,
+                  height: 220,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, _) =>
+                  const _PlaceholderCover(),
+                )
+                    : const _PlaceholderCover(),
+              ),
             const SizedBox(height: 24),
             Text(
               book.title,

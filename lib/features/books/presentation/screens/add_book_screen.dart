@@ -153,9 +153,12 @@ class _AddBookScreenState extends State<AddBookScreen> {
           _selectedPhotos[i],
           'leafmark_books/$bookId',
         );
-        if (url != null) {
-          uploadedUrls.add(url);
+
+        if (url == null) {
+          throw Exception('PhotoUploadFailure');
         }
+
+        uploadedUrls.add(url);
       }
 
       final book = Book(
@@ -190,9 +193,15 @@ class _AddBookScreenState extends State<AddBookScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSaving = false);
+
+      final isPhotoError = e.toString().contains('PhotoUploadFailure');
+      final errorMessage = isPhotoError
+          ? 'Failed to upload book photos. Please try again.'
+          : 'Failed to save book. Please try again.';
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Failed to save book. Please try again.'),
+          content: Text(errorMessage),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
           shape:

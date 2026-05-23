@@ -18,6 +18,10 @@ class BookCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final displayUrl = book.conditionPhotoUrls.isNotEmpty
+        ? book.conditionPhotoUrls.first
+        : book.coverUrl;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       elevation: 3,
@@ -28,9 +32,9 @@ class BookCard extends StatelessWidget {
         onLongPress: onLongPress,
         leading: ClipRRect(
           borderRadius: BorderRadius.circular(4),
-          child: book.coverUrl != null
+          child: displayUrl != null
               ? CachedNetworkImage(
-            imageUrl: book.coverUrl!,
+            imageUrl: displayUrl,
             width: 50,
             height: 75,
             fit: BoxFit.cover,
@@ -58,7 +62,6 @@ class BookCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(book.authors, maxLines: 1, overflow: TextOverflow.ellipsis),
-              // only show condition if not in catalog view
               if (!isCatalogView) ...[
                 const SizedBox(height: 4),
                 Text(

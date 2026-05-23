@@ -1,21 +1,20 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/app_theme.dart';
 import '../../../../core/leafmark_text_field.dart';
+import '../../../../core/cloudinary_service.dart';
 import '../../data/services/google_books_service.dart';
 import '../../domain/models/book_fetch_result.dart';
 import '../../domain/models/book.dart';
 import '../providers/book_shelf_provider.dart';
 
-/// Shown after a successful ISBN scan (or tapping "Enter manually").
-/// Fetches book details, shows a pre-filled form, and lets the user save.
-///
 class AddBookScreen extends StatefulWidget {
   final String? isbn;
-
   final GoogleBooksService? googleBooksService;
 
   const AddBookScreen({
@@ -31,8 +30,8 @@ class AddBookScreen extends StatefulWidget {
 class _AddBookScreenState extends State<AddBookScreen> {
   final _formKey = GlobalKey<FormState>();
   late final GoogleBooksService _googleBooksService;
+  final ImagePicker _picker = ImagePicker();
 
-  // Controllers
   late final TextEditingController _isbnController;
   late final TextEditingController _titleController;
   late final TextEditingController _authorsController;
@@ -43,6 +42,8 @@ class _AddBookScreenState extends State<AddBookScreen> {
   _ScreenState _state = _ScreenState.idle;
   String? _errorMessage;
   bool _isSaving = false;
+
+  final List<File> _selectedPhotos = [];
 
   @override
   void initState() {
@@ -104,25 +105,77 @@ class _AddBookScreenState extends State<AddBookScreen> {
     }
   }
 
+  Future<void> _pickPhotos() async {
+    if (_selectedPhotos.length >= 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You can only add up to 3 photos.')),
+      );
+      return;
+    }
+
+    try {
+      final List<XFile> images = await _picker.pickMultiImage(
+        imageQuality: 70,
+        maxWidth: 1000,
+      );
+      if (images.isNotEmpty) {
+        setState(() {
+          final remainingSlots = 3 - _selectedPhotos.length;
+          final photosToAdd = images.take(remainingSlots).map((x) => File(x.path)).toList();
+          _selectedPhotos.addAll(photosToAdd);
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to pick images.')),
+      );
+    }
+  }
+
+  void _removePhoto(int index) {
+    setState(() {
+      _selectedPhotos.removeAt(index);
+    });
+  }
+
   Future<void> _saveBook() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSaving = true);
 
-    final book = Book(
-      id: const Uuid().v4(),
-      isbn: _isbnController.text.trim(),
-      title: _titleController.text.trim(),
-      authors: _authorsController.text.trim(),
-      coverUrl: _fetchResult?.coverUrl,
-      condition: _condition,
-      notes: _notesController.text.trim().isEmpty
-          ? null
-          : _notesController.text.trim(),
-      addedAt: DateTime.now(),
-    );
+    final List<String> uploadedUrls = [];
+    final String bookId = const Uuid().v4();
 
     try {
+      for (int i = 0; i < _selectedPhotos.length; i++) {
+        final url = await CloudinaryService.uploadImage(
+          _selectedPhotos[i],
+          'leafmark_books/$bookId',
+        );
+
+        if (url == null) {
+          throw Exception('PhotoUploadFailure');
+        }
+
+        uploadedUrls.add(url);
+      }
+
+      final book = Book(
+        id: bookId,
+        isbn: _isbnController.text.trim(),
+        title: _titleController.text.trim(),
+        authors: _authorsController.text.trim(),
+        coverUrl: _fetchResult?.coverUrl,
+        condition: _condition,
+        notes: _notesController.text.trim().isEmpty
+            ? null
+            : _notesController.text.trim(),
+        addedAt: DateTime.now(),
+        conditionPhotoUrls: uploadedUrls,
+      );
+
+      if (!mounted) return;
       await context.read<BookShelfProvider>().addBook(book);
       if (!mounted) return;
 
@@ -140,9 +193,15 @@ class _AddBookScreenState extends State<AddBookScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isSaving = false);
+
+      final isPhotoError = e.toString().contains('PhotoUploadFailure');
+      final errorMessage = isPhotoError
+          ? 'Failed to upload book photos. Please try again.'
+          : 'Failed to save book. Please try again.';
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Failed to save book. Please try again.'),
+          content: Text(errorMessage),
           backgroundColor: Colors.red.shade700,
           behavior: SnackBarBehavior.floating,
           shape:
@@ -211,11 +270,13 @@ class _AddBookScreenState extends State<AddBookScreen> {
                   coverUrl: _fetchResult?.coverUrl,
                   condition: _condition,
                   onConditionChanged: (c) => setState(() => _condition = c),
+                  selectedPhotos: _selectedPhotos,
+                  onPickPhotos: _pickPhotos,
+                  onRemovePhoto: _removePhoto,
                 ),
 
               const SizedBox(height: 32),
 
-              // Save button
               ConstrainedBox (
                 constraints: const BoxConstraints(
                   minWidth: double.infinity,
@@ -364,6 +425,9 @@ class _BookForm extends StatelessWidget {
   final String? coverUrl;
   final BookCondition condition;
   final ValueChanged<BookCondition> onConditionChanged;
+  final List<File> selectedPhotos;
+  final VoidCallback onPickPhotos;
+  final Function(int) onRemovePhoto;
 
   const _BookForm({
     required this.titleController,
@@ -372,6 +436,9 @@ class _BookForm extends StatelessWidget {
     required this.coverUrl,
     required this.condition,
     required this.onConditionChanged,
+    required this.selectedPhotos,
+    required this.onPickPhotos,
+    required this.onRemovePhoto,
   });
 
   @override
@@ -426,6 +493,98 @@ class _BookForm extends StatelessWidget {
           selected: condition,
           onChanged: onConditionChanged,
         ),
+
+        const SizedBox(height: 20),
+
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Real Photos (${selectedPhotos.length}/3)',
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+            if (selectedPhotos.length < 3)
+              TextButton.icon(
+                onPressed: onPickPhotos,
+                icon: const Icon(Icons.add_a_photo, size: 16),
+                label: const Text('Add'),
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  minimumSize: Size.zero,
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (selectedPhotos.isEmpty)
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: Theme.of(context).colorScheme.outline.withValues(alpha: 0.2)),
+            ),
+            child: Row(
+              children: [
+                Icon(Icons.photo_library_outlined, color: Theme.of(context).colorScheme.onSurfaceVariant),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Show others the real condition of your book to build trust.',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        else
+          SizedBox(
+            height: 100,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: selectedPhotos.length,
+              itemBuilder: (context, index) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 12),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          selectedPhotos[index],
+                          height: 100,
+                          width: 80,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: -8,
+                        right: -8,
+                        child: IconButton(
+                          icon: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: Colors.black54,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.close, size: 16, color: Colors.white),
+                          ),
+                          onPressed: () => onRemovePhoto(index),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+          ),
 
         const SizedBox(height: 20),
 

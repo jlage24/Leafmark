@@ -10,6 +10,7 @@ class Book {
   final String? ownerName;
   final String? ownerId;
   final String? lockedBySwapId;
+  final List<String> conditionPhotoUrls;
 
   const Book({
     required this.id,
@@ -23,6 +24,7 @@ class Book {
     this.ownerName,
     this.ownerId,
     this.lockedBySwapId,
+    this.conditionPhotoUrls = const [],
   });
 
   bool get isLocked => lockedBySwapId != null;
@@ -39,6 +41,7 @@ class Book {
     'ownerName': ownerName,
     'ownerId': ownerId,
     'lockedBySwapId': lockedBySwapId,
+    'conditionPhotoUrls': conditionPhotoUrls,
   };
 
   factory Book.fromJson(Map<String, dynamic> json) => Book(
@@ -55,6 +58,10 @@ class Book {
     ownerName: json['ownerName'] as String?,
     ownerId: json['ownerId'] as String?,
     lockedBySwapId: json['lockedBySwapId'] as String?,
+    conditionPhotoUrls: (json['conditionPhotoUrls'] as List<dynamic>?)
+        ?.map((e) => e as String)
+        .toList() ??
+        const [],
   );
 
   Book copyWith({
@@ -69,6 +76,7 @@ class Book {
     String? ownerName,
     String? ownerId,
     Object? lockedBySwapId = _sentinel,
+    List<String>? conditionPhotoUrls,
   }) =>
       Book(
         id: id ?? this.id,
@@ -84,6 +92,7 @@ class Book {
         lockedBySwapId: lockedBySwapId == _sentinel
             ? this.lockedBySwapId
             : lockedBySwapId as String?,
+        conditionPhotoUrls: conditionPhotoUrls ?? this.conditionPhotoUrls,
       );
 
   @override

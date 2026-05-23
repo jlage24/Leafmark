@@ -240,12 +240,16 @@ class BookDetailScreen extends StatelessWidget {
                   itemCount: shelfBooks.length,
                   itemBuilder: (ctx, index) {
                     final offeredBook = shelfBooks[index];
+                    final displayUrl = offeredBook.conditionPhotoUrls.isNotEmpty
+                        ? offeredBook.conditionPhotoUrls.first
+                        : offeredBook.coverUrl;
+
                     return ListTile(
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(4),
-                        child: offeredBook.coverUrl != null
+                        child: displayUrl != null
                             ? Image.network(
-                          offeredBook.coverUrl!,
+                          displayUrl,
                           width: 36,
                           height: 52,
                           fit: BoxFit.cover,

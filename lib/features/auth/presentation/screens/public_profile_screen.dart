@@ -13,6 +13,7 @@ import '../../../reports/domain/models/report.dart';
 import '../../../swaps/presentation/providers/swap_provider.dart';
 import '../../../wishlist/domain/models/wishlist_item.dart';
 import '../../../wishlist/presentation/providers/wishlist_provider.dart';
+import '../../../books/presentation/providers/block_provider.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;

@@ -11,6 +11,7 @@ import 'features/search/presentation/providers/search_provider.dart';
 import 'features/swaps/presentation/providers/swap_provider.dart';
 import 'features/ratings/presentation/providers/rating_provider.dart';
 import 'features/wishlist/presentation/providers/wishlist_provider.dart';
+import 'features/books/presentation/providers/block_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +32,7 @@ class LeafMarkApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => SearchProvider()),
         ChangeNotifierProvider(create: (_) => RatingProvider()),
         ChangeNotifierProvider(create: (_) => WishlistProvider()),
+        ChangeNotifierProvider(create: (_) => BlockProvider()),
         ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
           create: (ctx) => ChatProvider(auth: ctx.read<AuthProvider>()),
           update: (ctx, auth, previous) =>

@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:rxdart/rxdart.dart';
 import '../../domain/models/swap_request.dart';
+import '../../../books/data/services/block_service.dart';
+
 
 class DuplicateSwapException implements Exception {}
 
@@ -9,6 +11,11 @@ class SwapService {
   final String _collection = 'swap_requests';
 
   Future<String> createSwapRequest(SwapRequest request) async {
+    final hasBlock = await BlockService().hasBlockRelationship(request.requesterId, request.ownerId);
+    if (hasBlock) {
+      throw Exception('Não é possível criar o pedido. Acesso restrito a este utilizador.');
+    }
+
     return await _db.runTransaction<String>((transaction) async {
       final query = await _db.collection(_collection)
           .where('bookWantedId', isEqualTo: request.bookWantedId)

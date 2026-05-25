@@ -66,5 +66,9 @@
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+    	<string>A aplicação precisa de acesso à câmara para tirar fotos para o perfil e banner.</string>
+    <key>NSPhotoLibraryUsageDescription</key>
+    	<string>A aplicação precisa de acesso à galeria para que possa escolher imagens para o perfil e banner.</string>
 </dict>
 </plist>

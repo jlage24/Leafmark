@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/chat_message.dart';
 import '../../domain/models/chat_metadata.dart';
+import 'package:rxdart/rxdart.dart';
+import '../../../books/data/services/block_service.dart';
 
 class BookAlreadyLockedException implements Exception {
   final String bookId;
@@ -166,7 +168,7 @@ class ChatService {
   }
 
   Stream<List<ChatMetadata>> getChats(String uid) {
-    return _chats
+    final chatsStream = _chats
         .where('participantIds', arrayContains: uid)
         .orderBy('lastMessageAt', descending: true)
         .snapshots()
@@ -174,6 +176,16 @@ class ChatService {
         .map((doc) =>
         ChatMetadata.fromMap(doc.data() as Map<String, dynamic>))
         .toList());
+
+    final blocksStream = BlockService().getBlockedUsersStream(uid);
+
+    // Usa o RxDart para combinar as streams e esconder as conversas de utilizadores bloqueados
+    return Rx.combineLatest2(chatsStream, blocksStream, (List<ChatMetadata> chats, List<String> blockedUids) {
+      return chats.where((chat) {
+        final otherUid = chat.participantIds.firstWhere((id) => id != uid, orElse: () => '');
+        return !blockedUids.contains(otherUid); // Esconde se o utilizador estiver bloqueado
+      }).toList();
+    });
   }
 
   Future<Map<String, String?>> fetchUserInfo(String uid) async {

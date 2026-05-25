@@ -31,6 +31,8 @@ class BlockService {
 
   // Stream para obter os IDs dos utilizadores bloqueados pelo utilizador atual em tempo real
   Stream<List<String>> getBlockedUsersStream(String currentUid) {
+    if (currentUid.isEmpty) return Stream.value([]);
+
     return _db
         .collection('users')
         .doc(currentUid)

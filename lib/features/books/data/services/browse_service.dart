@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:rxdart/rxdart.dart';
 import '../../domain/models/book.dart';
+import '../../../books/data/services/block_service.dart';
 
 class BrowseService {
   final FirebaseFirestore _firestore;
@@ -8,13 +10,21 @@ class BrowseService {
       : _firestore = firestore ?? FirebaseFirestore.instance;
 
   Stream<List<Book>> browseBooks(String currentUid) {
-    return _firestore
+    final booksStream = _firestore
         .collectionGroup('shelf')
-        .where('ownerId', isNotEqualTo: currentUid)
+        .where('ownerId', isNotEqualTo: currentUid.isEmpty ? 'invalid' : currentUid)
         .snapshots()
         .map((snapshot) => snapshot.docs
         .map((doc) => Book.fromJson(doc.data()))
         .toList());
+
+    if (currentUid.isEmpty) return booksStream;
+    final blocksStream = BlockService().getBlockedUsersStream(currentUid);
+    return Rx.combineLatest2(booksStream, blocksStream, (List<Book> books, List<String> blockedUids) {
+
+      // Filtra os livros cujos donos estejam na lista de bloqueados
+      return books.where((book) => !blockedUids.contains(book.ownerId)).toList();
+    });
   }
 
   Stream<List<Book>> browseAvailableBooks(String currentUid) {

@@ -192,6 +192,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
+                        // ── BOTÃO DE VOLTAR (MANTÉM-SE IGUAL) ──
                         Container(
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.3),
@@ -203,17 +204,56 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            shape: BoxShape.circle,
-                          ),
-                          child: IconButton(
-                            icon: const Icon(Icons.flag_outlined,
-                                size: 18, color: Colors.white),
-                            tooltip: 'Report user',
-                            onPressed: () => _showReportSheet(context),
-                          ),
+                        Row(
+                          children: [
+                            StreamBuilder<List<String>>(
+                              stream: context.read<BlockProvider>().getBlockedUsers(context.read<AuthProvider>().user?.uid ?? ''),
+                              builder: (context, snapshot) {
+                                final isBlocked = snapshot.data?.contains(widget.userId) ?? false;
+                                return Container(
+                                  margin: const EdgeInsets.only(right: 8), // Espaço entre o Block e o Report
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    icon: Icon(
+                                      isBlocked ? Icons.block : Icons.pan_tool_outlined,
+                                      size: 18,
+                                      color: isBlocked ? Colors.redAccent : Colors.white,
+                                    ),
+                                    tooltip: isBlocked ? 'Unblock user' : 'Block user',
+                                    onPressed: () async {
+                                      final currentUid = context.read<AuthProvider>().user?.uid ?? '';
+                                      if (isBlocked) {
+                                        await context.read<BlockProvider>().unblockUser(currentUid, widget.userId);
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User unblocked.')));
+                                        }
+                                      } else {
+                                        await context.read<BlockProvider>().blockUser(currentUid, widget.userId);
+                                        if (context.mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User blocked.')));
+                                        }
+                                      }
+                                    },
+                                  ),
+                                );
+                              },
+                            ),
+                            Container(
+                              decoration: BoxDecoration(
+                                color: Colors.black.withValues(alpha: 0.3),
+                                shape: BoxShape.circle,
+                              ),
+                              child: IconButton(
+                                icon: const Icon(Icons.flag_outlined,
+                                    size: 18, color: Colors.white),
+                                tooltip: 'Report user',
+                                onPressed: () => _showReportSheet(context),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),

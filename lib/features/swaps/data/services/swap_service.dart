@@ -13,7 +13,7 @@ class SwapService {
   Future<String> createSwapRequest(SwapRequest request) async {
     final hasBlock = await BlockService().hasBlockRelationship(request.requesterId, request.ownerId);
     if (hasBlock) {
-      throw Exception('Não é possível criar o pedido. Acesso restrito a este utilizador.');
+      throw Exception('Cannot create request. Access restricted due to block.');
     }
 
     return await _db.runTransaction<String>((transaction) async {

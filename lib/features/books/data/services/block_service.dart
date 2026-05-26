@@ -6,7 +6,7 @@ class BlockService {
   BlockService({FirebaseFirestore? firestore})
       : _db = firestore ?? FirebaseFirestore.instance;
 
-  // Bloqueia um utilizador guardando-o
+  // Blocks a user by saving them
   Future<void> blockUser(String currentUid, String targetUid) async {
     await _db
         .collection('users')
@@ -19,7 +19,7 @@ class BlockService {
     });
   }
 
-  // Desbloqueia um utilizador
+  // Unblocks a user
   Future<void> unblockUser(String currentUid, String targetUid) async {
     await _db
         .collection('users')
@@ -29,7 +29,7 @@ class BlockService {
         .delete();
   }
 
-  // Stream para obter os IDs dos utilizadores bloqueados pelo utilizador atual em tempo real
+  // Stream to get the IDs of users blocked by the current user in real-time
   Stream<List<String>> getBlockedUsersStream(String currentUid) {
     if (currentUid.isEmpty) return Stream.value([]);
 
@@ -41,7 +41,7 @@ class BlockService {
         .map((snap) => snap.docs.map((doc) => doc.id).toList());
   }
 
-  // Verifica pontualmente se existe um bloqueio
+  // Performs a one-time check to see if a block exists
   Future<bool> isBlocked(String currentUid, String targetUid) async {
     final doc = await _db
         .collection('users')
@@ -52,7 +52,7 @@ class BlockService {
     return doc.exists;
   }
 
-  // Verifica se há um bloqueio mútuo (importante para os Swaps)
+  // Checks if there is a mutual block relationship (important for Swaps)
   Future<bool> hasBlockRelationship(String uid1, String uid2) async {
     final blockedBy1 = await isBlocked(uid1, uid2);
     if (blockedBy1) return true;

@@ -1,17 +1,30 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/chat_message.dart';
 import '../../domain/models/chat_metadata.dart';
+import 'package:rxdart/rxdart.dart';
+import '../../../books/data/services/block_service.dart';
 
 class BookAlreadyLockedException implements Exception {
   final String bookId;
   const BookAlreadyLockedException(this.bookId);
 }
 
+/// NOTE: Block enforcement is currently handled Client-Side. 
+/// While we validate blocks before writing to Firestore, malicious users 
+/// could bypass Dart services. Full Server-Side enforcement would require 
+/// custom Cloud Functions or cross-collection Firestore rules. 
+/// Accepted as prototype-level protection.
+
 class ChatService {
   final FirebaseFirestore _db;
+  final BlockService _blockService;
 
-  ChatService({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  // Dependency Injection for Firestore and BlockService
+  ChatService({
+    FirebaseFirestore? firestore,
+    BlockService? blockService,
+  })  : _db = firestore ?? FirebaseFirestore.instance,
+        _blockService = blockService ?? BlockService();
 
   CollectionReference get _chats => _db.collection('chats');
 
@@ -19,6 +32,14 @@ class ChatService {
     required String swapId,
     required List<String> participantIds,
   }) async {
+    // Validate block relationship before creating the chat room
+    if (participantIds.length == 2) {
+      final hasBlock = await _blockService.hasBlockRelationship(participantIds[0], participantIds[1]);
+      if (hasBlock) {
+        throw Exception('Cannot create chat. Access restricted due to a block relationship.');
+      }
+    }
+
     final docRef = _chats.doc(swapId);
     final snap = await docRef.get();
     if (snap.exists) return;
@@ -37,6 +58,19 @@ class ChatService {
     required String swapId,
     required ChatMessage message,
   }) async {
+    // Service-level validation: check block status before sending a new message
+    final chatDoc = await _chats.doc(swapId).get();
+    if (chatDoc.exists) {
+      final chatData = chatDoc.data() as Map<String, dynamic>;
+      final participants = List<String>.from(chatData['participantIds'] ?? []);
+      if (participants.length == 2) {
+        final hasBlock = await _blockService.hasBlockRelationship(participants[0], participants[1]);
+        if (hasBlock) {
+          throw Exception('Cannot send message. Access restricted due to a block relationship.');
+        }
+      }
+    }
+
     final batch = _db.batch();
 
     final messageRef = _chats.doc(swapId).collection('messages').doc();
@@ -165,8 +199,8 @@ class ChatService {
         .toList());
   }
 
-  Stream<List<ChatMetadata>> getChats(String uid) {
-    return _chats
+Stream<List<ChatMetadata>> getChats(String uid) {
+    final chatsStream = _chats
         .where('participantIds', arrayContains: uid)
         .orderBy('lastMessageAt', descending: true)
         .snapshots()
@@ -174,6 +208,15 @@ class ChatService {
         .map((doc) =>
         ChatMetadata.fromMap(doc.data() as Map<String, dynamic>))
         .toList());
+        
+    final blocksStream = _blockService.getBlockedUsersStream(uid).onErrorReturn(<String>[]);
+
+    return Rx.combineLatest2(chatsStream, blocksStream, (List<ChatMetadata> chats, List<String> blockedUids) {
+      return chats.where((chat) {
+        final otherUid = chat.participantIds.firstWhere((id) => id != uid, orElse: () => '');
+        return !blockedUids.contains(otherUid);
+      }).toList();
+    });
   }
 
   Future<Map<String, String?>> fetchUserInfo(String uid) async {

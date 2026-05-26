@@ -9,6 +9,12 @@ class BookAlreadyLockedException implements Exception {
   const BookAlreadyLockedException(this.bookId);
 }
 
+/// NOTE: Block enforcement is currently handled Client-Side. 
+/// While we validate blocks before writing to Firestore, malicious users 
+/// could bypass Dart services. Full Server-Side enforcement would require 
+/// custom Cloud Functions or cross-collection Firestore rules. 
+/// Accepted as prototype-level protection.
+
 class ChatService {
   final FirebaseFirestore _db;
   final BlockService _blockService;
@@ -193,7 +199,7 @@ class ChatService {
         .toList());
   }
 
-  Stream<List<ChatMetadata>> getChats(String uid) {
+Stream<List<ChatMetadata>> getChats(String uid) {
     final chatsStream = _chats
         .where('participantIds', arrayContains: uid)
         .orderBy('lastMessageAt', descending: true)
@@ -203,7 +209,7 @@ class ChatService {
         ChatMetadata.fromMap(doc.data() as Map<String, dynamic>))
         .toList());
         
-    final blocksStream = _blockService.getBlockedUsersStream(uid).handleError((_) => <String>[]);
+    final blocksStream = _blockService.getBlockedUsersStream(uid).onErrorReturn(<String>[]);
 
     return Rx.combineLatest2(chatsStream, blocksStream, (List<ChatMetadata> chats, List<String> blockedUids) {
       return chats.where((chat) {

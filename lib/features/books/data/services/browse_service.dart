@@ -25,10 +25,7 @@ class BrowseService {
 
     if (currentUid.isEmpty) return booksStream;
 
-    // Use injected service and catch rules errors
-    final blocksStream = _blockService.getBlockedUsersStream(currentUid).handleError((error) {
-      return <String>[]; 
-    });
+    final blocksStream = _blockService.getBlockedUsersStream(currentUid).onErrorReturn(<String>[]);
 
     return Rx.combineLatest2(booksStream, blocksStream, (List<Book> books, List<String> blockedUids) {
       return books.where((book) => !blockedUids.contains(book.ownerId)).toList();
@@ -47,15 +44,13 @@ class BrowseService {
 
     if (currentUid.isEmpty) return booksStream;
 
-    // Apply the exact same block filtering logic here
-    final blocksStream = _blockService.getBlockedUsersStream(currentUid).handleError((error) {
-      return <String>[];
-    });
+    final blocksStream = _blockService.getBlockedUsersStream(currentUid).onErrorReturn(<String>[]);
 
     return Rx.combineLatest2(booksStream, blocksStream, (List<Book> books, List<String> blockedUids) {
       return books.where((book) => !blockedUids.contains(book.ownerId)).toList();
     });
   }
+
   Future<Book?> fetchBook(String ownerId, String bookId) async {
     try {
       final doc = await _firestore

@@ -3,15 +3,21 @@ import 'package:rxdart/rxdart.dart';
 import '../../domain/models/swap_request.dart';
 import '../../../books/data/services/block_service.dart';
 
-
 class DuplicateSwapException implements Exception {}
 
 class SwapService {
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final FirebaseFirestore _db;
+  final BlockService _blockService;
   final String _collection = 'swap_requests';
 
+  SwapService({
+    FirebaseFirestore? firestore,
+    BlockService? blockService,
+  })  : _db = firestore ?? FirebaseFirestore.instance,
+        _blockService = blockService ?? BlockService();
+
   Future<String> createSwapRequest(SwapRequest request) async {
-    final hasBlock = await BlockService().hasBlockRelationship(request.requesterId, request.ownerId);
+    final hasBlock = await _blockService.hasBlockRelationship(request.requesterId, request.ownerId);
     if (hasBlock) {
       throw Exception('Cannot create request. Access restricted due to block.');
     }

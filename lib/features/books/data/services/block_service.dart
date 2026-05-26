@@ -6,8 +6,14 @@ class BlockService {
   BlockService({FirebaseFirestore? firestore})
       : _db = firestore ?? FirebaseFirestore.instance;
 
-  // Blocks a user by saving them
+
+// Blocks a user by saving them
   Future<void> blockUser(String currentUid, String targetUid) async {
+    // CORREÇÃO: Validação defensiva adicionada
+    if (currentUid.isEmpty || targetUid.isEmpty || currentUid == targetUid) {
+      throw ArgumentError('Invalid block operation');
+    }
+
     await _db
         .collection('users')
         .doc(currentUid)

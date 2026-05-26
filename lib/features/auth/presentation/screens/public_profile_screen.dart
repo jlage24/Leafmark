@@ -203,6 +203,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
+                      if (context.read<AuthProvider>().user?.uid != widget.userId)
                         Row(
                           children: [
                             if (context.read<AuthProvider>().user?.uid != widget.userId)

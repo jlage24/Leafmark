@@ -169,6 +169,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               ? widget.displayName[0].toUpperCase()
               : '?';
 
+          final currentUid = context.read<AuthProvider>().user?.uid ?? '';
+          final isOwnProfile = currentUid == widget.userId;
+
           return ListView(
             padding: const EdgeInsets.only(bottom: 32),
             children: [
@@ -203,12 +206,11 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
-                      if (context.read<AuthProvider>().user?.uid != widget.userId)
-                        Row(
-                          children: [
-                            if (context.read<AuthProvider>().user?.uid != widget.userId)
+                        if (!isOwnProfile)
+                          Row(
+                            children: [
                               StreamBuilder<List<String>>(
-                                stream: context.read<BlockProvider>().getBlockedUsers(context.read<AuthProvider>().user?.uid ?? ''),
+                                stream: context.read<BlockProvider>().getBlockedUsers(currentUid),
                                 builder: (context, snapshot) {
                                   final isBlocked = snapshot.data?.contains(widget.userId) ?? false;
                                   return Container(
@@ -225,7 +227,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                       ),
                                       tooltip: isBlocked ? 'Unblock user' : 'Block user',
                                       onPressed: () async {
-                                        final currentUid = context.read<AuthProvider>().user?.uid ?? '';
                                         if (isBlocked) {
                                           await context.read<BlockProvider>().unblockUser(currentUid, widget.userId);
                                           if (context.mounted) {
@@ -242,20 +243,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                   );
                                 },
                               ),
-                            Container(
-                              decoration: BoxDecoration(
-                                color: Colors.black.withValues(alpha: 0.3),
-                                shape: BoxShape.circle,
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(Icons.flag_outlined,
+                                      size: 18, color: Colors.white),
+                                  tooltip: 'Report user',
+                                  onPressed: () => _showReportSheet(context),
+                                ),
                               ),
-                              child: IconButton(
-                                icon: const Icon(Icons.flag_outlined,
-                                    size: 18, color: Colors.white),
-                                tooltip: 'Report user',
-                                onPressed: () => _showReportSheet(context),
-                              ),
-                            ),
-                          ],
-                        ),
+                            ],
+                          ),
                       ],
                     ),
                   ),
@@ -285,7 +286,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               ),
               const SizedBox(height: 48),
 
-              // ── Nome, username, bio, stats ───────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(

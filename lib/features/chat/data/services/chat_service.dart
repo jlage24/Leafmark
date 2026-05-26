@@ -58,7 +58,7 @@ class ChatService {
     required String swapId,
     required ChatMessage message,
   }) async {
-    // Server-side validation: Check block status before accepting a new message
+    // Service-level validation: check block status before sending a new message
     final chatDoc = await _chats.doc(swapId).get();
     if (chatDoc.exists) {
       final chatData = chatDoc.data() as Map<String, dynamic>;

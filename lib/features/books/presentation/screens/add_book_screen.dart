@@ -36,8 +36,16 @@ class _AddBookScreenState extends State<AddBookScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _authorsController;
   late final TextEditingController _notesController;
+  late final TextEditingController _locationController;
 
   BookCondition _condition = BookCondition.good;
+  String? _selectedCategory;
+
+  final List<String> _categories = [
+    'Fiction', 'Non-Fiction', 'Sci-Fi', 'Fantasy',
+    'Romance', 'Mystery', 'Academic', 'Thriller',
+  ];
+
   BookFetchResult? _fetchResult;
   _ScreenState _state = _ScreenState.idle;
   String? _errorMessage;
@@ -54,6 +62,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
     _titleController = TextEditingController();
     _authorsController = TextEditingController();
     _notesController = TextEditingController();
+    _locationController = TextEditingController();
 
     if (widget.isbn != null && widget.isbn!.isNotEmpty) {
       _fetchBookDetails(widget.isbn!);
@@ -68,6 +77,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
     _titleController.dispose();
     _authorsController.dispose();
     _notesController.dispose();
+    _locationController.dispose();
     super.dispose();
   }
 
@@ -142,6 +152,13 @@ class _AddBookScreenState extends State<AddBookScreen> {
   Future<void> _saveBook() async {
     if (!_formKey.currentState!.validate()) return;
 
+    if (_selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a category.')),
+      );
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     final List<String> uploadedUrls = [];
@@ -168,6 +185,10 @@ class _AddBookScreenState extends State<AddBookScreen> {
         authors: _authorsController.text.trim(),
         coverUrl: _fetchResult?.coverUrl,
         condition: _condition,
+        category: _selectedCategory,
+        location: _locationController.text.trim().isEmpty
+            ? null
+            : _locationController.text.trim(),
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
@@ -267,12 +288,16 @@ class _AddBookScreenState extends State<AddBookScreen> {
                   titleController: _titleController,
                   authorsController: _authorsController,
                   notesController: _notesController,
+                  locationController: _locationController,
                   coverUrl: _fetchResult?.coverUrl,
                   condition: _condition,
                   onConditionChanged: (c) => setState(() => _condition = c),
                   selectedPhotos: _selectedPhotos,
                   onPickPhotos: _pickPhotos,
                   onRemovePhoto: _removePhoto,
+                  categories: _categories,
+                  selectedCategory: _selectedCategory,
+                  onCategoryChanged: (c) => setState(() => _selectedCategory = c),
                 ),
 
               const SizedBox(height: 32),
@@ -422,23 +447,31 @@ class _BookForm extends StatelessWidget {
   final TextEditingController titleController;
   final TextEditingController authorsController;
   final TextEditingController notesController;
+  final TextEditingController locationController;
   final String? coverUrl;
   final BookCondition condition;
   final ValueChanged<BookCondition> onConditionChanged;
   final List<File> selectedPhotos;
   final VoidCallback onPickPhotos;
   final Function(int) onRemovePhoto;
+  final List<String> categories;
+  final String? selectedCategory;
+  final ValueChanged<String?> onCategoryChanged;
 
   const _BookForm({
     required this.titleController,
     required this.authorsController,
     required this.notesController,
+    required this.locationController,
     required this.coverUrl,
     required this.condition,
     required this.onConditionChanged,
     required this.selectedPhotos,
     required this.onPickPhotos,
     required this.onRemovePhoto,
+    required this.categories,
+    required this.selectedCategory,
+    required this.onCategoryChanged,
   });
 
   @override
@@ -477,6 +510,45 @@ class _BookForm extends StatelessWidget {
           hintText: 'Umberto Eco',
           validator: (v) =>
           (v == null || v.isEmpty) ? 'Author is required' : null,
+        ),
+
+        const SizedBox(height: 14),
+
+        Text(
+          'Category',
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: Theme.of(context).colorScheme.onSurface,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surface,
+            border: Border.all(color: AppTheme.divider),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: selectedCategory,
+              hint: const Text('Select a literary category'),
+              isExpanded: true,
+              dropdownColor: Theme.of(context).colorScheme.surface,
+              items: categories.map((cat) {
+                return DropdownMenuItem(value: cat, child: Text(cat));
+              }).toList(),
+              onChanged: onCategoryChanged,
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 14),
+
+        LeafmarkTextField(
+          controller: locationController,
+          label: 'Location (City or Campus)',
+          hintText: 'e.g. FEUP, Porto',
         ),
 
         const SizedBox(height: 20),

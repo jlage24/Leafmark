@@ -105,7 +105,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
           Expanded(
             child: StreamBuilder<List<Book>>(
-              stream: browseService.browseAvailableBooks(uid),
+              stream: browseService.browseBooks(uid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -118,23 +118,21 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
                 if (_selectedCategory != null || _locationQuery.isNotEmpty) {
                   books = books.where((book) {
-                    bool matchesCategory = true;
-                    bool matchesLocation = true;
+                    if (book.isLocked) return false;
 
-                    if (_selectedCategory != null) {
-                      matchesCategory = book.category == _selectedCategory;
+                    if (_selectedCategory != null && book.category != _selectedCategory) {
+                      return false;
                     }
+
                     if (_locationQuery.isNotEmpty) {
                       final bookLoc = (book.location ?? '').toLowerCase();
-                      matchesLocation = bookLoc.contains(_locationQuery);
+                      if (!bookLoc.contains(_locationQuery)) return false;
                     }
 
-
-                    return matchesCategory && matchesLocation;
+                    return true;
                   }).toList();
                 }
 
-                // --- Empty State (Sem Resultados) ---
                 if (books.isEmpty) {
                   return Center(
                     child: Column(

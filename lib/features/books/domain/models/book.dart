@@ -120,6 +120,17 @@ class Book {
 
 const Object _sentinel = Object();
 
+const List<String> bookCategories = [
+  'Fiction',
+  'Non-Fiction',
+  'Sci-Fi',
+  'Fantasy',
+  'Romance',
+  'Mystery',
+  'Academic',
+  'Thriller',
+];
+
 enum BookCondition {
   mint('Mint'),
   good('Good'),

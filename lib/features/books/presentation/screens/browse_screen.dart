@@ -18,11 +18,6 @@ class _BrowseScreenState extends State<BrowseScreen> {
   final TextEditingController _locationController = TextEditingController();
   String _locationQuery = '';
 
-  final List<String> _categories = [
-    'Fiction', 'Non-Fiction', 'Sci-Fi', 'Fantasy',
-    'Romance', 'Mystery', 'Academic', 'Thriller',
-  ];
-
   @override
   void dispose() {
     _locationController.dispose();
@@ -81,9 +76,9 @@ class _BrowseScreenState extends State<BrowseScreen> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: _categories.length,
+              itemCount: bookCategories.length,
               itemBuilder: (context, index) {
-                final category = _categories[index];
+                final category = bookCategories[index];
                 final isSelected = _selectedCategory == category;
                 return Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 4),
@@ -118,18 +113,20 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
                 if (_selectedCategory != null || _locationQuery.isNotEmpty) {
                   books = books.where((book) {
-                    if (book.isLocked) return false;
+                    bool matchesCategory = true;
+                    bool matchesLocation = true;
+                    if (_selectedCategory != null) {
 
-                    if (_selectedCategory != null && book.category != _selectedCategory) {
-                      return false;
+                      final bookCategory = book.category?.trim().toLowerCase();
+                      final selectedCategory = _selectedCategory?.trim().toLowerCase();
+                      matchesCategory = bookCategory == selectedCategory;
                     }
-
                     if (_locationQuery.isNotEmpty) {
                       final bookLoc = (book.location ?? '').toLowerCase();
-                      if (!bookLoc.contains(_locationQuery)) return false;
+                      matchesLocation = bookLoc.contains(_locationQuery);
                     }
 
-                    return true;
+                    return matchesCategory && matchesLocation;
                   }).toList();
                 }
 
@@ -149,6 +146,15 @@ class _BrowseScreenState extends State<BrowseScreen> {
                           'Try removing some filters to see more results.',
                           style: theme.textTheme.bodySmall,
                         ),
+
+                        if (_selectedCategory != null || _locationQuery.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          TextButton.icon(
+                            onPressed: _clearFilters,
+                            icon: const Icon(Icons.clear),
+                            label: const Text('Clear filters'),
+                          ),
+                        ],
                       ],
                     ),
                   );

@@ -41,11 +41,6 @@ class _AddBookScreenState extends State<AddBookScreen> {
   BookCondition _condition = BookCondition.good;
   String? _selectedCategory;
 
-  final List<String> _categories = [
-    'Fiction', 'Non-Fiction', 'Sci-Fi', 'Fantasy',
-    'Romance', 'Mystery', 'Academic', 'Thriller',
-  ];
-
   BookFetchResult? _fetchResult;
   _ScreenState _state = _ScreenState.idle;
   String? _errorMessage;
@@ -186,9 +181,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
         coverUrl: _fetchResult?.coverUrl,
         condition: _condition,
         category: _selectedCategory,
-        location: _locationController.text.trim().isEmpty
-            ? null
-            : _locationController.text.trim(),
+        location: _locationController.text.trim(),
         notes: _notesController.text.trim().isEmpty
             ? null
             : _notesController.text.trim(),
@@ -295,7 +288,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
                   selectedPhotos: _selectedPhotos,
                   onPickPhotos: _pickPhotos,
                   onRemovePhoto: _removePhoto,
-                  categories: _categories,
+                  categories: bookCategories,
                   selectedCategory: _selectedCategory,
                   onCategoryChanged: (c) => setState(() => _selectedCategory = c),
                 ),
@@ -549,6 +542,8 @@ class _BookForm extends StatelessWidget {
           controller: locationController,
           label: 'Location (City or Campus)',
           hintText: 'e.g. FEUP, Porto',
+          validator: (v) =>
+          (v == null || v.trim().isEmpty) ? 'Location is required' : null,
         ),
 
         const SizedBox(height: 20),

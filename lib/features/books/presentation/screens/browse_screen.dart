@@ -138,7 +138,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.search_off, size: 64, color: theme.colorScheme.primary.withOpacity(0.4)),
+                        Icon(Icons.search_off, size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.4)),
                         const SizedBox(height: 16),
                         Text(
                           'No books match your filters.',

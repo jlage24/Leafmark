@@ -100,7 +100,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
 
           Expanded(
             child: StreamBuilder<List<Book>>(
-              stream: browseService.browseBooks(uid),
+              stream: browseService.browseAvailableBooks(uid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -115,8 +115,8 @@ class _BrowseScreenState extends State<BrowseScreen> {
                   books = books.where((book) {
                     bool matchesCategory = true;
                     bool matchesLocation = true;
-                    if (_selectedCategory != null) {
 
+                    if (_selectedCategory != null) {
                       final bookCategory = book.category?.trim().toLowerCase();
                       final selectedCategory = _selectedCategory?.trim().toLowerCase();
                       matchesCategory = bookCategory == selectedCategory;

@@ -1,12 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../auth/domain/models/app_user.dart';
 
-class UserSearchService {
+abstract class UserSearchRepository {
+  Future<List<AppUser>> searchUsers(
+      String query, {
+        String? excludeUid,
+        int limit = 20,
+      });
+}
+
+class UserSearchService implements UserSearchRepository {
   final FirebaseFirestore _db;
 
   UserSearchService({FirebaseFirestore? firestore})
       : _db = firestore ?? FirebaseFirestore.instance;
 
+  @override
   Future<List<AppUser>> searchUsers(
       String query, {
         String? excludeUid,

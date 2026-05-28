@@ -8,11 +8,11 @@ enum SearchTarget { books, users }
 
 class SearchProvider extends ChangeNotifier {
   final GoogleBooksService _booksService;
-  final UserSearchService _userSearchService;
+  final UserSearchRepository _userSearchService;
 
   SearchProvider({
     GoogleBooksService? booksService,
-    UserSearchService? userSearchService,
+    UserSearchRepository? userSearchService,
   })  : _booksService = booksService ?? GoogleBooksService(),
         _userSearchService = userSearchService ?? UserSearchService();
 

@@ -48,14 +48,19 @@ class SwapService {
       return docRef.id;
     });
 
+    final senderInfo = await fetchUserInfo(request.requesterId);
+    final senderName = senderInfo['displayName'] ?? 'Someone';
+
     await _notificationService.createNotification(
       AppNotification(
         id: '',
         recipientId: request.ownerId,
         senderId: request.requesterId,
+        senderDisplayName: senderName,
+        senderPhotoUrl: senderInfo['photoUrl'],
         type: AppNotificationType.swapRequest,
         title: 'New swap request',
-        body: 'Someone wants to swap for one of your books.',
+        body: '$senderName wants to swap for one of your books.',
         swapRequestId: swapRequestId,
         swapId: swapRequestId,
         isRead: false,
@@ -106,14 +111,19 @@ class SwapService {
 
     await batch.commit();
 
+    final senderInfo = await fetchUserInfo(swap.ownerId);
+    final senderName = senderInfo['displayName'] ?? 'Someone';
+
     await _notificationService.createNotification(
       AppNotification(
         id: '',
         recipientId: swap.requesterId,
         senderId: swap.ownerId,
+        senderDisplayName: senderName,
+        senderPhotoUrl: senderInfo['photoUrl'],
         type: AppNotificationType.swapAccepted,
         title: 'Swap accepted',
-        body: 'Your swap request was accepted.',
+        body: '$senderName accepted your swap request.',
         swapRequestId: swap.id,
         swapId: swap.id,
         isRead: false,
@@ -129,6 +139,31 @@ class SwapService {
 
   Future<void> deleteRequest(String id) async {
     await _db.collection(_collection).doc(id).delete();
+  }
+
+  Future<Map<String, String?>> fetchUserInfo(String uid) async {
+    try {
+      final doc = await _db.collection('users').doc(uid).get();
+
+      if (!doc.exists) {
+        return {
+          'displayName': null,
+          'photoUrl': null,
+        };
+      }
+
+      final data = doc.data()!;
+
+      return {
+        'displayName': data['displayName'] as String?,
+        'photoUrl': data['profilePictureUrl'] as String?,
+      };
+    } catch (_) {
+      return {
+        'displayName': null,
+        'photoUrl': null,
+      };
+    }
   }
 
   Stream<List<SwapRequest>> incomingRequests(String uid) {

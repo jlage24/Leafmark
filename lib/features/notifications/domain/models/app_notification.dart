@@ -12,6 +12,8 @@ class AppNotification {
   final String id;
   final String recipientId;
   final String senderId;
+  final String? senderDisplayName;
+  final String? senderPhotoUrl;
   final AppNotificationType type;
   final String title;
   final String body;
@@ -25,6 +27,8 @@ class AppNotification {
     required this.id,
     required this.recipientId,
     required this.senderId,
+    this.senderDisplayName,
+    this.senderPhotoUrl,
     required this.type,
     required this.title,
     required this.body,
@@ -39,6 +43,8 @@ class AppNotification {
     return {
       'recipientId': recipientId,
       'senderId': senderId,
+      'senderDisplayName': senderDisplayName,
+      'senderPhotoUrl': senderPhotoUrl,
       'type': type.name,
       'title': title,
       'body': body,
@@ -55,6 +61,8 @@ class AppNotification {
       id: id,
       recipientId: map['recipientId'] as String,
       senderId: map['senderId'] as String,
+      senderDisplayName: map['senderDisplayName'] as String?,
+      senderPhotoUrl: map['senderPhotoUrl'] as String?,
       type: AppNotificationType.values.byName(map['type'] as String),
       title: map['title'] as String,
       body: map['body'] as String,

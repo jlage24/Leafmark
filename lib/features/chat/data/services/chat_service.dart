@@ -97,6 +97,15 @@ class ChatService {
       }
     }
 
+    Map<String, String?> senderInfo = {
+      'displayName': null,
+      'photoUrl': null,
+    };
+
+    if (recipientId != null) {
+      senderInfo = await fetchUserInfo(message.senderId);
+    }
+
     final batch = _db.batch();
 
     final chatRef = _chats.doc(swapId);
@@ -120,9 +129,14 @@ class ChatService {
           id: '',
           recipientId: recipientId,
           senderId: message.senderId,
+          senderDisplayName: senderInfo['displayName'],
+          senderPhotoUrl: senderInfo['photoUrl'],
           type: _notificationTypeForMessage(message.type),
           title: _notificationTitleForMessage(message.type),
-          body: _notificationBodyForMessage(message),
+          body: _notificationBodyForMessage(
+            message,
+            senderInfo['displayName'] ?? 'Someone',
+          ),
           chatId: swapId,
           swapId: swapId,
           isRead: false,
@@ -366,14 +380,20 @@ Stream<List<ChatMetadata>> getChats(String uid) {
     }
   }
 
-  String _notificationBodyForMessage(ChatMessage message) {
+  String _notificationBodyForMessage(
+      ChatMessage message,
+      String senderName,
+      ) {
     switch (message.type) {
       case MessageType.proposal:
-        return 'Someone proposed a book swap with you.';
+        return '$senderName sent you a swap proposal.';
       case MessageType.counterOffer:
-        return 'Someone sent you a counter-offer.';
+        return '$senderName sent you a counter-offer.';
       case MessageType.text:
-        return message.text ?? 'You received a new message.';
+        if (message.text != null && message.text!.trim().isNotEmpty) {
+          return '$senderName: ${message.text}';
+        }
+        return '$senderName sent you a message.';
     }
   }
 }

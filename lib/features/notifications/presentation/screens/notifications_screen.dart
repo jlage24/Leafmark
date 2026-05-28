@@ -2,9 +2,64 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/notification_provider.dart';
 import '../../domain/models/app_notification.dart';
+import '../../../chat/presentation/screens/chat_screen.dart';
+import '../../../swaps/presentation/screens/swap_requests_screen.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
+
+  Future<void> _handleNotificationTap(
+      BuildContext context,
+      AppNotification notification,
+      NotificationProvider provider,
+      ) async {
+    await provider.markAsRead(notification.id);
+
+    if (!context.mounted) return;
+
+    switch (notification.type) {
+      case AppNotificationType.chatMessage:
+      case AppNotificationType.proposal:
+      case AppNotificationType.counterOffer:
+      case AppNotificationType.swapAccepted:
+        final chatId = notification.chatId ?? notification.swapId;
+
+        if (chatId == null || chatId.isEmpty) {
+          _showUnavailableSnackBar(context);
+          return;
+        }
+
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => ChatScreen(
+              swapId: chatId,
+              otherUserId: notification.senderId,
+              otherUserName:
+              notification.senderDisplayName ?? 'LeafMark user',
+            ),
+          ),
+        );
+        break;
+
+      case AppNotificationType.swapRequest:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => const SwapRequestsScreen(),
+          ),
+        );
+        break;
+    }
+  }
+
+  void _showUnavailableSnackBar(BuildContext context) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('This notification cannot be opened anymore.'),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -14,15 +69,36 @@ class NotificationsScreen extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Notifications'),
         actions: [
-          TextButton(
-            onPressed: provider.markAllAsRead,
-            child: const Text('Mark all read'),
+          StreamBuilder<int>(
+            stream: provider.unreadCount(),
+            builder: (context, snapshot) {
+              final count = snapshot.data ?? 0;
+
+              if (count <= 0) return const SizedBox.shrink();
+
+              return TextButton(
+                onPressed: provider.markAllAsRead,
+                child: const Text('Mark all read'),
+              );
+            },
           ),
         ],
       ),
       body: StreamBuilder<List<AppNotification>>(
         stream: provider.notifications(),
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
+                child: Text(
+                  'Failed to load notifications: ${snapshot.error}',
+                  textAlign: TextAlign.center,
+                ),
+              ),
+            );
+          }
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
           }
@@ -42,7 +118,11 @@ class NotificationsScreen extends StatelessWidget {
 
               return _NotificationCard(
                 notification: notification,
-                onTap: () => provider.markAsRead(notification.id),
+                onTap: () => _handleNotificationTap(
+                  context,
+                  notification,
+                  provider,
+                ),
               );
             },
           );
@@ -121,7 +201,17 @@ class _NotificationCard extends StatelessWidget {
         leading: CircleAvatar(
           backgroundColor: scheme.primaryContainer,
           foregroundColor: scheme.onPrimaryContainer,
-          child: Icon(_iconForType(notification.type)),
+          backgroundImage: notification.senderPhotoUrl != null &&
+              notification.senderPhotoUrl!.isNotEmpty
+              ? NetworkImage(notification.senderPhotoUrl!)
+              : null,
+          child: notification.senderPhotoUrl == null ||
+              notification.senderPhotoUrl!.isEmpty
+              ? Text(
+            _initialFor(notification.senderDisplayName),
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          )
+              : null,
         ),
         title: Text(
           notification.title,
@@ -135,31 +225,28 @@ class _NotificationCard extends StatelessWidget {
           child: Text(notification.body),
         ),
         trailing: notification.isRead
-            ? null
-            : Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(
-            color: scheme.primary,
-            shape: BoxShape.circle,
-          ),
+            ? const Icon(Icons.chevron_right, size: 18)
+            : Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color: scheme.primary,
+                shape: BoxShape.circle,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Icon(Icons.chevron_right, size: 18),
+          ],
         ),
       ),
     );
   }
 
-  IconData _iconForType(AppNotificationType type) {
-    switch (type) {
-      case AppNotificationType.swapRequest:
-        return Icons.swap_horiz;
-      case AppNotificationType.chatMessage:
-        return Icons.chat_bubble_outline;
-      case AppNotificationType.proposal:
-        return Icons.local_offer_outlined;
-      case AppNotificationType.counterOffer:
-        return Icons.compare_arrows;
-      case AppNotificationType.swapAccepted:
-        return Icons.check_circle_outline;
-    }
+  String _initialFor(String? name) {
+    if (name == null || name.trim().isEmpty) return '?';
+    return name.trim()[0].toUpperCase();
   }
 }

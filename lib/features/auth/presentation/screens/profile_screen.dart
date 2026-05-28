@@ -11,6 +11,7 @@ import '../../../ratings/domain/models/rating.dart';
 import '../../../swaps/presentation/screens/exchange_history_screen.dart';
 import '../../../wishlist/presentation/screens/wishlist_screen.dart';
 import '../../../books/presentation/providers/follow_provider.dart';
+import '../widgets/profile_badges.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -181,7 +182,6 @@ class ProfileScreen extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 24),
-
           if (user?.favoriteAuthors != null &&
               user!.favoriteAuthors.isNotEmpty) ...[
             const Divider(),

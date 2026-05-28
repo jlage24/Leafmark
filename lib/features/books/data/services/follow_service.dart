@@ -63,4 +63,10 @@ class FollowService {
     if (uid.isEmpty) return Stream.value(0);
     return _db.collection('users').doc(uid).collection('followers').snapshots().map((snap) => snap.docs.length);
   }
+
+  Stream<int> getFollowingCount(String uid) {
+    if (uid.isEmpty) return Stream.value(0);
+    return _db.collection('users').doc(uid).collection('following').snapshots().map((snap) => snap.docs.length);
+  }
 }
+

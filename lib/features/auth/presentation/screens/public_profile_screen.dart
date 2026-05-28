@@ -307,7 +307,33 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           style: textTheme.bodyMedium,
                           textAlign: TextAlign.center),
                     ],
-                    // Follow button
+
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        StreamBuilder<int>(
+                          stream: context.read<FollowProvider>().getFollowersCount(widget.userId),
+                          builder: (context, snapshot) {
+                            return Text(
+                              '${snapshot.data ?? 0} Followers',
+                              style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 16),
+                        StreamBuilder<int>(
+                          stream: context.read<FollowProvider>().getFollowingCount(widget.userId),
+                          builder: (context, snapshot) {
+                            return Text(
+                              '${snapshot.data ?? 0} Following',
+                              style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+
                     if (!isOwnProfile) ...[
                       const SizedBox(height: 16),
                       StreamBuilder<bool>(
@@ -323,7 +349,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                   await context.read<FollowProvider>().followUser(currentUid, widget.userId);
                                 }
                               } catch (e) {
-                                // Handle block exception and show alert message to user
                                 if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
@@ -345,7 +370,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                         },
                       ),
                     ],
+
                     const SizedBox(height: 24),
+
                     FutureBuilder<int>(
                       future: _shelfCountFuture,
                       builder: (context, shelfSnap) {
@@ -356,18 +383,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                                 label: 'Books',
                                 value: shelfSnap.hasData ? '$count' : '-'),
                             const SizedBox(width: 8),
-                            // Follow counter
-                            StreamBuilder<int>(
-                              stream: context.read<FollowProvider>().getFollowersCount(widget.userId),
-                              builder: (context, snapshot) {
-                                return _StatCard(
-                                  label: 'Followers',
-                                  value: snapshot.hasData ? '${snapshot.data}' : '-',
-                                );
-                              },
-                            ),
-                            const SizedBox(width: 8),
-
                             StreamBuilder<int>(
                               stream: context.read<SwapProvider>().exchangeCount(widget.userId),
                               builder: (context, snapshot) {

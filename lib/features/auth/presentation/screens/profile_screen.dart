@@ -134,7 +134,34 @@ class ProfileScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ],
+
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    StreamBuilder<int>(
+                      stream: context.read<FollowProvider>().getFollowersCount(user?.uid ?? ''),
+                      builder: (context, snapshot) {
+                        return Text(
+                          '${snapshot.data ?? 0} Followers',
+                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 16),
+                    StreamBuilder<int>(
+                      stream: context.read<FollowProvider>().getFollowingCount(user?.uid ?? ''),
+                      builder: (context, snapshot) {
+                        return Text(
+                          '${snapshot.data ?? 0} Following',
+                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                        );
+                      },
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 24),
+
                 Row(
                   children: [
                     _StatCard(label: 'Books', value: '${shelf.books.length}'),
@@ -149,30 +176,16 @@ class ProfileScreen extends StatelessWidget {
                       },
                     ),
                     const SizedBox(width: 8),
-
-                    StreamBuilder<int>(
-                      stream: context.read<FollowProvider>().getFollowersCount(user?.uid ?? ''),
-                      builder: (context, snapshot) {
-                        return _StatCard(
-                          label: 'Followers',
-                          value: snapshot.hasData ? '${snapshot.data}' : '—',
-                        );
-                      },
-                    ),
-                    const SizedBox(width: 8),
-
                     StreamBuilder<List<Rating>>(
                       stream: context.read<RatingProvider>().getRatingsForUser(user?.uid ?? ''),
                       builder: (context, snapshot) {
                         String ratingValue = '—';
-
                         if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                           final ratings = snapshot.data!;
                           final totalStars = ratings.fold<int>(0, (total, item) => total + item.rating);
                           final average = totalStars / ratings.length;
                           ratingValue = average.toStringAsFixed(1);
                         }
-
                         return _StatCard(label: 'Rating', value: ratingValue);
                       },
                     ),

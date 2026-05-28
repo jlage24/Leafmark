@@ -23,4 +23,8 @@ class FollowProvider extends ChangeNotifier {
   Stream<int> getFollowersCount(String uid) {
     return _service.getFollowersCount(uid);
   }
+
+  Stream<int> getFollowingCount(String uid) {
+    return _service.getFollowingCount(uid);
+  }
 }

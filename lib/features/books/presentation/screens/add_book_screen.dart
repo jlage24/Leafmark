@@ -359,8 +359,11 @@ class _IsbnInputRow extends StatelessWidget {
             keyboardType: TextInputType.number,
             inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[0-9X]'))],
             validator: (v) {
-              if (v == null || v.isEmpty) return 'Enter an ISBN';
-              if (v.length != 10 && v.length != 13) {
+              final value = v?.trim() ?? '';
+
+              if (value.isEmpty) return 'Enter an ISBN';
+
+              if (value.length != 10 && value.length != 13) {
                 return 'ISBN must be 10 or 13 digits';
               }
               return null;
@@ -492,7 +495,9 @@ class _BookForm extends StatelessWidget {
           label: 'Title',
           hintText: 'The Name of the Rose',
           validator: (v) =>
-          (v == null || v.isEmpty) ? 'Title is required' : null,
+          (v == null || v.trim().isEmpty)
+              ? 'Title is required'
+              : null,
         ),
 
         const SizedBox(height: 14),
@@ -502,7 +507,9 @@ class _BookForm extends StatelessWidget {
           label: 'Author(s)',
           hintText: 'Umberto Eco',
           validator: (v) =>
-          (v == null || v.isEmpty) ? 'Author is required' : null,
+          (v == null || v.trim().isEmpty)
+              ? 'Author is required'
+              : null,
         ),
 
         const SizedBox(height: 14),

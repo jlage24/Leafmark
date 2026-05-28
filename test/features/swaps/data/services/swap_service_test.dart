@@ -49,14 +49,46 @@ void main() {
         .doc('userA')
         .collection('shelf')
         .doc('book1')
-        .set({'lockedBySwapId': null});
+        .set({
+      'id': 'book1',
+      'isbn': '111',
+      'title': 'Book 1',
+      'authors': 'Author A',
+      'condition': 'good',
+      'addedAt': DateTime(2026, 1, 1).toIso8601String(),
+      'ownerId': 'userA',
+      'ownerName': 'Alice',
+      'lockedBySwapId': null,
+      'conditionPhotoUrls': [],
+    });
 
     await fakeDb
         .collection('users')
         .doc('userB')
         .collection('shelf')
         .doc('book2')
-        .set({'lockedBySwapId': null});
+        .set({
+      'id': 'book2',
+      'isbn': '222',
+      'title': 'Book 2',
+      'authors': 'Author B',
+      'condition': 'good',
+      'addedAt': DateTime(2026, 1, 1).toIso8601String(),
+      'ownerId': 'userB',
+      'ownerName': 'Bob',
+      'lockedBySwapId': null,
+      'conditionPhotoUrls': [],
+    });
+  }
+
+  Future<void> createDummyChat(String swapId) async {
+    await fakeDb.collection('chats').doc(swapId).set({
+      'swapId': swapId,
+      'participantIds': ['userA', 'userB'],
+      'status': 'active',
+      'lastMessage': null,
+      'lastMessageAt': null,
+    });
   }
 
   group('SwapService Unit Tests', () {
@@ -153,6 +185,7 @@ void main() {
 
         await fakeDb.collection('swap_requests').doc(swap.id).set(swap.toMap());
         await createDummyBooks();
+        await createDummyChat(swap.id);
 
         await swapService.acceptSwapAndLockBooks(swap);
 
@@ -198,7 +231,7 @@ void main() {
           id: 'swap2',
           requesterId: 'userC',
           bookOfferedId: 'book3',
-          bookWantedId: 'book1',
+          bookWantedId: 'book2',
         );
 
         await fakeDb
@@ -212,6 +245,7 @@ void main() {
             .set(conflictingSwap.toMap());
 
         await createDummyBooks();
+        await createDummyChat(acceptedSwap.id);
 
         await swapService.acceptSwapAndLockBooks(acceptedSwap);
 
@@ -236,6 +270,8 @@ void main() {
         final swap = makeSwap();
 
         await fakeDb.collection('swap_requests').doc(swap.id).set(swap.toMap());
+
+        await createDummyChat(swap.id);
 
         await swapService.updateStatus('swap1', SwapStatus.rejected);
 

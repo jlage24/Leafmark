@@ -1,12 +1,21 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'block_service.dart';
 
 class FollowService {
   final FirebaseFirestore _db;
+  final BlockService _blockService;
 
-  FollowService({FirebaseFirestore? firestore}) : _db = firestore ?? FirebaseFirestore.instance;
+  FollowService({FirebaseFirestore? firestore, BlockService? blockService})
+      : _db = firestore ?? FirebaseFirestore.instance,
+        _blockService = blockService ?? BlockService();
 
   Future<void> followUser(String followerId, String followedId) async {
     if (followerId.isEmpty || followedId.isEmpty || followerId == followedId) return;
+
+    final hasBlock = await _blockService.hasBlockRelationship(followerId, followedId);
+    if (hasBlock) {
+      throw Exception('Cannot follow user. The user is Blocked.');
+    }
 
     final batch = _db.batch();
 

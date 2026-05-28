@@ -315,10 +315,22 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           final isFollowing = snapshot.data ?? false;
                           return FilledButton.icon(
                             onPressed: () async {
-                              if (isFollowing) {
-                                await context.read<FollowProvider>().unfollowUser(currentUid, widget.userId);
-                              } else {
-                                await context.read<FollowProvider>().followUser(currentUid, widget.userId);
+                              try {
+                                if (isFollowing) {
+                                  await context.read<FollowProvider>().unfollowUser(currentUid, widget.userId);
+                                } else {
+                                  await context.read<FollowProvider>().followUser(currentUid, widget.userId);
+                                }
+                              } catch (e) {
+                                // Handle block exception and show alert message to user
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(e.toString().replaceAll('Exception: ', '')),
+                                      backgroundColor: Theme.of(context).colorScheme.error,
+                                    ),
+                                  );
+                                }
                               }
                             },
                             style: FilledButton.styleFrom(

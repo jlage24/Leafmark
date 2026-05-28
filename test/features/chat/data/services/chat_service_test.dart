@@ -110,13 +110,17 @@ void main() {
           () => mockBlockService.hasBlockRelationship('userA', 'userB'),
         ).thenAnswer((_) async => true);
 
-        expect(
-          () => chatService.createChat(
+        await expectLater(
+          chatService.createChat(
             swapId: 'swap1',
             participantIds: ['userA', 'userB'],
           ),
           throwsException,
         );
+
+        final snap = await fakeDb.collection('chats').get();
+
+        expect(snap.docs, isEmpty);
       },
     );
 
@@ -158,6 +162,55 @@ void main() {
         DateTime(2026, 1, 2),
       );
     });
+
+    test('sendMessage throws exception when chat does not exist', () async {
+      await expectLater(
+        chatService.sendMessage(swapId: 'missingChat', message: makeMessage()),
+        throwsException,
+      );
+
+      final messagesSnap = await fakeDb
+          .collection('chats')
+          .doc('missingChat')
+          .collection('messages')
+          .get();
+
+      final notificationsSnap = await fakeDb.collection('notifications').get();
+
+      expect(messagesSnap.docs, isEmpty);
+      expect(notificationsSnap.docs, isEmpty);
+    });
+
+    test(
+      'sendMessage throws exception when block relationship exists without writing data',
+      () async {
+        when(
+          () => mockBlockService.hasBlockRelationship('userA', 'userB'),
+        ).thenAnswer((_) async => true);
+
+        await createDummyChat();
+
+        await expectLater(
+          chatService.sendMessage(swapId: 'swap1', message: makeMessage()),
+          throwsException,
+        );
+
+        final messagesSnap = await fakeDb
+            .collection('chats')
+            .doc('swap1')
+            .collection('messages')
+            .get();
+
+        final chatSnap = await fakeDb.collection('chats').doc('swap1').get();
+        final notificationsSnap = await fakeDb
+            .collection('notifications')
+            .get();
+
+        expect(messagesSnap.docs, isEmpty);
+        expect(chatSnap['lastMessage'], '');
+        expect(notificationsSnap.docs, isEmpty);
+      },
+    );
 
     test('sendProposal stores proposal message', () async {
       when(

@@ -12,6 +12,8 @@ import '../../../swaps/presentation/screens/exchange_history_screen.dart';
 import '../../../wishlist/presentation/screens/wishlist_screen.dart';
 import '../../../books/presentation/providers/follow_provider.dart';
 import '../widgets/profile_badges.dart';
+import '../../../notifications/presentation/providers/notification_provider.dart';
+import '../../../notifications/presentation/screens/notifications_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -69,17 +71,46 @@ class ProfileScreen extends StatelessWidget {
                         color: AppTheme.primaryLight,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, size: 20),
-                      color: AppTheme.primaryLight,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const EditProfileScreen(),
-                          ),
-                        );
-                      },
+                    Row(
+                      children: [
+                        StreamBuilder<int>(
+                          stream: context.read<NotificationProvider>().unreadCount(),
+                          builder: (context, snapshot) {
+                            final count = snapshot.data ?? 0;
+
+                            return IconButton(
+                              color: AppTheme.primaryLight,
+                              tooltip: 'Notifications',
+                              icon: Badge(
+                                isLabelVisible: count > 0,
+                                label: Text(count > 99 ? '99+' : '$count'),
+                                child: const Icon(Icons.notifications_none_outlined, size: 20),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const NotificationsScreen(),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          color: AppTheme.primaryLight,
+                          tooltip: 'Edit profile',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const EditProfileScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),

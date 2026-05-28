@@ -31,6 +31,7 @@ class _MainScreenState extends State<MainScreen> {
       );
       return;
     }
+
     setState(() => _currentIndex = index);
   }
 

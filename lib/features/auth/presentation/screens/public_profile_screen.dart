@@ -316,7 +316,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           stream: context.read<FollowProvider>().getFollowersCount(widget.userId),
                           builder: (context, snapshot) {
                             return Text(
-                              '${snapshot.data ?? 0} Followers',
+                              '${snapshot.hasData ? snapshot.data : '-'} Followers',
                               style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                             );
                           },

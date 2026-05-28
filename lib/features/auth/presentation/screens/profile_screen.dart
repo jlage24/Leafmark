@@ -143,7 +143,7 @@ class ProfileScreen extends StatelessWidget {
                       stream: context.read<FollowProvider>().getFollowersCount(user?.uid ?? ''),
                       builder: (context, snapshot) {
                         return Text(
-                          '${snapshot.data ?? 0} Followers',
+                          '${snapshot.hasData ? snapshot.data : '-'} Followers',
                           style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
                         );
                       },

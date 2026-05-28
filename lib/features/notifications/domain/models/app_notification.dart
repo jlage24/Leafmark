@@ -6,6 +6,8 @@ enum AppNotificationType {
   proposal,
   counterOffer,
   swapAccepted,
+  swapRejected,
+  newFollower,
 }
 
 class AppNotification {

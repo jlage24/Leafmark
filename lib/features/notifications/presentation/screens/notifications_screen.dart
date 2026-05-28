@@ -4,6 +4,7 @@ import '../providers/notification_provider.dart';
 import '../../domain/models/app_notification.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
 import '../../../swaps/presentation/screens/swap_requests_screen.dart';
+import '../../../auth/presentation/screens/public_profile_screen.dart';
 
 class NotificationsScreen extends StatelessWidget {
   const NotificationsScreen({super.key});
@@ -43,10 +44,24 @@ class NotificationsScreen extends StatelessWidget {
         break;
 
       case AppNotificationType.swapRequest:
+      case AppNotificationType.swapRejected:
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => const SwapRequestsScreen(),
+          ),
+        );
+        break;
+
+      case AppNotificationType.newFollower:
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PublicProfileScreen(
+              userId: notification.senderId,
+              displayName:
+              notification.senderDisplayName ?? 'LeafMark user',
+            ),
           ),
         );
         break;

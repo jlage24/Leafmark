@@ -134,11 +134,48 @@ class SwapService {
   }
 
   Future<void> updateStatus(String id, SwapStatus status) async {
-    await _db.collection(_collection).doc(id).update({'status': status.name});
+    final ref = _db.collection(_collection).doc(id);
+    final snap = await ref.get();
+
+    if (!snap.exists) {
+      throw Exception('Swap request not found.');
+    }
+
+    final swap = SwapRequest.fromMap(snap.data()!, snap.id);
+    final wasPending = swap.status == SwapStatus.pending;
+
+    await ref.update({'status': status.name});
+
+    if (status == SwapStatus.rejected && wasPending) {
+      await _notifySwapRejected(swap);
+    }
   }
 
   Future<void> deleteRequest(String id) async {
     await _db.collection(_collection).doc(id).delete();
+  }
+
+  Future<void> _notifySwapRejected(SwapRequest swap) async {
+    final senderInfo = await fetchUserInfo(swap.ownerId);
+    final senderName = senderInfo['displayName'] ?? 'Someone';
+
+    await _notificationService.createNotification(
+      AppNotification(
+        id: '',
+        recipientId: swap.requesterId,
+        senderId: swap.ownerId,
+        senderDisplayName: senderName,
+        senderPhotoUrl: senderInfo['photoUrl'],
+        type: AppNotificationType.swapRejected,
+        title: 'Swap rejected',
+        body: '$senderName rejected your swap request.',
+        swapRequestId: swap.id,
+        swapId: swap.id,
+        isRead: false,
+        createdAt: DateTime.now(),
+      ),
+      notificationId: 'swap_rejected_${swap.id}',
+    );
   }
 
   Future<Map<String, String?>> fetchUserInfo(String uid) async {

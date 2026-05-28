@@ -219,9 +219,19 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     Color color;
     switch (status) {
-      case SwapStatus.accepted: color = Colors.green; break;
-      case SwapStatus.rejected: color = Colors.red; break;
-      case SwapStatus.pending: color = Colors.orange; break;
+      case SwapStatus.pending:
+        color = Colors.orange;
+        break;
+      case SwapStatus.accepted:
+        color = Colors.blue;
+        break;
+      case SwapStatus.completed:
+        color = Colors.green;
+        break;
+      case SwapStatus.rejected:
+      case SwapStatus.cancelled:
+        color = Colors.red;
+        break;
     }
 
     return Container(

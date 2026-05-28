@@ -13,9 +13,71 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 
+    function isSwapParticipant(swapId) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/swap_requests/$(swapId))
+        && (request.auth.uid == get(/databases/$(database)/documents/swap_requests/$(swapId)).data.requesterId
+         || request.auth.uid == get(/databases/$(database)/documents/swap_requests/$(swapId)).data.ownerId);
+    }
+
+    function canLockBookForSwap(uid, bookId, swapId) {
+      let swap = get(/databases/$(database)/documents/swap_requests/$(swapId)).data;
+
+      return isSwapParticipant(swapId)
+        && swap.status == 'pending'
+        && request.resource.data.lockedBySwapId == swapId
+        && ((uid == swap.requesterId && bookId == swap.bookOfferedId)
+         || (uid == swap.ownerId && bookId == swap.bookWantedId));
+    }
+
+    function canDeleteLockedBookForCompletedSwap(uid, bookId, swapId) {
+      let swap = get(/databases/$(database)/documents/swap_requests/$(swapId)).data;
+
+      return isSwapParticipant(swapId)
+        && swap.status == 'accepted'
+        && resource.data.lockedBySwapId == swapId
+        && ((uid == swap.requesterId && bookId == swap.bookOfferedId)
+         || (uid == swap.ownerId && bookId == swap.bookWantedId));
+    }
+
+    function canCreateReceivedBookFromCompletedSwap(uid, bookId, swapId) {
+      let swap = get(/databases/$(database)/documents/swap_requests/$(swapId)).data;
+
+      return isSwapParticipant(swapId)
+        && swap.status == 'accepted'
+        && request.resource.data.ownerId == uid
+        && request.resource.data.lockedBySwapId == null
+        && request.resource.data.lastExchangeId == swapId
+        && ((uid == swap.requesterId && bookId == swap.bookWantedId)
+         || (uid == swap.ownerId && bookId == swap.bookOfferedId));
+    }
+
     match /users/{uid}/shelf/{bookId} {
-      allow read:  if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && (request.auth.uid == uid
+         || canCreateReceivedBookFromCompletedSwap(
+              uid,
+              bookId,
+              request.resource.data.lastExchangeId
+            ));
+
+      allow update: if request.auth != null
+        && (request.auth.uid == uid
+         || canLockBookForSwap(
+              uid,
+              bookId,
+              request.resource.data.lockedBySwapId
+            ));
+
+      allow delete: if request.auth != null
+        && (request.auth.uid == uid
+         || canDeleteLockedBookForCompletedSwap(
+              uid,
+              bookId,
+              resource.data.lockedBySwapId
+            ));
     }
 
     match /{path=**}/shelf/{bookId} {
@@ -30,9 +92,20 @@ service cloud.firestore {
     match /swap_requests/{requestId} {
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.requesterId;
-      allow read, update: if request.auth != null
-        && (request.auth.uid == resource.data.requesterId
-         || request.auth.uid == resource.data.ownerId);
+
+      allow read: if request.auth != null
+        && (
+          request.auth.uid == resource.data.requesterId
+          || request.auth.uid == resource.data.ownerId
+          || resource.data.status == 'completed'
+        );
+
+      allow update: if request.auth != null
+        && (
+          request.auth.uid == resource.data.requesterId
+          || request.auth.uid == resource.data.ownerId
+        );
+
       allow delete: if request.auth != null
         && request.auth.uid == resource.data.requesterId;
     }

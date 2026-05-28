@@ -3,6 +3,9 @@ import '../../domain/models/chat_message.dart';
 import '../../domain/models/chat_metadata.dart';
 import 'package:rxdart/rxdart.dart';
 import '../../../books/data/services/block_service.dart';
+import '../../../notifications/data/services/notification_service.dart';
+import '../../../notifications/domain/models/app_notification.dart';
+
 
 class BookAlreadyLockedException implements Exception {
   final String bookId;
@@ -18,13 +21,16 @@ class BookAlreadyLockedException implements Exception {
 class ChatService {
   final FirebaseFirestore _db;
   final BlockService _blockService;
+  final NotificationService _notificationService;
 
   // Dependency Injection for Firestore and BlockService
   ChatService({
     FirebaseFirestore? firestore,
     BlockService? blockService,
+    NotificationService? notificationService,
   })  : _db = firestore ?? FirebaseFirestore.instance,
-        _blockService = blockService ?? BlockService();
+        _blockService = blockService ?? BlockService(),
+        _notificationService = notificationService ?? NotificationService();
 
   CollectionReference get _chats => _db.collection('chats');
 
@@ -58,29 +64,86 @@ class ChatService {
     required String swapId,
     required ChatMessage message,
   }) async {
-    // Service-level validation: check block status before sending a new message
     final chatDoc = await _chats.doc(swapId).get();
-    if (chatDoc.exists) {
-      final chatData = chatDoc.data() as Map<String, dynamic>;
-      final participants = List<String>.from(chatData['participantIds'] ?? []);
-      if (participants.length == 2) {
-        final hasBlock = await _blockService.hasBlockRelationship(participants[0], participants[1]);
-        if (hasBlock) {
-          throw Exception('Cannot send message. Access restricted due to a block relationship.');
-        }
+
+    if (!chatDoc.exists) {
+      throw Exception('Cannot send message. Chat does not exist.');
+    }
+
+    final chatData = chatDoc.data() as Map<String, dynamic>;
+    final participants = List<String>.from(chatData['participantIds'] ?? []);
+
+    String? recipientId;
+
+    if (participants.length == 2) {
+      final hasBlock = await _blockService.hasBlockRelationship(
+        participants[0],
+        participants[1],
+      );
+
+      if (hasBlock) {
+        throw Exception(
+          'Cannot send message. Access restricted due to a block relationship.',
+        );
       }
+
+      recipientId = participants.firstWhere(
+            (uid) => uid != message.senderId,
+        orElse: () => '',
+      );
+
+      if (recipientId.isEmpty) {
+        recipientId = null;
+      }
+    }
+
+    Map<String, String?> senderInfo = {
+      'displayName': null,
+      'photoUrl': null,
+    };
+
+    if (recipientId != null) {
+      senderInfo = await fetchUserInfo(message.senderId);
     }
 
     final batch = _db.batch();
 
-    final messageRef = _chats.doc(swapId).collection('messages').doc();
+    final chatRef = _chats.doc(swapId);
+    final messageRef = chatRef.collection('messages').doc();
+
     batch.set(messageRef, message.toMap());
 
-    final chatRef = _chats.doc(swapId);
     batch.update(chatRef, {
       'lastMessage': message.text ?? _lastMessagePreview(message.type),
       'lastMessageAt': Timestamp.fromDate(message.createdAt),
     });
+
+    if (recipientId != null) {
+      final notificationId = 'chat_${swapId}_${messageRef.id}';
+      final notificationRef =
+      _notificationService.notificationDocument(notificationId);
+
+      batch.set(
+        notificationRef,
+        AppNotification(
+          id: '',
+          recipientId: recipientId,
+          senderId: message.senderId,
+          senderDisplayName: senderInfo['displayName'],
+          senderPhotoUrl: senderInfo['photoUrl'],
+          type: _notificationTypeForMessage(message.type),
+          title: _notificationTitleForMessage(message.type),
+          body: _notificationBodyForMessage(
+            message,
+            senderInfo['displayName'] ?? 'Someone',
+          ),
+          chatId: swapId,
+          swapId: swapId,
+          isRead: false,
+          createdAt: message.createdAt,
+        ).toMap(),
+      );
+    }
 
     await batch.commit();
   }
@@ -293,5 +356,44 @@ Stream<List<ChatMetadata>> getChats(String uid) {
       if (raw == null) return {};
       return raw.map((k, v) => MapEntry(k, (v as Timestamp).toDate()));
     });
+  }
+
+  AppNotificationType _notificationTypeForMessage(MessageType type) {
+    switch (type) {
+      case MessageType.proposal:
+        return AppNotificationType.proposal;
+      case MessageType.counterOffer:
+        return AppNotificationType.counterOffer;
+      case MessageType.text:
+        return AppNotificationType.chatMessage;
+    }
+  }
+
+  String _notificationTitleForMessage(MessageType type) {
+    switch (type) {
+      case MessageType.proposal:
+        return 'New swap proposal';
+      case MessageType.counterOffer:
+        return 'New counter-offer';
+      case MessageType.text:
+        return 'New message';
+    }
+  }
+
+  String _notificationBodyForMessage(
+      ChatMessage message,
+      String senderName,
+      ) {
+    switch (message.type) {
+      case MessageType.proposal:
+        return '$senderName sent you a swap proposal.';
+      case MessageType.counterOffer:
+        return '$senderName sent you a counter-offer.';
+      case MessageType.text:
+        if (message.text != null && message.text!.trim().isNotEmpty) {
+          return '$senderName: ${message.text}';
+        }
+        return '$senderName sent you a message.';
+    }
   }
 }

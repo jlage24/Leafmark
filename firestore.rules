@@ -77,7 +77,11 @@ service cloud.firestore {
     }
 
     match /users/{uid}/blocked_users/{blockedUid} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null
+        && (request.auth.uid == uid || request.auth.uid == blockedUid);
+
+      allow write: if request.auth != null
+        && request.auth.uid == uid;
     }
 
     match /users/{uid}/following/{followedUid} {
@@ -103,6 +107,27 @@ service cloud.firestore {
         && (request.auth.uid == uid || request.auth.uid == followerUid);
 
       allow update: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.senderId
+        && request.resource.data.recipientId is string
+        && request.resource.data.senderId is string
+        && request.resource.data.title is string
+        && request.resource.data.body is string
+        && request.resource.data.type is string
+        && request.resource.data.isRead == false;
+
+      allow read: if request.auth != null
+        && request.auth.uid == resource.data.recipientId;
+
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.recipientId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead'])
+        && request.resource.data.isRead == true;
+
+      allow delete: if false;
     }
   }
 }

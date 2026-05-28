@@ -10,6 +10,7 @@ import 'edit_profile_screen.dart';
 import '../../../ratings/domain/models/rating.dart';
 import '../../../swaps/presentation/screens/exchange_history_screen.dart';
 import '../../../wishlist/presentation/screens/wishlist_screen.dart';
+import '../../../books/presentation/providers/follow_provider.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -142,6 +143,17 @@ class ProfileScreen extends StatelessWidget {
                       builder: (context, snapshot) {
                         return _StatCard(
                           label: 'Swaps',
+                          value: snapshot.hasData ? '${snapshot.data}' : '—',
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 8),
+
+                    StreamBuilder<int>(
+                      stream: context.read<FollowProvider>().getFollowersCount(user?.uid ?? ''),
+                      builder: (context, snapshot) {
+                        return _StatCard(
+                          label: 'Followers',
                           value: snapshot.hasData ? '${snapshot.data}' : '—',
                         );
                       },

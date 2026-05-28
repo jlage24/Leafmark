@@ -14,6 +14,8 @@ import '../../../swaps/presentation/providers/swap_provider.dart';
 import '../../../wishlist/domain/models/wishlist_item.dart';
 import '../../../wishlist/presentation/providers/wishlist_provider.dart';
 import '../../../books/presentation/providers/block_provider.dart';
+import '../../../books/presentation/providers/follow_provider.dart';
+
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
@@ -304,6 +306,32 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           style: textTheme.bodyMedium,
                           textAlign: TextAlign.center),
                     ],
+                    // Follow button
+                    if (!isOwnProfile) ...[
+                      const SizedBox(height: 16),
+                      StreamBuilder<bool>(
+                        stream: context.read<FollowProvider>().isFollowing(currentUid, widget.userId),
+                        builder: (context, snapshot) {
+                          final isFollowing = snapshot.data ?? false;
+                          return FilledButton.icon(
+                            onPressed: () async {
+                              if (isFollowing) {
+                                await context.read<FollowProvider>().unfollowUser(currentUid, widget.userId);
+                              } else {
+                                await context.read<FollowProvider>().followUser(currentUid, widget.userId);
+                              }
+                            },
+                            style: FilledButton.styleFrom(
+                              backgroundColor: isFollowing ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.primary,
+                              foregroundColor: isFollowing ? Theme.of(context).colorScheme.onSurface : Colors.white,
+                              elevation: isFollowing ? 0 : 1,
+                            ),
+                            icon: Icon(isFollowing ? Icons.check : Icons.person_add, size: 18),
+                            label: Text(isFollowing ? 'Following' : 'Follow'),
+                          );
+                        },
+                      ),
+                    ],
                     const SizedBox(height: 24),
                     FutureBuilder<int>(
                       future: _shelfCountFuture,
@@ -313,8 +341,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           children: [
                             _StatCard(
                                 label: 'Books',
-                                value: shelfSnap.hasData ? '$count' : '…'),
+                                value: shelfSnap.hasData ? '$count' : '-'),
                             const SizedBox(width: 8),
+                            // Follow counter
+                            StreamBuilder<int>(
+                              stream: context.read<FollowProvider>().getFollowersCount(widget.userId),
+                              builder: (context, snapshot) {
+                                return _StatCard(
+                                  label: 'Followers',
+                                  value: snapshot.hasData ? '${snapshot.data}' : '-',
+                                );
+                              },
+                            ),
+                            const SizedBox(width: 8),
+
                             StreamBuilder<int>(
                               stream: context.read<SwapProvider>().exchangeCount(widget.userId),
                               builder: (context, snapshot) {

@@ -108,14 +108,16 @@ void main() {
           () => mockBlockService.hasBlockRelationship('userA', 'userB'),
         ).thenAnswer((_) async => true);
 
-        expect(
-          () => swapService.createSwapRequest(makeSwap()),
+        await expectLater(
+          swapService.createSwapRequest(makeSwap()),
           throwsException,
         );
 
-        final snap = await fakeDb.collection('swap_requests').get();
+        final swapSnap = await fakeDb.collection('swap_requests').get();
+        final notificationSnap = await fakeDb.collection('notifications').get();
 
-        expect(snap.docs, isEmpty);
+        expect(swapSnap.docs, isEmpty);
+        expect(notificationSnap.docs, isEmpty);
       },
     );
 
@@ -131,14 +133,16 @@ void main() {
             .doc('existingSwap')
             .set(makeSwap(id: 'existingSwap').toMap());
 
-        expect(
-          () => swapService.createSwapRequest(makeSwap(id: '')),
+        await expectLater(
+          swapService.createSwapRequest(makeSwap(id: '')),
           throwsA(isA<DuplicateSwapException>()),
         );
 
-        final snap = await fakeDb.collection('swap_requests').get();
+        final swapSnap = await fakeDb.collection('swap_requests').get();
+        final notificationSnap = await fakeDb.collection('notifications').get();
 
-        expect(snap.docs.length, 1);
+        expect(swapSnap.docs.length, 1);
+        expect(notificationSnap.docs, isEmpty);
       },
     );
 
@@ -253,6 +257,19 @@ void main() {
         expect(notificationSnap['swapId'], 'swap1');
       },
     );
+
+    test('updateStatus throws exception when request does not exist', () async {
+      await expectLater(
+        swapService.updateStatus('missingSwap', SwapStatus.rejected),
+        throwsException,
+      );
+
+      final notificationSnap = await fakeDb.collection('notifications').get();
+      final swapSnap = await fakeDb.collection('swap_requests').get();
+
+      expect(notificationSnap.docs, isEmpty);
+      expect(swapSnap.docs, isEmpty);
+    });
 
     test('incomingRequests returns requests owned by user', () async {
       await fakeDb

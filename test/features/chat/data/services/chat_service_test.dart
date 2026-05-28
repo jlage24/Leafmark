@@ -5,6 +5,7 @@ import 'package:leafmark/features/books/data/services/block_service.dart';
 import 'package:leafmark/features/chat/data/services/chat_service.dart';
 import 'package:leafmark/features/chat/domain/models/chat_message.dart';
 import 'package:leafmark/features/chat/domain/models/chat_metadata.dart';
+import 'package:leafmark/features/notifications/data/services/notification_service.dart';
 import 'package:mocktail/mocktail.dart';
 
 class MockBlockService extends Mock implements BlockService {}
@@ -12,14 +13,17 @@ class MockBlockService extends Mock implements BlockService {}
 void main() {
   late FakeFirebaseFirestore fakeDb;
   late MockBlockService mockBlockService;
+  late NotificationService notificationService;
   late ChatService chatService;
 
   setUp(() {
     fakeDb = FakeFirebaseFirestore();
     mockBlockService = MockBlockService();
+    notificationService = NotificationService(firestore: fakeDb);
     chatService = ChatService(
       firestore: fakeDb,
       blockService: mockBlockService,
+      notificationService: notificationService,
     );
   });
 
@@ -31,6 +35,22 @@ void main() {
       'lastMessage': '',
       'lastMessageAt': Timestamp.fromDate(DateTime(2026, 1, 1)),
     });
+  }
+
+  Future<void> createLockedBooks() async {
+    await fakeDb
+        .collection('users')
+        .doc('userA')
+        .collection('shelf')
+        .doc('book1')
+        .set({'lockedBySwapId': 'swap1'});
+
+    await fakeDb
+        .collection('users')
+        .doc('userB')
+        .collection('shelf')
+        .doc('book2')
+        .set({'lockedBySwapId': 'swap1'});
   }
 
   ChatMessage makeMessage() => ChatMessage(
@@ -60,6 +80,27 @@ void main() {
       expect(snap['status'], ChatStatus.active.name);
       expect(snap['lastMessage'], '📚 Swap proposal');
       expect(snap['lastMessageAt'], isA<Timestamp>());
+    });
+
+    test('createChat uses swap id as deterministic chat id', () async {
+      when(
+        () => mockBlockService.hasBlockRelationship('userA', 'userB'),
+      ).thenAnswer((_) async => false);
+
+      await chatService.createChat(
+        swapId: 'swap1',
+        participantIds: ['userA', 'userB'],
+      );
+
+      await chatService.createChat(
+        swapId: 'swap1',
+        participantIds: ['userA', 'userB'],
+      );
+
+      final snap = await fakeDb.collection('chats').get();
+
+      expect(snap.docs.length, 1);
+      expect(snap.docs.first.id, 'swap1');
     });
 
     test(
@@ -141,12 +182,49 @@ void main() {
 
       expect(snap.docs.length, 1);
       expect(snap.docs.first['type'], MessageType.proposal.name);
+      expect(snap.docs.first['senderId'], 'userA');
       expect(snap.docs.first['bookOfferedId'], 'book1');
       expect(snap.docs.first['bookOfferedOwnerId'], 'userA');
       expect(snap.docs.first['bookWantedId'], 'book2');
 
       final chatSnap = await fakeDb.collection('chats').doc('swap1').get();
+
       expect(chatSnap['lastMessage'], '📚 Swap proposal');
+      expect(chatSnap['lastMessageAt'], isA<Timestamp>());
+    });
+
+    test('sendCounterOffer stores counter offer message', () async {
+      when(
+        () => mockBlockService.hasBlockRelationship('userA', 'userB'),
+      ).thenAnswer((_) async => false);
+
+      await createDummyChat();
+
+      await chatService.sendCounterOffer(
+        swapId: 'swap1',
+        senderId: 'userB',
+        bookOfferedId: 'book2',
+        bookOfferedOwnerId: 'userB',
+        bookWantedId: 'book1',
+      );
+
+      final snap = await fakeDb
+          .collection('chats')
+          .doc('swap1')
+          .collection('messages')
+          .get();
+
+      expect(snap.docs.length, 1);
+      expect(snap.docs.first['type'], MessageType.counterOffer.name);
+      expect(snap.docs.first['senderId'], 'userB');
+      expect(snap.docs.first['bookOfferedId'], 'book2');
+      expect(snap.docs.first['bookOfferedOwnerId'], 'userB');
+      expect(snap.docs.first['bookWantedId'], 'book1');
+
+      final chatSnap = await fakeDb.collection('chats').doc('swap1').get();
+
+      expect(chatSnap['lastMessage'], '🔄 Counter offer');
+      expect(chatSnap['lastMessageAt'], isA<Timestamp>());
     });
 
     test('acceptSwap updates chat status to completed', () async {
@@ -157,6 +235,39 @@ void main() {
       final snap = await fakeDb.collection('chats').doc('swap1').get();
 
       expect(snap['status'], ChatStatus.completed.name);
+    });
+
+    test('cancelSwap updates status and unlocks both books', () async {
+      await createDummyChat();
+      await createLockedBooks();
+
+      await chatService.cancelSwap(
+        swapId: 'swap1',
+        bookOfferedId: 'book1',
+        bookOfferedOwnerId: 'userA',
+        bookWantedId: 'book2',
+        bookWantedOwnerId: 'userB',
+      );
+
+      final chatSnap = await fakeDb.collection('chats').doc('swap1').get();
+
+      final offeredBookSnap = await fakeDb
+          .collection('users')
+          .doc('userA')
+          .collection('shelf')
+          .doc('book1')
+          .get();
+
+      final wantedBookSnap = await fakeDb
+          .collection('users')
+          .doc('userB')
+          .collection('shelf')
+          .doc('book2')
+          .get();
+
+      expect(chatSnap['status'], ChatStatus.cancelled.name);
+      expect(offeredBookSnap['lockedBySwapId'], isNull);
+      expect(wantedBookSnap['lockedBySwapId'], isNull);
     });
   });
 }

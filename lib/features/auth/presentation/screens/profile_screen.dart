@@ -181,6 +181,11 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
+          ProfileBadges(
+            userId: user?.uid ?? '',
+            shelfCount: shelf.books.length,
+          ),
+
           const SizedBox(height: 24),
           if (user?.favoriteAuthors != null &&
               user!.favoriteAuthors.isNotEmpty) ...[

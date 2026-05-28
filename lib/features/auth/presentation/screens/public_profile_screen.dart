@@ -15,6 +15,7 @@ import '../../../wishlist/domain/models/wishlist_item.dart';
 import '../../../wishlist/presentation/providers/wishlist_provider.dart';
 import '../../../books/presentation/providers/block_provider.dart';
 import '../../../books/presentation/providers/follow_provider.dart';
+import '../widgets/profile_badges.dart';
 
 
 class PublicProfileScreen extends StatefulWidget {
@@ -403,9 +404,19 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   ],
                 ),
               ),
+              FutureBuilder<int>(
+                future: _shelfCountFuture,
+                builder: (context, shelfSnap) {
+                  return ProfileBadges(
+                    userId: widget.userId,
+                    shelfCount: shelfSnap.data ?? 0,
+                  );
+                },
+              ),
+
               const SizedBox(height: 24),
 
-              // ── Favorite Authors ─────────────────────────────────────
+              // Favorite Authors
               if (favoriteAuthors.isNotEmpty) ...[
                 const Divider(),
                 Padding(

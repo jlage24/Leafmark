@@ -210,6 +210,19 @@ void main() {
       expect(book, isNull);
     });
 
+    test('fetchBook returns null when stored book data is malformed', () async {
+      await fakeDb
+          .collection('users')
+          .doc('userB')
+          .collection('shelf')
+          .doc('invalidBook')
+          .set({'title': 'Invalid Book', 'addedAt': 'not-a-date'});
+
+      final book = await browseService.fetchBook('userB', 'invalidBook');
+
+      expect(book, isNull);
+    });
+
     test('fetchDisplayName returns stored display name', () async {
       await fakeDb.collection('users').doc('userB').set({
         'displayName': 'Beatriz',
@@ -225,5 +238,16 @@ void main() {
 
       expect(displayName, isNull);
     });
+
+    test(
+      'fetchDisplayName returns null when stored name has invalid type',
+      () async {
+        await fakeDb.collection('users').doc('userB').set({'displayName': 123});
+
+        final displayName = await browseService.fetchDisplayName('userB');
+
+        expect(displayName, isNull);
+      },
+    );
   });
 }

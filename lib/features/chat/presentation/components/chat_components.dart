@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../books/data/services/browse_service.dart';
 import '../../../books/domain/models/book.dart';
-import '../../data/services/chat_service.dart';
+import '../../../swaps/data/services/swap_service.dart';
 import '../../domain/models/chat_message.dart';
 import '../../domain/models/chat_metadata.dart';
 
@@ -234,7 +234,7 @@ class _ProposalCardState extends State<ProposalCard> {
             children: [
               BookMini(
                 bookId: widget.message.bookOfferedId ?? '',
-                ownerId: widget.isMe ? widget.currentUid : widget.otherUserId,
+                ownerIds: _offeredBookOwnerCandidates(),
                 browseService: _browseService,
               ),
               Padding(
@@ -244,7 +244,7 @@ class _ProposalCardState extends State<ProposalCard> {
               ),
               BookMini(
                 bookId: widget.message.bookWantedId ?? '',
-                ownerId: widget.isMe ? widget.otherUserId : widget.currentUid,
+                ownerIds: _wantedBookOwnerCandidates(),
                 browseService: _browseService,
               ),
             ],
@@ -263,6 +263,39 @@ class _ProposalCardState extends State<ProposalCard> {
         ],
       ),
     );
+  }
+
+  List<String> _offeredBookOwnerCandidates() {
+    final originalOwnerId = widget.message.bookOfferedOwnerId ??
+        (widget.isMe ? widget.currentUid : widget.otherUserId);
+
+    final otherParticipantId = originalOwnerId == widget.currentUid
+        ? widget.otherUserId
+        : widget.currentUid;
+
+    return _uniqueNonEmpty([originalOwnerId, otherParticipantId]);
+  }
+
+  List<String> _wantedBookOwnerCandidates() {
+    final offeredOwnerId = widget.message.bookOfferedOwnerId ??
+        (widget.isMe ? widget.currentUid : widget.otherUserId);
+
+    final originalWantedOwnerId = offeredOwnerId == widget.currentUid
+        ? widget.otherUserId
+        : widget.currentUid;
+
+    return _uniqueNonEmpty([originalWantedOwnerId, offeredOwnerId]);
+  }
+
+  List<String> _uniqueNonEmpty(List<String?> values) {
+    final result = <String>[];
+
+    for (final value in values) {
+      if (value == null || value.isEmpty || result.contains(value)) continue;
+      result.add(value);
+    }
+
+    return result;
   }
 }
 
@@ -285,33 +318,21 @@ class ActionButtons extends StatelessWidget {
     this.onCounter,
   });
 
-  String get _bookOfferedId => message.bookOfferedId ?? '';
-  String get _bookOfferedOwnerId => otherUserId;
-  String get _bookWantedId => message.bookWantedId ?? '';
-  String get _bookWantedOwnerId => currentUid;
-
   Future<void> _handleAccept(BuildContext context) async {
     try {
-      await ChatService().acceptSwap(swapId: swapId);
+      await SwapService().acceptSwapById(swapId);
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Something went wrong: $e')),
+        SnackBar(content: Text('Failed to accept swap: $e')),
       );
     }
   }
 
   Future<void> _handleReject(BuildContext context) async {
     try {
-      await ChatService().cancelSwap(
-        swapId: swapId,
-        bookOfferedId: _bookOfferedId,
-        bookOfferedOwnerId: _bookOfferedOwnerId,
-        bookWantedId: _bookWantedId,
-        bookWantedOwnerId: _bookWantedOwnerId,
-      );
+      await SwapService().rejectSwapById(swapId);
     } catch (e) {
-      // FIX: Added try-catch to prevent silent failures on network error
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Failed to reject swap: $e')),
@@ -322,18 +343,17 @@ class ActionButtons extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (chatStatus != ChatStatus.active) {
+      final info = _statusInfo();
+
       return Align(
         alignment: Alignment.center,
         child: Text(
-          chatStatus == ChatStatus.completed
-              ? '✅ Swap accepted — books reserved'
-              : '❌ Swap rejected',
+          info.message,
+          textAlign: TextAlign.center,
           style: TextStyle(
             fontSize: 12,
-            color: chatStatus == ChatStatus.completed
-                ? Colors.green[700]
-                : Colors.red[700],
-            fontWeight: FontWeight.w500,
+            color: info.color,
+            fontWeight: FontWeight.w600,
           ),
         ),
       );
@@ -368,34 +388,73 @@ class ActionButtons extends StatelessWidget {
       ],
     );
   }
+
+  _ProposalStatusInfo _statusInfo() {
+    switch (chatStatus) {
+      case ChatStatus.accepted:
+        return _ProposalStatusInfo(
+          message: '✅ Swap accepted — books reserved until the exchange is completed',
+          color: Colors.green.shade700,
+        );
+      case ChatStatus.completed:
+        return _ProposalStatusInfo(
+          message: '🎉 Exchange completed',
+          color: Colors.green.shade700,
+        );
+      case ChatStatus.cancelled:
+        return _ProposalStatusInfo(
+          message: '❌ Swap rejected',
+          color: Colors.red.shade700,
+        );
+      case ChatStatus.active:
+        return _ProposalStatusInfo(
+          message: '',
+          color: Colors.grey,
+        );
+    }
+  }
+}
+
+class _ProposalStatusInfo {
+  final String message;
+  final Color color;
+
+  const _ProposalStatusInfo({
+    required this.message,
+    required this.color,
+  });
 }
 
 // ─── Book Mini ────────────────────────────────────────────────────────────────
 class BookMini extends StatelessWidget {
   final String bookId;
-  final String ownerId;
+  final List<String> ownerIds;
   final BrowseService browseService;
 
   const BookMini({
     super.key,
     required this.bookId,
-    required this.ownerId,
+    required this.ownerIds,
     required this.browseService,
   });
 
   @override
   Widget build(BuildContext context) {
     return FutureBuilder<Book?>(
-      future: browseService.fetchBook(ownerId, bookId),
+      future: _fetchBookFromAnyOwner(),
       builder: (context, snapshot) {
         final book = snapshot.data;
+        final displayUrl = book?.conditionPhotoUrls.isNotEmpty == true
+            ? book!.conditionPhotoUrls.first
+            : book?.coverUrl;
+
         return Column(
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(6),
-              child: book?.coverUrl != null
+              child: displayUrl != null
                   ? Image.network(
-                book!.coverUrl!,
+                displayUrl,
                 width: 48,
                 height: 68,
                 fit: BoxFit.cover,
@@ -411,7 +470,7 @@ class BookMini extends StatelessWidget {
                 book?.title ??
                     (snapshot.connectionState == ConnectionState.waiting
                         ? '...'
-                        : '—'),
+                        : 'Book unavailable'),
                 style: const TextStyle(fontSize: 11),
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
@@ -422,6 +481,19 @@ class BookMini extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<Book?> _fetchBookFromAnyOwner() async {
+    if (bookId.isEmpty) return null;
+
+    for (final ownerId in ownerIds) {
+      if (ownerId.isEmpty) continue;
+
+      final book = await browseService.fetchBook(ownerId, bookId);
+      if (book != null) return book;
+    }
+
+    return null;
   }
 
   Widget _placeholder() => Container(

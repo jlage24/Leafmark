@@ -10,6 +10,10 @@ import 'edit_profile_screen.dart';
 import '../../../ratings/domain/models/rating.dart';
 import '../../../swaps/presentation/screens/exchange_history_screen.dart';
 import '../../../wishlist/presentation/screens/wishlist_screen.dart';
+import '../../../books/presentation/providers/follow_provider.dart';
+import '../widgets/profile_badges.dart';
+import '../../../notifications/presentation/providers/notification_provider.dart';
+import '../../../notifications/presentation/screens/notifications_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -67,17 +71,46 @@ class ProfileScreen extends StatelessWidget {
                         color: AppTheme.primaryLight,
                       ),
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.edit_outlined, size: 20),
-                      color: AppTheme.primaryLight,
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const EditProfileScreen(),
-                          ),
-                        );
-                      },
+                    Row(
+                      children: [
+                        StreamBuilder<int>(
+                          stream: context.read<NotificationProvider>().unreadCount(),
+                          builder: (context, snapshot) {
+                            final count = snapshot.data ?? 0;
+
+                            return IconButton(
+                              color: AppTheme.primaryLight,
+                              tooltip: 'Notifications',
+                              icon: Badge(
+                                isLabelVisible: count > 0,
+                                label: Text(count > 99 ? '99+' : '$count'),
+                                child: const Icon(Icons.notifications_none_outlined, size: 20),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const NotificationsScreen(),
+                                  ),
+                                );
+                              },
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.edit_outlined, size: 20),
+                          color: AppTheme.primaryLight,
+                          tooltip: 'Edit profile',
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const EditProfileScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -132,7 +165,34 @@ class ProfileScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                 ],
+
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    StreamBuilder<int>(
+                      stream: context.read<FollowProvider>().getFollowersCount(user?.uid ?? ''),
+                      builder: (context, snapshot) {
+                        return Text(
+                          '${snapshot.hasData ? snapshot.data : '-'} Followers',
+                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 16),
+                    StreamBuilder<int>(
+                      stream: context.read<FollowProvider>().getFollowingCount(user?.uid ?? ''),
+                      builder: (context, snapshot) {
+                        return Text(
+                          '${snapshot.data ?? 0} Following',
+                          style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                        );
+                      },
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 24),
+
                 Row(
                   children: [
                     _StatCard(label: 'Books', value: '${shelf.books.length}'),
@@ -147,19 +207,16 @@ class ProfileScreen extends StatelessWidget {
                       },
                     ),
                     const SizedBox(width: 8),
-
                     StreamBuilder<List<Rating>>(
                       stream: context.read<RatingProvider>().getRatingsForUser(user?.uid ?? ''),
                       builder: (context, snapshot) {
                         String ratingValue = '—';
-
                         if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                           final ratings = snapshot.data!;
                           final totalStars = ratings.fold<int>(0, (total, item) => total + item.rating);
                           final average = totalStars / ratings.length;
                           ratingValue = average.toStringAsFixed(1);
                         }
-
                         return _StatCard(label: 'Rating', value: ratingValue);
                       },
                     ),
@@ -168,8 +225,12 @@ class ProfileScreen extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          ProfileBadges(
+            userId: user?.uid ?? '',
+            shelfCount: shelf.books.length,
+          ),
 
+          const SizedBox(height: 24),
           if (user?.favoriteAuthors != null &&
               user!.favoriteAuthors.isNotEmpty) ...[
             const Divider(),

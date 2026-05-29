@@ -13,9 +13,71 @@ service cloud.firestore {
       allow write: if request.auth != null && request.auth.uid == uid;
     }
 
+    function isSwapParticipant(swapId) {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/swap_requests/$(swapId))
+        && (request.auth.uid == get(/databases/$(database)/documents/swap_requests/$(swapId)).data.requesterId
+         || request.auth.uid == get(/databases/$(database)/documents/swap_requests/$(swapId)).data.ownerId);
+    }
+
+    function canLockBookForSwap(uid, bookId, swapId) {
+      let swap = get(/databases/$(database)/documents/swap_requests/$(swapId)).data;
+
+      return isSwapParticipant(swapId)
+        && swap.status == 'pending'
+        && request.resource.data.lockedBySwapId == swapId
+        && ((uid == swap.requesterId && bookId == swap.bookOfferedId)
+         || (uid == swap.ownerId && bookId == swap.bookWantedId));
+    }
+
+    function canDeleteLockedBookForCompletedSwap(uid, bookId, swapId) {
+      let swap = get(/databases/$(database)/documents/swap_requests/$(swapId)).data;
+
+      return isSwapParticipant(swapId)
+        && swap.status == 'accepted'
+        && resource.data.lockedBySwapId == swapId
+        && ((uid == swap.requesterId && bookId == swap.bookOfferedId)
+         || (uid == swap.ownerId && bookId == swap.bookWantedId));
+    }
+
+    function canCreateReceivedBookFromCompletedSwap(uid, bookId, swapId) {
+      let swap = get(/databases/$(database)/documents/swap_requests/$(swapId)).data;
+
+      return isSwapParticipant(swapId)
+        && swap.status == 'accepted'
+        && request.resource.data.ownerId == uid
+        && request.resource.data.lockedBySwapId == null
+        && request.resource.data.lastExchangeId == swapId
+        && ((uid == swap.requesterId && bookId == swap.bookWantedId)
+         || (uid == swap.ownerId && bookId == swap.bookOfferedId));
+    }
+
     match /users/{uid}/shelf/{bookId} {
-      allow read:  if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == uid;
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && (request.auth.uid == uid
+         || canCreateReceivedBookFromCompletedSwap(
+              uid,
+              bookId,
+              request.resource.data.lastExchangeId
+            ));
+
+      allow update: if request.auth != null
+        && (request.auth.uid == uid
+         || canLockBookForSwap(
+              uid,
+              bookId,
+              request.resource.data.lockedBySwapId
+            ));
+
+      allow delete: if request.auth != null
+        && (request.auth.uid == uid
+         || canDeleteLockedBookForCompletedSwap(
+              uid,
+              bookId,
+              resource.data.lockedBySwapId
+            ));
     }
 
     match /{path=**}/shelf/{bookId} {
@@ -30,9 +92,20 @@ service cloud.firestore {
     match /swap_requests/{requestId} {
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.requesterId;
-      allow read, update: if request.auth != null
-        && (request.auth.uid == resource.data.requesterId
-         || request.auth.uid == resource.data.ownerId);
+
+      allow read: if request.auth != null
+        && (
+          request.auth.uid == resource.data.requesterId
+          || request.auth.uid == resource.data.ownerId
+          || resource.data.status == 'completed'
+        );
+
+      allow update: if request.auth != null
+        && (
+          request.auth.uid == resource.data.requesterId
+          || request.auth.uid == resource.data.ownerId
+        );
+
       allow delete: if request.auth != null
         && request.auth.uid == resource.data.requesterId;
     }
@@ -41,10 +114,8 @@ service cloud.firestore {
       allow read: if request.auth != null
         && (resource == null
           || request.auth.uid in resource.data.participantIds);
-
       allow create: if request.auth != null
         && request.auth.uid in request.resource.data.participantIds;
-
       allow update: if request.auth != null
         && resource != null
         && request.auth.uid in resource.data.participantIds
@@ -52,17 +123,14 @@ service cloud.firestore {
         && (!request.resource.data.keys().hasAny(['lastReadAt'])
             || request.resource.data.lastReadAt.keys()
                 .hasOnly(resource.data.participantIds));
-
       allow delete: if false;
 
       match /messages/{messageId} {
         allow read: if request.auth != null
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(swapId)).data.participantIds;
-
         allow create: if request.auth != null
           && request.auth.uid in get(/databases/$(database)/documents/chats/$(swapId)).data.participantIds
           && request.resource.data.senderId == request.auth.uid;
-
         allow update, delete: if false;
       }
     }
@@ -81,5 +149,58 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    match /users/{uid}/blocked_users/{blockedUid} {
+      allow read: if request.auth != null
+        && (request.auth.uid == uid || request.auth.uid == blockedUid);
+
+      allow write: if request.auth != null
+        && request.auth.uid == uid;
+    }
+
+    match /users/{uid}/following/{followedUid} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.followedUid == followedUid;
+
+      allow delete: if request.auth != null
+        && (request.auth.uid == uid || request.auth.uid == followedUid);
+
+      allow update: if false;
+    }
+
+    match /users/{uid}/followers/{followerUid} {
+      allow read: if request.auth != null;
+
+      allow create: if request.auth != null
+        && request.auth.uid == followerUid
+        && request.resource.data.followerUid == followerUid;
+
+      allow delete: if request.auth != null
+        && (request.auth.uid == uid || request.auth.uid == followerUid);
+
+      allow update: if false;
+    }
+
+    match /notifications/{notificationId} {
+      allow create: if request.auth != null
+        && request.auth.uid == request.resource.data.senderId
+        && request.resource.data.recipientId is string
+        && request.resource.data.senderId is string
+        && request.resource.data.title is string
+        && request.resource.data.body is string
+        && request.resource.data.type is string
+        && request.resource.data.isRead == false;
+
+      allow read: if request.auth != null
+        && request.auth.uid == resource.data.recipientId;
+
+      allow update: if request.auth != null
+        && request.auth.uid == resource.data.recipientId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead'])
+        && request.resource.data.isRead == true;
+
+      allow delete: if false;
+    }
   }
 }

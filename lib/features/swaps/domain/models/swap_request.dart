@@ -1,6 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum SwapStatus { pending, accepted, rejected }
+enum SwapStatus {
+  pending,
+  accepted,
+  rejected,
+  completed,
+  cancelled,
+}
 
 class SwapRequest {
   final String id;
@@ -10,6 +16,7 @@ class SwapRequest {
   final String bookWantedId;
   final SwapStatus status;
   final DateTime createdAt;
+  final DateTime? completedAt;
 
   SwapRequest({
     required this.id,
@@ -19,6 +26,7 @@ class SwapRequest {
     required this.bookWantedId,
     required this.status,
     required this.createdAt,
+    this.completedAt,
   });
 
   Map<String, dynamic> toMap() {
@@ -29,10 +37,15 @@ class SwapRequest {
       'bookWantedId': bookWantedId,
       'status': status.name,
       'createdAt': Timestamp.fromDate(createdAt),
+      'completedAt': completedAt != null
+          ? Timestamp.fromDate(completedAt!)
+          : null,
     };
   }
 
   factory SwapRequest.fromMap(Map<String, dynamic> map, String documentId) {
+    final rawCompletedAt = map['completedAt'];
+
     return SwapRequest(
       id: documentId,
       requesterId: map['requesterId'] ?? '',
@@ -41,6 +54,9 @@ class SwapRequest {
       bookWantedId: map['bookWantedId'] ?? '',
       status: SwapStatus.values.byName(map['status'] ?? 'pending'),
       createdAt: (map['createdAt'] as Timestamp).toDate(),
+      completedAt: rawCompletedAt is Timestamp
+          ? rawCompletedAt.toDate()
+          : null,
     );
   }
 }

@@ -52,8 +52,9 @@ class _ExchangeHistoryScreenState extends State<ExchangeHistoryScreen> {
           return ListView.builder(
             padding: const EdgeInsets.all(8),
             itemCount: swaps.length,
-            itemBuilder: (context, i) =>
-                _HistoryTile(swap: swaps[i], uid: _uid),
+            itemBuilder: (context, index) {
+              return _HistoryTile(swap: swaps[index], uid: _uid);
+            },
           );
         },
       ),
@@ -72,18 +73,22 @@ class _HistoryTile extends StatelessWidget {
     final browseService = BrowseService();
     final isRequester = swap.requesterId == uid;
 
-    final bookOwnerId = swap.ownerId;
-    final bookId = swap.bookWantedId;
+    final receivedBookOwnerId = isRequester ? swap.requesterId : swap.ownerId;
+    final receivedBookId = isRequester ? swap.bookWantedId : swap.bookOfferedId;
     final partnerUid = isRequester ? swap.ownerId : swap.requesterId;
 
-    return FutureBuilder<List<dynamic>>(
-      future: Future.wait([
-        browseService.fetchBook(bookOwnerId, bookId),
-        browseService.fetchDisplayName(partnerUid),
-      ]),
+    return FutureBuilder<_HistoryData>(
+      future: _loadHistoryData(
+        browseService: browseService,
+        bookOwnerId: receivedBookOwnerId,
+        bookId: receivedBookId,
+        partnerUid: partnerUid,
+      ),
       builder: (context, snapshot) {
-        final book = snapshot.data?[0] as Book?;
-        final partnerName = snapshot.data?[1] as String? ?? '...';
+        final data = snapshot.data;
+        final book = data?.book;
+        final partnerName = data?.partnerName ?? 'LeafMark user';
+        final completedDate = swap.completedAt ?? swap.createdAt;
 
         return Card(
           margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
@@ -93,15 +98,7 @@ class _HistoryTile extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: book?.coverUrl != null
-                      ? Image.network(
-                    book!.coverUrl!,
-                    width: 60,
-                    height: 90,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => _placeholder(),
-                  )
-                      : _placeholder(),
+                  child: _BookCover(book: book),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -109,7 +106,10 @@ class _HistoryTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        book?.title ?? 'Loading...',
+                        book?.title ??
+                            (snapshot.connectionState == ConnectionState.waiting
+                                ? 'Loading exchanged book...'
+                                : 'Exchanged book'),
                         style: Theme.of(context)
                             .textTheme
                             .titleMedium
@@ -124,11 +124,13 @@ class _HistoryTile extends StatelessWidget {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        DateFormat('dd MMM yyyy').format(swap.createdAt),
+                        DateFormat('dd MMM yyyy').format(completedDate),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.grey[500],
                         ),
                       ),
+                      const SizedBox(height: 6),
+                      const _CompletedBadge(),
                     ],
                   ),
                 ),
@@ -140,7 +142,85 @@ class _HistoryTile extends StatelessWidget {
     );
   }
 
-  Widget _placeholder() {
+  Future<_HistoryData> _loadHistoryData({
+    required BrowseService browseService,
+    required String bookOwnerId,
+    required String bookId,
+    required String partnerUid,
+  }) async {
+    final results = await Future.wait<dynamic>([
+      browseService.fetchBook(bookOwnerId, bookId),
+      browseService.fetchDisplayName(partnerUid),
+    ]);
+
+    return _HistoryData(
+      book: results[0] as Book?,
+      partnerName: results[1] as String? ?? 'LeafMark user',
+    );
+  }
+}
+
+class _HistoryData {
+  final Book? book;
+  final String partnerName;
+
+  const _HistoryData({required this.book, required this.partnerName});
+}
+
+class _BookCover extends StatelessWidget {
+  final Book? book;
+
+  const _BookCover({required this.book});
+
+  @override
+  Widget build(BuildContext context) {
+    final displayUrl = book?.conditionPhotoUrls.isNotEmpty == true
+        ? book!.conditionPhotoUrls.first
+        : book?.coverUrl;
+
+    if (displayUrl == null || displayUrl.isEmpty) {
+      return const _PlaceholderCover();
+    }
+
+    return Image.network(
+      displayUrl,
+      width: 60,
+      height: 90,
+      fit: BoxFit.cover,
+      errorBuilder: (context, error, stackTrace) => const _PlaceholderCover(),
+    );
+  }
+}
+
+class _CompletedBadge extends StatelessWidget {
+  const _CompletedBadge();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: Colors.green.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.45)),
+      ),
+      child: Text(
+        'COMPLETED',
+        style: TextStyle(
+          color: Colors.green.shade700,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
+class _PlaceholderCover extends StatelessWidget {
+  const _PlaceholderCover();
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       width: 60,
       height: 90,

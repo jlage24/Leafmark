@@ -1,6 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum ChatStatus { active, completed, cancelled }
+enum ChatStatus {
+  active,
+  accepted,
+  completed,
+  cancelled,
+}
 
 class ChatMetadata {
   final String swapId;
@@ -42,10 +47,15 @@ class ChatMetadata {
         ? List<String>.from(rawTyping as List)
         : <String>[];
 
+    final rawStatus = map['status'] as String? ?? ChatStatus.active.name;
+    final normalizedStatus = rawStatus == 'exchanged'
+        ? ChatStatus.completed.name
+        : rawStatus;
+
     return ChatMetadata(
       swapId: map['swapId'] as String,
       participantIds: List<String>.from(map['participantIds']),
-      status: ChatStatus.values.byName(map['status'] as String),
+      status: ChatStatus.values.byName(normalizedStatus),
       lastMessage: map['lastMessage'] as String?,
       lastMessageAt: map['lastMessageAt'] != null
           ? (map['lastMessageAt'] as Timestamp).toDate()

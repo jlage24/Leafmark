@@ -6,50 +6,182 @@ import '../../domain/models/book.dart';
 import '../widgets/book_card.dart';
 import 'book_detail_screen.dart';
 
-class BrowseScreen extends StatelessWidget {
+class BrowseScreen extends StatefulWidget {
   const BrowseScreen({super.key});
+
+  @override
+  State<BrowseScreen> createState() => _BrowseScreenState();
+}
+
+class _BrowseScreenState extends State<BrowseScreen> {
+  String? _selectedCategory;
+  final TextEditingController _locationController = TextEditingController();
+  String _locationQuery = '';
+
+  @override
+  void dispose() {
+    _locationController.dispose();
+    super.dispose();
+  }
+
+  void _clearFilters() {
+    setState(() {
+      _selectedCategory = null;
+      _locationController.clear();
+      _locationQuery = '';
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final uid = context.read<AuthProvider>().user?.uid ?? '';
     final browseService = BrowseService();
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Browse Books'),
+        actions: [
+          if (_selectedCategory != null || _locationQuery.isNotEmpty)
+            TextButton(
+              onPressed: _clearFilters,
+              child: const Text('Clear'),
+            ),
+        ],
       ),
-      body: StreamBuilder<List<Book>>(
-        stream: browseService.browseBooks(uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return const Center(child: Text('Error loading books.'));
-          }
-          final books = snapshot.data ?? [];
-          if (books.isEmpty) {
-            return const Center(child: Text('No books available yet.'));
-          }
-          return ListView.builder(
-            itemCount: books.length,
-            itemBuilder: (context, index) {
-              final book = books[index];
-              return BookCard(
-                book: book,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          BookDetailScreen(book: book, isOwner: false),
+      body: Column(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+            child: TextField(
+              controller: _locationController,
+              decoration: InputDecoration(
+                hintText: 'Filter by city or campus...',
+                prefixIcon: const Icon(Icons.location_on_outlined),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _locationQuery = value.trim().toLowerCase();
+                });
+              },
+            ),
+          ),
+
+          SizedBox(
+            height: 50,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              itemCount: bookCategories.length,
+              itemBuilder: (context, index) {
+                final category = bookCategories[index];
+                final isSelected = _selectedCategory == category;
+                return Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  child: FilterChip(
+                    label: Text(category),
+                    selected: isSelected,
+                    onSelected: (selected) {
+                      setState(() {
+                        _selectedCategory = selected ? category : null;
+                      });
+                    },
+                  ),
+                );
+              },
+            ),
+          ),
+
+          const Divider(),
+
+          Expanded(
+            child: StreamBuilder<List<Book>>(
+              stream: browseService.browseAvailableBooks(uid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return const Center(child: Text('Error loading books.'));
+                }
+
+                var books = snapshot.data ?? [];
+
+                if (_selectedCategory != null || _locationQuery.isNotEmpty) {
+                  books = books.where((book) {
+                    bool matchesCategory = true;
+                    bool matchesLocation = true;
+
+                    if (_selectedCategory != null) {
+                      final bookCategory = book.category?.trim().toLowerCase();
+                      final selectedCategory = _selectedCategory?.trim().toLowerCase();
+                      matchesCategory = bookCategory == selectedCategory;
+                    }
+                    if (_locationQuery.isNotEmpty) {
+                      final bookLoc = (book.location ?? '').toLowerCase();
+                      matchesLocation = bookLoc.contains(_locationQuery);
+                    }
+
+                    return matchesCategory && matchesLocation;
+                  }).toList();
+                }
+
+                if (books.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.search_off, size: 64, color: theme.colorScheme.primary.withValues(alpha: 0.4)),
+                        const SizedBox(height: 16),
+                        Text(
+                          'No books match your filters.',
+                          style: theme.textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Try removing some filters to see more results.',
+                          style: theme.textTheme.bodySmall,
+                        ),
+
+                        if (_selectedCategory != null || _locationQuery.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          TextButton.icon(
+                            onPressed: _clearFilters,
+                            icon: const Icon(Icons.clear),
+                            label: const Text('Clear filters'),
+                          ),
+                        ],
+                      ],
                     ),
                   );
-                },
-              );
-            },
-          );
-        },
+                }
+
+                return ListView.builder(
+                  itemCount: books.length,
+                  itemBuilder: (context, index) {
+                    final book = books[index];
+                    return BookCard(
+                      book: book,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                BookDetailScreen(book: book, isOwner: false),
+                          ),
+                        );
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }

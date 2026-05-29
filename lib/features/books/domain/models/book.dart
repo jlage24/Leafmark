@@ -10,6 +10,10 @@ class Book {
   final String? ownerName;
   final String? ownerId;
   final String? lockedBySwapId;
+  final List<String> conditionPhotoUrls;
+  final String? category;
+  final String? location;
+  final String? lastExchangeId;
 
   const Book({
     required this.id,
@@ -23,6 +27,10 @@ class Book {
     this.ownerName,
     this.ownerId,
     this.lockedBySwapId,
+    this.conditionPhotoUrls = const [],
+    this.category,
+    this.location,
+    this.lastExchangeId,
   });
 
   bool get isLocked => lockedBySwapId != null;
@@ -39,6 +47,10 @@ class Book {
     'ownerName': ownerName,
     'ownerId': ownerId,
     'lockedBySwapId': lockedBySwapId,
+    'conditionPhotoUrls': conditionPhotoUrls,
+    'category': category,
+    'location': location,
+    'lastExchangeId': lastExchangeId,
   };
 
   factory Book.fromJson(Map<String, dynamic> json) => Book(
@@ -55,6 +67,13 @@ class Book {
     ownerName: json['ownerName'] as String?,
     ownerId: json['ownerId'] as String?,
     lockedBySwapId: json['lockedBySwapId'] as String?,
+    conditionPhotoUrls: (json['conditionPhotoUrls'] as List<dynamic>?)
+        ?.map((e) => e as String)
+        .toList() ??
+        const [],
+    category: json['category'] as String?,
+    location: json['location'] as String?,
+    lastExchangeId: json['lastExchangeId'] as String?,
   );
 
   Book copyWith({
@@ -69,6 +88,10 @@ class Book {
     String? ownerName,
     String? ownerId,
     Object? lockedBySwapId = _sentinel,
+    List<String>? conditionPhotoUrls,
+    String? category,
+    String? location,
+    String? lastExchangeId,
   }) =>
       Book(
         id: id ?? this.id,
@@ -84,6 +107,10 @@ class Book {
         lockedBySwapId: lockedBySwapId == _sentinel
             ? this.lockedBySwapId
             : lockedBySwapId as String?,
+        conditionPhotoUrls: conditionPhotoUrls ?? this.conditionPhotoUrls,
+        category: category ?? this.category,
+        location: location ?? this.location,
+        lastExchangeId: lastExchangeId ?? this.lastExchangeId,
       );
 
   @override
@@ -98,6 +125,17 @@ class Book {
 }
 
 const Object _sentinel = Object();
+
+const List<String> bookCategories = [
+  'Fiction',
+  'Non-Fiction',
+  'Sci-Fi',
+  'Fantasy',
+  'Romance',
+  'Mystery',
+  'Academic',
+  'Thriller',
+];
 
 enum BookCondition {
   mint('Mint'),

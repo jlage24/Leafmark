@@ -9,6 +9,7 @@ import '../../domain/models/chat_metadata.dart';
 import '../../../auth/presentation/screens/public_profile_screen.dart';
 import '../../../../features/ratings/presentation/screens/rate_exchange_screen.dart';
 import '../../../../features/ratings/presentation/providers/rating_provider.dart';
+import '../../../../features/swaps/presentation/providers/swap_provider.dart';
 import '../components/chat_components.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -339,19 +340,6 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
         builder: (context, ratingSnap) {
           final hasRated = ratingSnap.data ?? false;
 
-          if (hasRated) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              color: Theme.of(context).colorScheme.surfaceContainerHighest,
-              child: const Center(
-                child: Text(
-                  'You have already rated this exchange. Thank you!',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-              ),
-            );
-          }
-
           return Container(
             padding: const EdgeInsets.all(16),
             width: double.infinity,
@@ -366,33 +354,153 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                 ),
               ),
             ),
-            child: FilledButton.icon(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => RateExchangeScreen(
-                      swapId: widget.swapId,
-                      revieweeId: widget.otherUserId,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.check_circle_outline,
+                      color: Colors.green.shade700,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Exchange was a success!',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: Colors.green.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  hasRated
+                      ? 'You have already rated this exchange. Thank you!'
+                      : 'The books have been exchanged. You can now rate this swap.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                if (!hasRated) ...[
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton.icon(
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => RateExchangeScreen(
+                              swapId: widget.swapId,
+                              revieweeId: widget.otherUserId,
+                            ),
+                          ),
+                        );
+                        if (mounted) {
+                          setState(() {
+                            _hasRatedFuture = context
+                                .read<RatingProvider>()
+                                .hasRated(widget.swapId, currentUid);
+                          });
+                        }
+                      },
+                      icon: const Icon(Icons.star),
+                      label: const Text('Rate this exchange'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                      ),
                     ),
                   ),
-                );
-                if (mounted) {
-                  setState(() {
-                    _hasRatedFuture = context
-                        .read<RatingProvider>()
-                        .hasRated(widget.swapId, currentUid);
-                  });
-                }
-              },
-              icon: const Icon(Icons.star),
-              label: const Text('Rate this exchange'),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-              ),
+                ],
+              ],
             ),
           );
         },
+      );
+    }
+
+    if (status == ChatStatus.accepted) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(16),
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
+              border: Border(
+                top: BorderSide(
+                  color: Theme.of(context)
+                      .colorScheme
+                      .outline
+                      .withValues(alpha: 0.2),
+                ),
+              ),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Books are reserved for this swap.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Use this chat to arrange where and when to meet. Only complete the exchange after both people have physically traded the books.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall,
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: context.watch<SwapProvider>().isLoading
+                        ? null
+                        : () async {
+                      try {
+                        await context
+                            .read<SwapProvider>()
+                            .completePhysicalExchange(widget.swapId);
+
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Exchange completed!'),
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                e.toString().replaceAll('Exception: ', ''),
+                              ),
+                              backgroundColor:
+                              Theme.of(context).colorScheme.error,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: const Icon(Icons.handshake_outlined),
+                    label: const Text('Mark exchange as completed'),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ChatInputBar(
+            controller: _controller,
+            onChanged: () => _chatProvider.onTyping(widget.swapId),
+            onSend: _sendText,
+            onCounterOffer: null,
+          ),
+        ],
       );
     }
 
@@ -418,4 +526,5 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
       onCounterOffer: null,
     );
   }
+
 }

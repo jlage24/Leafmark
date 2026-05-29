@@ -1,17 +1,36 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../domain/models/chat_message.dart';
 import '../../domain/models/chat_metadata.dart';
+import 'package:rxdart/rxdart.dart';
+import '../../../books/data/services/block_service.dart';
+import '../../../notifications/data/services/notification_service.dart';
+import '../../../notifications/domain/models/app_notification.dart';
+
 
 class BookAlreadyLockedException implements Exception {
   final String bookId;
   const BookAlreadyLockedException(this.bookId);
 }
 
+/// NOTE: Block enforcement is currently handled Client-Side. 
+/// While we validate blocks before writing to Firestore, malicious users 
+/// could bypass Dart services. Full Server-Side enforcement would require 
+/// custom Cloud Functions or cross-collection Firestore rules. 
+/// Accepted as prototype-level protection.
+
 class ChatService {
   final FirebaseFirestore _db;
+  final BlockService _blockService;
+  final NotificationService _notificationService;
 
-  ChatService({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+  // Dependency Injection for Firestore and BlockService
+  ChatService({
+    FirebaseFirestore? firestore,
+    BlockService? blockService,
+    NotificationService? notificationService,
+  })  : _db = firestore ?? FirebaseFirestore.instance,
+        _blockService = blockService ?? BlockService(),
+        _notificationService = notificationService ?? NotificationService();
 
   CollectionReference get _chats => _db.collection('chats');
 
@@ -19,6 +38,14 @@ class ChatService {
     required String swapId,
     required List<String> participantIds,
   }) async {
+    // Validate block relationship before creating the chat room
+    if (participantIds.length == 2) {
+      final hasBlock = await _blockService.hasBlockRelationship(participantIds[0], participantIds[1]);
+      if (hasBlock) {
+        throw Exception('Cannot create chat. Access restricted due to a block relationship.');
+      }
+    }
+
     final docRef = _chats.doc(swapId);
     final snap = await docRef.get();
     if (snap.exists) return;
@@ -37,16 +64,86 @@ class ChatService {
     required String swapId,
     required ChatMessage message,
   }) async {
+    final chatDoc = await _chats.doc(swapId).get();
+
+    if (!chatDoc.exists) {
+      throw Exception('Cannot send message. Chat does not exist.');
+    }
+
+    final chatData = chatDoc.data() as Map<String, dynamic>;
+    final participants = List<String>.from(chatData['participantIds'] ?? []);
+
+    String? recipientId;
+
+    if (participants.length == 2) {
+      final hasBlock = await _blockService.hasBlockRelationship(
+        participants[0],
+        participants[1],
+      );
+
+      if (hasBlock) {
+        throw Exception(
+          'Cannot send message. Access restricted due to a block relationship.',
+        );
+      }
+
+      recipientId = participants.firstWhere(
+            (uid) => uid != message.senderId,
+        orElse: () => '',
+      );
+
+      if (recipientId.isEmpty) {
+        recipientId = null;
+      }
+    }
+
+    Map<String, String?> senderInfo = {
+      'displayName': null,
+      'photoUrl': null,
+    };
+
+    if (recipientId != null) {
+      senderInfo = await fetchUserInfo(message.senderId);
+    }
+
     final batch = _db.batch();
 
-    final messageRef = _chats.doc(swapId).collection('messages').doc();
+    final chatRef = _chats.doc(swapId);
+    final messageRef = chatRef.collection('messages').doc();
+
     batch.set(messageRef, message.toMap());
 
-    final chatRef = _chats.doc(swapId);
     batch.update(chatRef, {
       'lastMessage': message.text ?? _lastMessagePreview(message.type),
       'lastMessageAt': Timestamp.fromDate(message.createdAt),
     });
+
+    if (recipientId != null) {
+      final notificationId = 'chat_${swapId}_${messageRef.id}';
+      final notificationRef =
+      _notificationService.notificationDocument(notificationId);
+
+      batch.set(
+        notificationRef,
+        AppNotification(
+          id: '',
+          recipientId: recipientId,
+          senderId: message.senderId,
+          senderDisplayName: senderInfo['displayName'],
+          senderPhotoUrl: senderInfo['photoUrl'],
+          type: _notificationTypeForMessage(message.type),
+          title: _notificationTitleForMessage(message.type),
+          body: _notificationBodyForMessage(
+            message,
+            senderInfo['displayName'] ?? 'Someone',
+          ),
+          chatId: swapId,
+          swapId: swapId,
+          isRead: false,
+          createdAt: message.createdAt,
+        ).toMap(),
+      );
+    }
 
     await batch.commit();
   }
@@ -165,8 +262,8 @@ class ChatService {
         .toList());
   }
 
-  Stream<List<ChatMetadata>> getChats(String uid) {
-    return _chats
+Stream<List<ChatMetadata>> getChats(String uid) {
+    final chatsStream = _chats
         .where('participantIds', arrayContains: uid)
         .orderBy('lastMessageAt', descending: true)
         .snapshots()
@@ -174,6 +271,15 @@ class ChatService {
         .map((doc) =>
         ChatMetadata.fromMap(doc.data() as Map<String, dynamic>))
         .toList());
+        
+    final blocksStream = _blockService.getBlockedUsersStream(uid).onErrorReturn(<String>[]);
+
+    return Rx.combineLatest2(chatsStream, blocksStream, (List<ChatMetadata> chats, List<String> blockedUids) {
+      return chats.where((chat) {
+        final otherUid = chat.participantIds.firstWhere((id) => id != uid, orElse: () => '');
+        return !blockedUids.contains(otherUid);
+      }).toList();
+    });
   }
 
   Future<Map<String, String?>> fetchUserInfo(String uid) async {
@@ -250,5 +356,44 @@ class ChatService {
       if (raw == null) return {};
       return raw.map((k, v) => MapEntry(k, (v as Timestamp).toDate()));
     });
+  }
+
+  AppNotificationType _notificationTypeForMessage(MessageType type) {
+    switch (type) {
+      case MessageType.proposal:
+        return AppNotificationType.proposal;
+      case MessageType.counterOffer:
+        return AppNotificationType.counterOffer;
+      case MessageType.text:
+        return AppNotificationType.chatMessage;
+    }
+  }
+
+  String _notificationTitleForMessage(MessageType type) {
+    switch (type) {
+      case MessageType.proposal:
+        return 'New swap proposal';
+      case MessageType.counterOffer:
+        return 'New counter-offer';
+      case MessageType.text:
+        return 'New message';
+    }
+  }
+
+  String _notificationBodyForMessage(
+      ChatMessage message,
+      String senderName,
+      ) {
+    switch (message.type) {
+      case MessageType.proposal:
+        return '$senderName sent you a swap proposal.';
+      case MessageType.counterOffer:
+        return '$senderName sent you a counter-offer.';
+      case MessageType.text:
+        if (message.text != null && message.text!.trim().isNotEmpty) {
+          return '$senderName: ${message.text}';
+        }
+        return '$senderName sent you a message.';
+    }
   }
 }

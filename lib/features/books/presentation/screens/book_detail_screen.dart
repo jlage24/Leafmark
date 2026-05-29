@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../domain/models/book.dart';
 import '../../../swaps/domain/models/swap_request.dart';
 import '../../../swaps/presentation/providers/swap_provider.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
+import '../../../auth/presentation/screens/public_profile_screen.dart';
 import '../../../swaps/data/services/swap_service.dart';
 import '../../../chat/presentation/providers/chat_provider.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
@@ -21,155 +23,93 @@ class BookDetailScreen extends StatelessWidget {
     this.isCatalogView = false,
   });
 
+  List<String> get _galleryUrls {
+    final urls = <String>[
+      ...book.conditionPhotoUrls,
+      if (book.coverUrl != null && book.coverUrl!.isNotEmpty) book.coverUrl!,
+    ];
+
+    return urls.toSet().toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
     final swapProvider = context.watch<SwapProvider>();
     final authProvider = context.read<AuthProvider>();
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Scaffold(
-      appBar: AppBar(title: Text(book.title)),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(10.0),
-              child: book.coverUrl != null
-                  ? Image.network(
-                book.coverUrl!,
-                height: 220,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, _) =>
-                const _PlaceholderCover(),
-              )
-                  : const _PlaceholderCover(),
-            ),
-            const SizedBox(height: 24),
-            Text(
-              book.title,
-              style: textTheme.headlineSmall
-                  ?.copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              book.authors,
-              style:
-              textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 20),
-            Wrap(
-              spacing: 10,
-              runSpacing: 8,
-              alignment: WrapAlignment.center,
-              children: [
-                if (!isCatalogView) ...[
-                  _MetaChip(
-                    icon: Icons.star_outline_rounded,
-                    label: book.condition.label,
-                    color: _conditionColor(book.condition),
-                  ),
-                  if (book.ownerName != null)
-                    _MetaChip(
-                      icon: Icons.person_outline_rounded,
-                      label: book.ownerName!,
-                      color: colorScheme.primary,
+      body: CustomScrollView(
+        slivers: [
+          _BookGalleryAppBar(
+            title: book.title,
+            imageUrls: _galleryUrls,
+            isReserved: book.isLocked,
+          ),
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 120),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _TitleSection(book: book),
+                  const SizedBox(height: 18),
+                  _MetaSection(book: book),
+                  const SizedBox(height: 24),
+                  if (!isCatalogView && book.ownerId != null)
+                    _OwnerCard(
+                      book: book,
+                      isOwner: isOwner,
                     ),
-                ],
-                if (book.isbn.isNotEmpty)
-                  _MetaChip(
-                    icon: Icons.qr_code_rounded,
-                    label: book.isbn,
-                    color: Colors.grey,
-                  ),
-              ],
-            ),
-            if (!isCatalogView &&
-                book.notes != null &&
-                book.notes!.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: colorScheme.primary.withValues(alpha: 0.06),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                      color: colorScheme.primary.withValues(alpha: 0.15)),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(Icons.notes_rounded,
-                        size: 18, color: colorScheme.primary),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Text(
-                        book.notes!,
-                        style: textTheme.bodyMedium?.copyWith(
-                          color: colorScheme.onSurface
-                              .withValues(alpha: 0.75),
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ),
+                  if (!isCatalogView && book.ownerId != null)
+                    const SizedBox(height: 24),
+                  _InfoSection(book: book),
+                  if (book.notes != null && book.notes!.trim().isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _NotesSection(notes: book.notes!),
                   ],
-                ),
-              ),
-            ],
-            if (!isCatalogView) ...[
-              const SizedBox(height: 36),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: isOwner
-                    ? OutlinedButton.icon(
-                  onPressed: null,
-                  icon: const Icon(Icons.check_circle_outline_rounded),
-                  label: const Text('This book is on your shelf'),
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
+                  const SizedBox(height: 24),
+                  _TrustSection(
+                    hasRealPhotos: book.conditionPhotoUrls.isNotEmpty,
                   ),
-                )
-                    : FilledButton.icon(
-                  onPressed: swapProvider.isLoading
-                      ? null
-                      : () => _showBookPickerSheet(
-                      context, authProvider),
-                  icon: swapProvider.isLoading
-                      ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white))
-                      : const Icon(Icons.swap_horiz_rounded),
-                  label: const Text('Request Swap'),
-                ),
+                ],
               ),
-            ],
-            const SizedBox(height: 24),
-          ],
+            ),
+          ),
+        ],
+      ),
+      bottomNavigationBar: isCatalogView
+          ? null
+          : _BottomActionBar(
+        isOwner: isOwner,
+        isReserved: book.isLocked,
+        isLoading: swapProvider.isLoading,
+        bottomPadding: bottomPadding,
+        onViewOwner: book.ownerId == null
+            ? null
+            : () => Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PublicProfileScreen(
+              userId: book.ownerId!,
+              displayName: book.ownerName ?? 'LeafMark user',
+            ),
+          ),
         ),
+        onRequestSwap: isOwner || book.isLocked
+            ? null
+            : () => _showBookPickerSheet(context, authProvider),
       ),
     );
   }
 
-  void _showBookPickerSheet(
-      BuildContext context, AuthProvider authProvider) {
-    final shelfBooks = context.read<BookShelfProvider>().books;
+  void _showBookPickerSheet(BuildContext context, AuthProvider authProvider) {
+    final shelfBooks = context.read<BookShelfProvider>().availableBooks;
 
     if (shelfBooks.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content:
-          Text('You need books on your shelf to propose a swap.'),
+          content: Text('You need available books on your shelf to propose a swap.'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -178,76 +118,70 @@ class BookDetailScreen extends StatelessWidget {
 
     showModalBottomSheet(
       context: context,
+      showDragHandle: true,
+      isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (sheetCtx) {
         return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                margin: const EdgeInsets.only(top: 10),
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2),
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 4, 20, 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Choose a book to offer',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                child: Text(
-                  'Which book do you want to offer?',
-                  style: Theme.of(context)
-                      .textTheme
-                      .titleMedium
-                      ?.copyWith(fontWeight: FontWeight.bold),
+                const SizedBox(height: 6),
+                Text(
+                  'Pick one of your available books to start a swap request.',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall,
                 ),
-              ),
-              const Divider(height: 1),
-              ConstrainedBox(
-                constraints: BoxConstraints(
-                  maxHeight:
-                  MediaQuery.of(context).size.height * 0.45,
+                const SizedBox(height: 16),
+                ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxHeight: MediaQuery.of(context).size.height * 0.52,
+                  ),
+                  child: ListView.separated(
+                    shrinkWrap: true,
+                    itemCount: shelfBooks.length,
+                    separatorBuilder: (context, index) => const Divider(height: 1),
+                    itemBuilder: (ctx, index) {
+                      final offeredBook = shelfBooks[index];
+                      final displayUrl = offeredBook.conditionPhotoUrls.isNotEmpty
+                          ? offeredBook.conditionPhotoUrls.first
+                          : offeredBook.coverUrl;
+
+                      return ListTile(
+                        contentPadding: EdgeInsets.zero,
+                        leading: _MiniBookCover(url: displayUrl),
+                        title: Text(
+                          offeredBook.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        subtitle: Text(
+                          '${offeredBook.authors} · ${offeredBook.condition.label}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        trailing: const Icon(Icons.chevron_right),
+                        onTap: () {
+                          Navigator.pop(sheetCtx);
+                          _submitSwap(context, authProvider, offeredBook);
+                        },
+                      );
+                    },
+                  ),
                 ),
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: shelfBooks.length,
-                  itemBuilder: (ctx, index) {
-                    final offeredBook = shelfBooks[index];
-                    return ListTile(
-                      leading: ClipRRect(
-                        borderRadius: BorderRadius.circular(4),
-                        child: offeredBook.coverUrl != null
-                            ? Image.network(
-                          offeredBook.coverUrl!,
-                          width: 36,
-                          height: 52,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                          const Icon(Icons.book, size: 36),
-                        )
-                            : const Icon(Icons.book, size: 36),
-                      ),
-                      title: Text(
-                        offeredBook.title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                            fontWeight: FontWeight.w500),
-                      ),
-                      subtitle: Text(offeredBook.condition.label),
-                      onTap: () {
-                        Navigator.pop(sheetCtx);
-                        _submitSwap(context, authProvider, offeredBook);
-                      },
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(height: 8),
-            ],
+              ],
+            ),
           ),
         );
       },
@@ -294,7 +228,7 @@ class BookDetailScreen extends StatelessWidget {
           MaterialPageRoute(
             builder: (_) => ChatScreen(
               swapId: swapId,
-              otherUserName: book.ownerName ?? '',
+              otherUserName: book.ownerName ?? 'LeafMark user',
               otherUserId: book.ownerId ?? '',
             ),
           ),
@@ -304,7 +238,7 @@ class BookDetailScreen extends StatelessWidget {
       if (context.mounted) {
         _showResultDialog(
           context,
-          title: 'Already Requested!',
+          title: 'Already requested',
           message: 'You already have a pending request for this book.',
           icon: Icons.info_outline_rounded,
           iconColor: Colors.orange,
@@ -331,43 +265,583 @@ class BookDetailScreen extends StatelessWidget {
       }) {
     showDialog(
       context: context,
-      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        shape:
-        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        icon: Icon(icon, color: iconColor, size: 54),
-        title:
-        Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        content: Text(message,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 15)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+        icon: Icon(icon, color: iconColor, size: 52),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+        content: Text(message, textAlign: TextAlign.center),
         actionsAlignment: MainAxisAlignment.center,
         actions: [
           FilledButton(
-            style: FilledButton.styleFrom(
-                minimumSize: const Size(120, 44)),
             onPressed: () {
               Navigator.pop(ctx);
               Navigator.pop(context);
             },
-            child: const Text('Awesome'),
+            child: const Text('Got it'),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _BookGalleryAppBar extends StatefulWidget {
+  final String title;
+  final List<String> imageUrls;
+  final bool isReserved;
+
+  const _BookGalleryAppBar({
+    required this.title,
+    required this.imageUrls,
+    required this.isReserved,
+  });
+
+  @override
+  State<_BookGalleryAppBar> createState() => _BookGalleryAppBarState();
+}
+
+class _BookGalleryAppBarState extends State<_BookGalleryAppBar> {
+  final _controller = PageController();
+  int _currentIndex = 0;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final hasImages = widget.imageUrls.isNotEmpty;
+
+    return SliverAppBar(
+      expandedHeight: 390,
+      pinned: true,
+      stretch: true,
+      title: Text(
+        widget.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      flexibleSpace: FlexibleSpaceBar(
+        background: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (hasImages)
+              PageView.builder(
+                controller: _controller,
+                physics: const PageScrollPhysics(),
+                itemCount: widget.imageUrls.length,
+                onPageChanged: (index) => setState(() => _currentIndex = index),
+                itemBuilder: (context, index) {
+                  return Image.network(
+                    widget.imageUrls[index],
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                    const _PlaceholderCover(),
+                  );
+                },
+              )
+            else
+              const _PlaceholderCover(),
+
+            const IgnorePointer(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.black45,
+                      Colors.transparent,
+                      Colors.black54,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+
+            if (widget.isReserved)
+              Positioned(
+                left: 16,
+                bottom: 20,
+                child: _StatusPill(
+                  icon: Icons.lock_outline,
+                  label: 'Reserved',
+                  color: Colors.orange,
+                ),
+              ),
+
+            if (hasImages && widget.imageUrls.length > 1)
+              Positioned(
+                right: 16,
+                bottom: 20,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.55),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    '${_currentIndex + 1}/${widget.imageUrls.length}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+
+            if (hasImages && widget.imageUrls.length > 1)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 22,
+                child: IgnorePointer(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(widget.imageUrls.length, (index) {
+                      final selected = index == _currentIndex;
+
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        width: selected ? 18 : 7,
+                        height: 7,
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? Colors.white
+                              : Colors.white.withValues(alpha: 0.55),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                      );
+                    }),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _TitleSection extends StatelessWidget {
+  final Book book;
+
+  const _TitleSection({required this.book});
+
+  @override
+  Widget build(BuildContext context) {
+    final textTheme = Theme.of(context).textTheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          book.title,
+          style: textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w800,
+            height: 1.1,
+          ),
+        ),
+        const SizedBox(height: 8),
+        Text(
+          book.authors,
+          style: textTheme.titleMedium?.copyWith(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MetaSection extends StatelessWidget {
+  final Book book;
+
+  const _MetaSection({required this.book});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        _MetaChip(
+          icon: Icons.auto_awesome_outlined,
+          label: book.condition.label,
+          color: _conditionColor(book.condition),
+        ),
+        if (book.category != null && book.category!.trim().isNotEmpty)
+          _MetaChip(
+            icon: Icons.category_outlined,
+            label: book.category!,
+            color: Colors.deepPurple,
+          ),
+        if (book.location != null && book.location!.trim().isNotEmpty)
+          _MetaChip(
+            icon: Icons.place_outlined,
+            label: book.location!,
+            color: Colors.teal,
+          ),
+        if (book.isbn.trim().isNotEmpty)
+          _MetaChip(
+            icon: Icons.qr_code_rounded,
+            label: book.isbn,
+            color: Colors.blueGrey,
+          ),
+      ],
     );
   }
 
   Color _conditionColor(BookCondition condition) {
     switch (condition) {
       case BookCondition.mint:
-        return Colors.green[700]!;
+        return Colors.green.shade700;
       case BookCondition.good:
-        return Colors.blue[700]!;
+        return Colors.blue.shade700;
       case BookCondition.fair:
-        return Colors.orange[700]!;
+        return Colors.orange.shade700;
       case BookCondition.poor:
-        return Colors.red[700]!;
+        return Colors.red.shade700;
     }
+  }
+}
+
+class _OwnerCard extends StatelessWidget {
+  final Book book;
+  final bool isOwner;
+
+  const _OwnerCard({
+    required this.book,
+    required this.isOwner,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ownerName = book.ownerName ?? 'LeafMark user';
+    final initial = ownerName.trim().isNotEmpty
+        ? ownerName.trim()[0].toUpperCase()
+        : '?';
+
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: book.ownerId == null
+          ? null
+          : () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PublicProfileScreen(
+            userId: book.ownerId!,
+            displayName: ownerName,
+          ),
+        ),
+      ),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Theme.of(context)
+              .colorScheme
+              .surfaceContainerHighest
+              .withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: Theme.of(context).colorScheme.outlineVariant,
+          ),
+        ),
+        child: Row(
+          children: [
+            CircleAvatar(
+              radius: 24,
+              child: Text(initial),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isOwner ? 'Listed by you' : 'Listed by $ownerName',
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isOwner
+                        ? 'This book is currently on your shelf.'
+                        : 'View profile, shelf, reviews and wishlist.',
+                    style: Theme.of(context).textTheme.bodySmall,
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoSection extends StatelessWidget {
+  final Book book;
+
+  const _InfoSection({required this.book});
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      title: 'About this book',
+      child: Column(
+        children: [
+          _InfoRow(
+            icon: Icons.menu_book_outlined,
+            label: 'Title',
+            value: book.title,
+          ),
+          _InfoRow(
+            icon: Icons.person_outline,
+            label: 'Author(s)',
+            value: book.authors,
+          ),
+          if (book.category != null && book.category!.trim().isNotEmpty)
+            _InfoRow(
+              icon: Icons.category_outlined,
+              label: 'Category',
+              value: book.category!,
+            ),
+          _InfoRow(
+            icon: Icons.auto_awesome_outlined,
+            label: 'Condition',
+            value: book.condition.label,
+          ),
+          if (book.location != null && book.location!.trim().isNotEmpty)
+            _InfoRow(
+              icon: Icons.place_outlined,
+              label: 'Location',
+              value: book.location!,
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NotesSection extends StatelessWidget {
+  final String notes;
+
+  const _NotesSection({required this.notes});
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      title: 'Condition notes',
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            Icons.notes_rounded,
+            size: 20,
+            color: Theme.of(context).colorScheme.primary,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              notes,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.35),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrustSection extends StatelessWidget {
+  final bool hasRealPhotos;
+
+  const _TrustSection({required this.hasRealPhotos});
+
+  @override
+  Widget build(BuildContext context) {
+    return _SectionCard(
+      title: 'Exchange confidence',
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            hasRealPhotos ? Icons.verified_outlined : Icons.info_outline,
+            color: hasRealPhotos ? Colors.green.shade700 : Colors.orange.shade700,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              hasRealPhotos
+                  ? 'This listing includes real condition photos uploaded by the owner.'
+                  : 'This listing only uses the book cover. Ask the owner for more details before swapping.',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BottomActionBar extends StatelessWidget {
+  final bool isOwner;
+  final bool isReserved;
+  final bool isLoading;
+  final double bottomPadding;
+  final VoidCallback? onViewOwner;
+  final VoidCallback? onRequestSwap;
+
+  const _BottomActionBar({
+    required this.isOwner,
+    required this.isReserved,
+    required this.isLoading,
+    required this.bottomPadding,
+    required this.onViewOwner,
+    required this.onRequestSwap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final disabledText = isOwner
+        ? 'This is your listing'
+        : isReserved
+        ? 'Book currently reserved'
+        : null;
+
+    return Container(
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + bottomPadding),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            blurRadius: 18,
+            offset: const Offset(0, -4),
+            color: Colors.black.withValues(alpha: 0.08),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton.icon(
+              onPressed: onViewOwner,
+              icon: const Icon(Icons.person_outline),
+              label: const Text('Owner'),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            flex: 2,
+            child: FilledButton.icon(
+              onPressed: disabledText != null || isLoading ? null : onRequestSwap,
+              icon: isLoading
+                  ? const SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              )
+                  : const Icon(Icons.swap_horiz_rounded),
+              label: Text(disabledText ?? 'Request swap'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 14),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final Widget child;
+
+  const _SectionCard({
+    required this.title,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.outlineVariant,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 14),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 19, color: Theme.of(context).colorScheme.primary),
+          const SizedBox(width: 12),
+          SizedBox(
+            width: 86,
+            child: Text(
+              label,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -376,32 +850,109 @@ class _MetaChip extends StatelessWidget {
   final String label;
   final Color color;
 
-  const _MetaChip(
-      {required this.icon, required this.label, required this.color});
+  const _MetaChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withValues(alpha: 0.25)),
+        borderRadius: BorderRadius.circular(999),
+        border: Border.all(color: color.withValues(alpha: 0.22)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 14, color: color),
+          Icon(icon, size: 15, color: color),
           const SizedBox(width: 6),
           Text(
             label,
             style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-                color: color),
+              color: color,
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _StatusPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+
+  const _StatusPill({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 15, color: Colors.white),
+          const SizedBox(width: 6),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MiniBookCover extends StatelessWidget {
+  final String? url;
+
+  const _MiniBookCover({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: url != null
+          ? Image.network(
+        url!,
+        width: 42,
+        height: 60,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) =>
+        const _MiniPlaceholderCover(),
+      )
+          : const _MiniPlaceholderCover(),
+    );
+  }
+}
+
+class _MiniPlaceholderCover extends StatelessWidget {
+  const _MiniPlaceholderCover();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 42,
+      height: 60,
+      color: Colors.grey[200],
+      child: const Icon(Icons.book_outlined, color: Colors.grey),
     );
   }
 }
@@ -412,11 +963,10 @@ class _PlaceholderCover extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 220,
-      width: 150,
       color: Colors.grey[200],
-      child:
-      const Icon(Icons.book_outlined, size: 64, color: Colors.grey),
+      child: const Center(
+        child: Icon(Icons.book_outlined, size: 80, color: Colors.grey),
+      ),
     );
   }
 }

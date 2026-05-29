@@ -13,6 +13,10 @@ import '../../../reports/domain/models/report.dart';
 import '../../../swaps/presentation/providers/swap_provider.dart';
 import '../../../wishlist/domain/models/wishlist_item.dart';
 import '../../../wishlist/presentation/providers/wishlist_provider.dart';
+import '../../../books/presentation/providers/block_provider.dart';
+import '../../../books/presentation/providers/follow_provider.dart';
+import '../widgets/profile_badges.dart';
+
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
@@ -168,6 +172,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               ? widget.displayName[0].toUpperCase()
               : '?';
 
+          final currentUid = context.read<AuthProvider>().user?.uid ?? '';
+          final isOwnProfile = currentUid == widget.userId;
+
           return ListView(
             padding: const EdgeInsets.only(bottom: 32),
             children: [
@@ -202,18 +209,57 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             onPressed: () => Navigator.pop(context),
                           ),
                         ),
-                        Container(
-                          decoration: BoxDecoration(
-                            color: Colors.black.withValues(alpha: 0.3),
-                            shape: BoxShape.circle,
+                        if (!isOwnProfile)
+                          Row(
+                            children: [
+                              StreamBuilder<List<String>>(
+                                stream: context.read<BlockProvider>().getBlockedUsers(currentUid),
+                                builder: (context, snapshot) {
+                                  final isBlocked = snapshot.data?.contains(widget.userId) ?? false;
+                                  return Container(
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.3),
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: IconButton(
+                                      icon: Icon(
+                                        isBlocked ? Icons.block : Icons.pan_tool_outlined, 
+                                        size: 18, 
+                                        color: isBlocked ? Colors.redAccent : Colors.white,
+                                      ),
+                                      tooltip: isBlocked ? 'Unblock user' : 'Block user',
+                                      onPressed: () async {
+                                        if (isBlocked) {
+                                          await context.read<BlockProvider>().unblockUser(currentUid, widget.userId);
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User unblocked.')));
+                                          }
+                                        } else {
+                                          await context.read<BlockProvider>().blockUser(currentUid, widget.userId);
+                                          if (context.mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('User blocked.')));
+                                          }
+                                        }
+                                      },
+                                    ),
+                                  );
+                                },
+                              ),
+                              Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.3),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: IconButton(
+                                  icon: const Icon(Icons.flag_outlined,
+                                      size: 18, color: Colors.white),
+                                  tooltip: 'Report user',
+                                  onPressed: () => _showReportSheet(context),
+                                ),
+                              ),
+                            ],
                           ),
-                          child: IconButton(
-                            icon: const Icon(Icons.flag_outlined,
-                                size: 18, color: Colors.white),
-                            tooltip: 'Report user',
-                            onPressed: () => _showReportSheet(context),
-                          ),
-                        ),
                       ],
                     ),
                   ),
@@ -243,7 +289,6 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
               ),
               const SizedBox(height: 48),
 
-              // ── Nome, username, bio, stats ───────────────────────────
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
@@ -262,7 +307,72 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           style: textTheme.bodyMedium,
                           textAlign: TextAlign.center),
                     ],
+
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        StreamBuilder<int>(
+                          stream: context.read<FollowProvider>().getFollowersCount(widget.userId),
+                          builder: (context, snapshot) {
+                            return Text(
+                              '${snapshot.hasData ? snapshot.data : '-'} Followers',
+                              style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 16),
+                        StreamBuilder<int>(
+                          stream: context.read<FollowProvider>().getFollowingCount(widget.userId),
+                          builder: (context, snapshot) {
+                            return Text(
+                              '${snapshot.data ?? 0} Following',
+                              style: textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+
+                    if (!isOwnProfile) ...[
+                      const SizedBox(height: 16),
+                      StreamBuilder<bool>(
+                        stream: context.read<FollowProvider>().isFollowing(currentUid, widget.userId),
+                        builder: (context, snapshot) {
+                          final isFollowing = snapshot.data ?? false;
+                          return FilledButton.icon(
+                            onPressed: () async {
+                              try {
+                                if (isFollowing) {
+                                  await context.read<FollowProvider>().unfollowUser(currentUid, widget.userId);
+                                } else {
+                                  await context.read<FollowProvider>().followUser(currentUid, widget.userId);
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(e.toString().replaceAll('Exception: ', '')),
+                                      backgroundColor: Theme.of(context).colorScheme.error,
+                                    ),
+                                  );
+                                }
+                              }
+                            },
+                            style: FilledButton.styleFrom(
+                              backgroundColor: isFollowing ? Theme.of(context).colorScheme.surfaceContainerHighest : AppTheme.primary,
+                              foregroundColor: isFollowing ? Theme.of(context).colorScheme.onSurface : Colors.white,
+                              elevation: isFollowing ? 0 : 1,
+                            ),
+                            icon: Icon(isFollowing ? Icons.check : Icons.person_add, size: 18),
+                            label: Text(isFollowing ? 'Following' : 'Follow'),
+                          );
+                        },
+                      ),
+                    ],
+
                     const SizedBox(height: 24),
+
                     FutureBuilder<int>(
                       future: _shelfCountFuture,
                       builder: (context, shelfSnap) {
@@ -271,7 +381,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                           children: [
                             _StatCard(
                                 label: 'Books',
-                                value: shelfSnap.hasData ? '$count' : '…'),
+                                value: shelfSnap.hasData ? '$count' : '-'),
                             const SizedBox(width: 8),
                             StreamBuilder<int>(
                               stream: context.read<SwapProvider>().exchangeCount(widget.userId),
@@ -309,9 +419,19 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   ],
                 ),
               ),
+              FutureBuilder<int>(
+                future: _shelfCountFuture,
+                builder: (context, shelfSnap) {
+                  return ProfileBadges(
+                    userId: widget.userId,
+                    shelfCount: shelfSnap.data ?? 0,
+                  );
+                },
+              ),
+
               const SizedBox(height: 24),
 
-              // ── Favorite Authors ─────────────────────────────────────
+              // Favorite Authors
               if (favoriteAuthors.isNotEmpty) ...[
                 const Divider(),
                 Padding(

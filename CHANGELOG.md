@@ -5,6 +5,68 @@ All notable changes to LeafMark will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
+## [0.4.0] - 2026-05-29 — Sprint 3 Release
+
+### Added
+
+* Real book condition photos uploaded through Cloudinary
+* Multiple book photos per listing with gallery support
+* User search powered by Firestore
+* Search users by username and display name
+* Follow and unfollow other readers
+* In-app real-time notifications
+* User blocking system
+* Automatic ownership transfer after completed exchanges
+* Complete physical exchange workflow from acceptance to ownership transfer
+* Book locking system to prevent conflicting exchanges
+* Extended automated test coverage for core services
+
+### Changed
+
+* Redesigned `SearchScreen` with Books / Users mode selector
+* Redesigned `BookDetailScreen` with marketplace-inspired layout
+* Improved exchange workflow to support real-world meetups before completion
+* Improved exchange history loading and presentation
+* Improved public profile statistics
+* Improved chat flow after swap acceptance
+* Improved browse experience with category and location filters
+* Improved empty states, success messages and error handling across the application
+
+### Fixed
+
+* Fixed issue #95 allowing creation of empty books
+* Fixed issue #96 where pressing Enter on login did not submit authentication
+* Fixed exchange history loading issues
+* Fixed public profile swap statistics
+* Fixed chat lifecycle after swap acceptance
+* Fixed multiple Firestore permission and security rule inconsistencies
+* Fixed test instability related to FakeFirestore and service injection
+
+### Security
+
+* Updated Firestore security rules for:
+
+  * Follow relationships
+  * Notifications
+  * Completed swaps
+  * Public profile statistics
+  * Blocking-related flows
+
+### Testing
+
+* Added and updated tests for:
+
+  * ChatService
+  * SwapService
+  * BlockService
+  * BrowseService
+  * User search functionality
+  * Book photo serialization
+
+### Known Limitations
+
+* Native push notifications remain out of scope and are not yet implemented
+* Recommendation feed remains planned future work
 
 ## [0.3.0] - 2026-05-15 — Sprint 2 Release
 

@@ -80,3 +80,62 @@ All five team members used AI assistants at various points. The tools were **Cla
 
 **Documentation**
 - Used Claude to write and refine the CHANGELOG, README setup guide, sprint retrospectives and this log
+
+---
+
+## Sprint 3
+
+**Core feature implementation**
+
+* Used Gemini to discuss UI approaches for the redesigned `SearchScreen`, including the Books / Users segmented search experience
+* Used Gemini to explore user discovery patterns and profile navigation flows
+* Used ChatGPT to review the architecture for the user search implementation and Firestore query structure
+* Used ChatGPT to validate dependency injection approaches for `UserSearchService` and improve testability
+
+**Exchange workflow redesign**
+
+* Used ChatGPT to analyse the complete physical exchange workflow and identify missing states between swap acceptance and exchange completion
+* Used ChatGPT to review ownership transfer logic and ensure consistency between book shelves after completed exchanges
+* Used Gemini to discuss UX implications of book locking and exchange completion flows
+
+**Notifications, follows and blocking**
+
+* Used Gemini to discuss social interaction patterns, follow relationships and notification UX
+* Used Claude/Gemini-style reasoning (second-opinion workflow) to compare different Firestore structures for notifications and follows before implementation
+* Used ChatGPT to review security implications of blocking users and swap restrictions
+
+**Firestore and security rules**
+
+* Used ChatGPT to analyse Firestore permission issues affecting follows, notifications, completed swaps and public profile statistics
+* Used Gemini to verify best practices for Firestore security rule organisation and collection access patterns
+
+**Testing and debugging**
+
+* Used ChatGPT extensively to debug failing service tests involving `FakeFirebaseFirestore`
+* Used ChatGPT to review `SwapService`, `ChatService`, `BrowseService` and `UserSearchService` test coverage
+* Used ChatGPT to identify dependency injection improvements that simplified testing
+* Used Gemini for Flutter testing questions and mocking strategies
+
+**Bug fixing**
+
+* Used ChatGPT to investigate and resolve:
+
+    * Issue #95 (empty books could be added)
+    * Issue #96 (login Enter key submission)
+    * Exchange history loading issues
+    * Public profile statistics issues
+    * Chat flow issues after swap acceptance
+
+**Release preparation**
+
+* Used ChatGPT to assist with:
+
+    * Sprint 3 release planning
+    * CHANGELOG preparation
+    * README review
+    * Release notes drafting
+    * Final release checklist validation
+
+**Validation**
+
+All AI-generated suggestions were manually reviewed, adapted and tested before being committed. AI tools were used as implementation assistants and reviewers, not as a replacement for development, testing or design decisions.

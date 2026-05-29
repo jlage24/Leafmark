@@ -161,6 +161,7 @@ The following screenshots show the current state of the application after Sprint
 <div align="center">
 
 <img src="docs/images/NotificationsScreen.png" alt="Notifications Screen" width="22%" />
+<img src="docs/images/SuccessfulSwapScreen.png" alt="Successful Swap Screen" width="22%" />
 
 </div>
 

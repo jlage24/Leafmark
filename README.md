@@ -138,16 +138,29 @@ The survey results directly influenced backlog prioritisation and feature planni
 
 ### User Interfaces
 
+The following screenshots show the current state of the application after Sprint 3.
+
 <div align="center">
 
-<img src="docs/images/Home-Mockup.png" alt="Home screen" width="22%" />
-<img src="docs/images/Search-Mockup.png" alt="Search screen" width="22%" />
-<img src="docs/images/Profile-Mockup.png" alt="Profile screen" width="22%" />
-<img src="docs/images/MyShelf-Mockup.png" alt="My Shelf screen" width="22%" />
+<img src="docs/images/LoginScreen.png" alt="Login Screen" width="22%" />
+<img src="docs/images/BrowseScreen.png" alt="Browse Screen" width="22%" />
+<img src="docs/images/SearchScreen.png" alt="Search Screen" width="22%" />
+<img src="docs/images/MyShelfScreen.png" alt="My Shelf Screen" width="22%" />
 
-<img src="docs/images/Login-Mockup.png" alt="Login screen" width="22%" />
-<img src="docs/images/Chat-Mockup.png" alt="Chat screen" width="22%" />
-<img src="docs/images/Book-Mockup.png" alt="Book screen" width="22%" />
+</div>
+
+<div align="center">
+
+<img src="docs/images/BookDetailScreen.png" alt="Book Detail Screen" width="22%" />
+<img src="docs/images/ChatScreen.png" alt="Chat Screen" width="22%" />
+<img src="docs/images/ProfileScreen.png" alt="Profile Screen" width="22%" />
+<img src="docs/images/PublicProfileScreen.png" alt="Public Profile Screen" width="22%" />
+
+</div>
+
+<div align="center">
+
+<img src="docs/images/NotificationsScreen.png" alt="Notifications Screen" width="22%" />
 
 </div>
 

@@ -129,12 +129,10 @@ const Object _sentinel = Object();
 const List<String> bookCategories = [
   'Fiction',
   'Non-Fiction',
-  'Sci-Fi',
-  'Fantasy',
-  'Romance',
-  'Mystery',
   'Academic',
-  'Thriller',
+  'Comics & Manga',
+  'Children & Young Adult',
+  'Other',
 ];
 
 enum BookCondition {

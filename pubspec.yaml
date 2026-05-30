@@ -61,6 +61,8 @@ dependencies:
   google_fonts: ^8.0.2
   provider: ^6.1.5+1
   image_cropper: ^12.2.1
+  geolocator: ^14.0.2
+  geocoding: ^4.0.0
 
 dev_dependencies:
   flutter_test:

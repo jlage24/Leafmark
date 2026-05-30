@@ -66,7 +66,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       children: [
                         if (!keyboardOpen) ...[
                           Text(
-                            'Discover',
+                            'Search',
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.w800,
                             ),

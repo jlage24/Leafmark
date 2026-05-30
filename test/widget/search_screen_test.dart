@@ -32,7 +32,7 @@ void main() {
       await tester.pumpWidget(buildSubject());
 
       expect(find.byType(TextField), findsOneWidget);
-      expect(find.text('Discover'), findsOneWidget);
+      expect(find.text('Search'), findsOneWidget);
       expect(find.text('Find books to swap or readers to follow.'), findsOneWidget);
     });
 

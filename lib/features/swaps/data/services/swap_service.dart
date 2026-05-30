@@ -6,6 +6,7 @@ import '../../../books/domain/models/book.dart';
 import '../../../notifications/data/services/notification_service.dart';
 import '../../../notifications/domain/models/app_notification.dart';
 import '../../domain/models/swap_request.dart';
+import '../../../chat/domain/models/chat_message.dart';
 
 class DuplicateSwapException implements Exception {}
 
@@ -86,15 +87,29 @@ class SwapService {
     await acceptSwapAndLockBooks(swap);
   }
 
-  Future<void> acceptSwapAndLockBooks(SwapRequest swap) async {
+  Future<void> acceptSwapAndLockBooks(SwapRequest swap, {
+        String? requesterBookIdOverride,
+        String? ownerBookIdOverride,
+        String? acceptedByUid,
+      }) async {
+
     if (swap.status != SwapStatus.pending) {
       return;
     }
 
+    final requesterBookId = requesterBookIdOverride ?? swap.bookOfferedId;
+    final ownerBookId = ownerBookIdOverride ?? swap.bookWantedId;
+    final actorUid = acceptedByUid ?? swap.ownerId;
+    final recipientUid = actorUid == swap.requesterId ? swap.ownerId : swap.requesterId;
+
     final batch = _db.batch();
 
     final swapRef = _db.collection(_collection).doc(swap.id);
-    batch.update(swapRef, {'status': SwapStatus.accepted.name});
+    batch.update(swapRef, {
+      'status': SwapStatus.accepted.name,
+      'bookOfferedId': requesterBookId,
+      'bookWantedId': ownerBookId,
+    });
 
     final chatRef = _db.collection('chats').doc(swap.id);
     batch.update(chatRef, {
@@ -104,43 +119,45 @@ class SwapService {
     });
 
     final offeredBookRef =
-    _db.collection('users/${swap.requesterId}/shelf').doc(swap.bookOfferedId);
+    _db.collection('users/${swap.requesterId}/shelf').doc(requesterBookId);
     final wantedBookRef =
-    _db.collection('users/${swap.ownerId}/shelf').doc(swap.bookWantedId);
+    _db.collection('users/${swap.ownerId}/shelf').doc(ownerBookId);
 
     batch.update(offeredBookRef, {'lockedBySwapId': swap.id});
     batch.update(wantedBookRef, {'lockedBySwapId': swap.id});
 
-    final otherRequests = await _db
-        .collection(_collection)
-        .where('status', isEqualTo: SwapStatus.pending.name)
-        .where('ownerId', isEqualTo: swap.ownerId)
-        .get();
+    if (actorUid == swap.ownerId) {
+      final otherRequests = await _db
+          .collection(_collection)
+          .where('status', isEqualTo: SwapStatus.pending.name)
+          .where('ownerId', isEqualTo: swap.ownerId)
+          .get();
 
-    for (final doc in otherRequests.docs) {
-      if (doc.id == swap.id) continue;
+      for (final doc in otherRequests.docs) {
+        if (doc.id == swap.id) continue;
 
-      final data = doc.data();
+        final data = doc.data();
 
-      final conflictsWithWanted =
-          data['bookWantedId'] == swap.bookWantedId ||
-              data['bookOfferedId'] == swap.bookWantedId;
+        final conflictsWithWanted =
+            data['bookWantedId'] == ownerBookId ||
+                data['bookOfferedId'] == ownerBookId;
 
-      if (conflictsWithWanted) {
-        batch.update(doc.reference, {'status': SwapStatus.rejected.name});
+        if (conflictsWithWanted) {
+          batch.update(doc.reference, {'status': SwapStatus.rejected.name});
+        }
       }
     }
 
     await batch.commit();
 
-    final senderInfo = await fetchUserInfo(swap.ownerId);
+    final senderInfo = await fetchUserInfo(actorUid);
     final senderName = senderInfo['displayName'] ?? 'Someone';
 
     await _notificationService.createNotification(
       AppNotification(
         id: '',
-        recipientId: swap.requesterId,
-        senderId: swap.ownerId,
+        recipientId: recipientUid,
+        senderId: actorUid,
         senderDisplayName: senderName,
         senderPhotoUrl: senderInfo['photoUrl'],
         type: AppNotificationType.swapAccepted,
@@ -401,6 +418,57 @@ class SwapService {
         'photoUrl': null,
       };
     }
+  }
+
+  Future<void> acceptOfferFromMessage({
+    required String swapId,
+    required ChatMessage message,
+    required String currentUid,
+  }) async {
+    final snap = await _db.collection(_collection).doc(swapId).get();
+
+    if (!snap.exists) {
+      throw Exception('Swap request not found.');
+    }
+
+    final swap = SwapRequest.fromMap(snap.data()!, snap.id);
+
+    if (swap.status != SwapStatus.pending) {
+      return;
+    }
+
+    final offeredBookId = message.bookOfferedId;
+    final wantedBookId = message.bookWantedId;
+    final offeredBookOwnerId = message.bookOfferedOwnerId;
+
+    if (offeredBookId == null ||
+        offeredBookId.isEmpty ||
+        wantedBookId == null ||
+        wantedBookId.isEmpty ||
+        offeredBookOwnerId == null ||
+        offeredBookOwnerId.isEmpty) {
+      throw Exception('Invalid offer message.');
+    }
+
+    String requesterBookId;
+    String ownerBookId;
+
+    if (offeredBookOwnerId == swap.requesterId) {
+      requesterBookId = offeredBookId;
+      ownerBookId = wantedBookId;
+    } else if (offeredBookOwnerId == swap.ownerId) {
+      requesterBookId = wantedBookId;
+      ownerBookId = offeredBookId;
+    } else {
+      throw Exception('Offer does not belong to this swap.');
+    }
+
+    await acceptSwapAndLockBooks(
+      swap,
+      requesterBookIdOverride: requesterBookId,
+      ownerBookIdOverride: ownerBookId,
+      acceptedByUid: currentUid,
+    );
   }
 
   Stream<List<SwapRequest>> incomingRequests(String uid) {

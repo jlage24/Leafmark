@@ -46,6 +46,30 @@ class BookShelfProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> updateBook(Book updatedBook) async {
+    if (_uid == null) return;
+    if (updatedBook.isLocked) {
+      throw Exception('Reserved books cannot be edited.');
+    }
+
+    final bookWithOwner = updatedBook.copyWith(
+      ownerId: _uid,
+      ownerName: _ownerName,
+    );
+
+    await _db
+        .collection(_collectionPath)
+        .doc(bookWithOwner.id)
+        .set(bookWithOwner.toJson(), SetOptions(merge: true));
+
+    final index = _books.indexWhere((book) => book.id == updatedBook.id);
+
+    if (index != -1) {
+      _books[index] = bookWithOwner;
+      notifyListeners();
+    }
+  }
+
   Future<void> removeBook(String id) async {
     if (_uid != null) {
       await _db.collection(_collectionPath).doc(id).delete();

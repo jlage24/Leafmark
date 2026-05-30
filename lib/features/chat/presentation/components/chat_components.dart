@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+
 import '../../../books/data/services/browse_service.dart';
 import '../../../books/domain/models/book.dart';
 import '../../../swaps/data/services/swap_service.dart';
 import '../../domain/models/chat_message.dart';
 import '../../domain/models/chat_metadata.dart';
 
-// ─── Typing Indicator ────────────────────────────────────────────────────────
 class TypingIndicator extends StatefulWidget {
   const TypingIndicator({super.key});
 
@@ -21,20 +21,24 @@ class _TypingIndicatorState extends State<TypingIndicator>
   @override
   void initState() {
     super.initState();
+
     _controllers = List.generate(
       3,
-          (i) => AnimationController(
+          (index) => AnimationController(
         vsync: this,
-        duration: const Duration(milliseconds: 400),
+        duration: const Duration(milliseconds: 420),
       ),
     );
+
     _animations = _controllers
-        .map((c) => Tween<double>(begin: 0, end: -6).animate(
-      CurvedAnimation(parent: c, curve: Curves.easeInOut),
-    ))
+        .map(
+          (controller) => Tween<double>(begin: 0, end: -6).animate(
+        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+      ),
+    )
         .toList();
 
-    for (int i = 0; i < 3; i++) {
+    for (var i = 0; i < 3; i++) {
       Future.delayed(Duration(milliseconds: i * 150), () {
         if (mounted) _controllers[i].repeat(reverse: true);
       });
@@ -46,36 +50,41 @@ class _TypingIndicatorState extends State<TypingIndicator>
     for (final controller in _controllers) {
       controller.dispose();
     }
+
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final color =
-    Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.4);
+    final theme = Theme.of(context);
+    final dotColor = theme.colorScheme.onSurface.withValues(alpha: 0.42);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHighest,
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.85),
         borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(16),
-          topRight: Radius.circular(16),
-          bottomRight: Radius.circular(16),
-          bottomLeft: Radius.circular(4),
+          topLeft: Radius.circular(18),
+          topRight: Radius.circular(18),
+          bottomRight: Radius.circular(18),
+          bottomLeft: Radius.circular(6),
         ),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
-        children: List.generate(3, (i) {
+        children: List.generate(3, (index) {
           return AnimatedBuilder(
-            animation: _animations[i],
+            animation: _animations[index],
             builder: (context, child) => Transform.translate(
-              offset: Offset(0, _animations[i].value),
+              offset: Offset(0, _animations[index].value),
               child: Container(
                 margin: const EdgeInsets.symmetric(horizontal: 2),
                 width: 6,
                 height: 6,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: dotColor,
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
           );
@@ -85,7 +94,6 @@ class _TypingIndicatorState extends State<TypingIndicator>
   }
 }
 
-// ─── Text Bubble ─────────────────────────────────────────────────────────────
 class TextBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isMe;
@@ -100,7 +108,10 @@ class TextBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
+    final bubbleColor =
+    isMe ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest;
+    final textColor = isMe ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface;
 
     return Column(
       crossAxisAlignment:
@@ -109,39 +120,43 @@ class TextBubble extends StatelessWidget {
         Align(
           alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
           child: Container(
-            margin: const EdgeInsets.only(bottom: 2),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            margin: const EdgeInsets.only(bottom: 3),
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 7),
             constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.72),
+              maxWidth: MediaQuery.of(context).size.width * 0.74,
+            ),
             decoration: BoxDecoration(
-              color: isMe
-                  ? colorScheme.primary
-                  : colorScheme.surfaceContainerHighest,
+              color: bubbleColor,
               borderRadius: BorderRadius.only(
-                topLeft: const Radius.circular(16),
-                topRight: const Radius.circular(16),
-                bottomLeft: Radius.circular(isMe ? 16 : 4),
-                bottomRight: Radius.circular(isMe ? 4 : 16),
+                topLeft: const Radius.circular(19),
+                topRight: const Radius.circular(19),
+                bottomLeft: Radius.circular(isMe ? 19 : 6),
+                bottomRight: Radius.circular(isMe ? 6 : 19),
               ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: isMe ? 0.07 : 0.035),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
                   message.text ?? '',
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isMe ? Colors.white : colorScheme.onSurface,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: textColor,
+                    height: 1.28,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 5),
                 Text(
                   _formatTime(message.createdAt),
-                  style: TextStyle(
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: textColor.withValues(alpha: 0.68),
                     fontSize: 10,
-                    color: isMe
-                        ? Colors.white.withValues(alpha: 0.7)
-                        : colorScheme.onSurface.withValues(alpha: 0.5),
                   ),
                 ),
               ],
@@ -150,10 +165,14 @@ class TextBubble extends StatelessWidget {
         ),
         if (isMe && showSeen)
           Padding(
-            padding: const EdgeInsets.only(right: 4, bottom: 6),
+            padding: const EdgeInsets.only(right: 6, bottom: 7),
             child: Text(
               '✓✓ Seen',
-              style: TextStyle(fontSize: 10, color: colorScheme.primary),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: theme.colorScheme.primary,
+                fontWeight: FontWeight.w700,
+                fontSize: 10,
+              ),
             ),
           ),
       ],
@@ -167,7 +186,6 @@ class TextBubble extends StatelessWidget {
   }
 }
 
-// ─── Proposal Card ────────────────────────────────────────────────────────────
 class ProposalCard extends StatefulWidget {
   final ChatMessage message;
   final bool isMe;
@@ -197,60 +215,68 @@ class _ProposalCardState extends State<ProposalCard> {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     final isProposal = widget.message.type == MessageType.proposal;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: colorScheme.outline.withValues(alpha: 0.2)),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: theme.colorScheme.outline.withValues(alpha: 0.12),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.045),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Icon(
-              isProposal ? Icons.swap_horiz_rounded : Icons.replay_rounded,
-              size: 15,
-              color: colorScheme.primary,
-            ),
-            const SizedBox(width: 6),
-            Text(
-              isProposal ? 'Swap proposal' : 'Counter offer',
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: colorScheme.primary,
-                letterSpacing: 0.5,
-              ),
-            ),
-          ]),
-          const SizedBox(height: 10),
+          _ProposalHeader(isProposal: isProposal),
+          const SizedBox(height: 14),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              BookMini(
-                bookId: widget.message.bookOfferedId ?? '',
-                ownerIds: _offeredBookOwnerCandidates(),
-                browseService: _browseService,
+              Expanded(
+                child: BookMini(
+                  bookId: widget.message.bookOfferedId ?? '',
+                  ownerIds: _offeredBookOwnerCandidates(),
+                  browseService: _browseService,
+                ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Icon(Icons.swap_horiz_rounded,
-                    color: colorScheme.primary, size: 24),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
+                child: Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.swap_horiz_rounded,
+                    color: theme.colorScheme.primary,
+                    size: 22,
+                  ),
+                ),
               ),
-              BookMini(
-                bookId: widget.message.bookWantedId ?? '',
-                ownerIds: _wantedBookOwnerCandidates(),
-                browseService: _browseService,
+              Expanded(
+                child: BookMini(
+                  bookId: widget.message.bookWantedId ?? '',
+                  ownerIds: _wantedBookOwnerCandidates(),
+                  browseService: _browseService,
+                ),
               ),
             ],
           ),
           if (!widget.isMe) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
             ActionButtons(
               swapId: widget.swapId,
               message: widget.message,
@@ -299,7 +325,44 @@ class _ProposalCardState extends State<ProposalCard> {
   }
 }
 
-// ─── Action Buttons ───────────────────────────────────────────────────────────
+class _ProposalHeader extends StatelessWidget {
+  final bool isProposal;
+
+  const _ProposalHeader({required this.isProposal});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Row(
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Icon(
+            isProposal ? Icons.swap_horiz_rounded : Icons.replay_rounded,
+            size: 19,
+            color: theme.colorScheme.primary,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Text(
+            isProposal ? 'Swap proposal' : 'Counter offer',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class ActionButtons extends StatelessWidget {
   final String swapId;
   final ChatMessage message;
@@ -320,12 +383,14 @@ class ActionButtons extends StatelessWidget {
 
   Future<void> _handleAccept(BuildContext context) async {
     try {
-      await SwapService().acceptSwapById(swapId);
+      await SwapService().acceptOfferFromMessage(
+        swapId: swapId,
+        message: message,
+        currentUid: currentUid,
+      );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to accept swap: $e')),
-      );
+      _showError(context, 'Failed to accept swap: $e');
     }
   }
 
@@ -334,10 +399,20 @@ class ActionButtons extends StatelessWidget {
       await SwapService().rejectSwapById(swapId);
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to reject swap: $e')),
-      );
+      _showError(context, 'Failed to reject swap: $e');
     }
+  }
+
+  void _showError(BuildContext context, String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(14),
+        ),
+      ),
+    );
   }
 
   @override
@@ -345,44 +420,36 @@ class ActionButtons extends StatelessWidget {
     if (chatStatus != ChatStatus.active) {
       final info = _statusInfo();
 
-      return Align(
-        alignment: Alignment.center,
-        child: Text(
-          info.message,
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 12,
-            color: info.color,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
-      );
+      return _ProposalStatusBadge(info: info);
     }
 
     return Row(
       children: [
         Expanded(
-          child: OutlinedButton(
+          child: OutlinedButton.icon(
             onPressed: () => _handleReject(context),
+            icon: const Icon(Icons.close_rounded, size: 17),
+            label: const Text('Reject'),
             style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.red,
-              side: const BorderSide(color: Colors.red),
+              foregroundColor: Colors.red.shade700,
+              side: BorderSide(color: Colors.red.withValues(alpha: 0.45)),
             ),
-            child: const Text('Reject'),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: OutlinedButton(
+          child: OutlinedButton.icon(
             onPressed: onCounter,
-            child: const Text('Counter'),
+            icon: const Icon(Icons.compare_arrows_rounded, size: 17),
+            label: const Text('Counter'),
           ),
         ),
         const SizedBox(width: 8),
         Expanded(
-          child: FilledButton(
+          child: FilledButton.icon(
             onPressed: () => _handleAccept(context),
-            child: const Text('Accept'),
+            icon: const Icon(Icons.check_rounded, size: 17),
+            label: const Text('Accept'),
           ),
         ),
       ],
@@ -393,21 +460,25 @@ class ActionButtons extends StatelessWidget {
     switch (chatStatus) {
       case ChatStatus.accepted:
         return _ProposalStatusInfo(
-          message: '✅ Swap accepted — books reserved until the exchange is completed',
+          icon: Icons.handshake_outlined,
+          message: 'Swap accepted — books reserved',
           color: Colors.green.shade700,
         );
       case ChatStatus.completed:
         return _ProposalStatusInfo(
-          message: '🎉 Exchange completed',
+          icon: Icons.celebration_outlined,
+          message: 'Exchange completed',
           color: Colors.green.shade700,
         );
       case ChatStatus.cancelled:
         return _ProposalStatusInfo(
-          message: '❌ Swap rejected',
+          icon: Icons.cancel_outlined,
+          message: 'Swap rejected',
           color: Colors.red.shade700,
         );
       case ChatStatus.active:
         return _ProposalStatusInfo(
+          icon: Icons.info_outline_rounded,
           message: '',
           color: Colors.grey,
         );
@@ -415,17 +486,55 @@ class ActionButtons extends StatelessWidget {
   }
 }
 
+class _ProposalStatusBadge extends StatelessWidget {
+  final _ProposalStatusInfo info;
+
+  const _ProposalStatusBadge({required this.info});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: info.color.withValues(alpha: 0.09),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: info.color.withValues(alpha: 0.22)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(info.icon, size: 17, color: info.color),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              info.message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 12,
+                color: info.color,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ProposalStatusInfo {
+  final IconData icon;
   final String message;
   final Color color;
 
   const _ProposalStatusInfo({
+    required this.icon,
     required this.message,
     required this.color,
   });
 }
 
-// ─── Book Mini ────────────────────────────────────────────────────────────────
 class BookMini extends StatelessWidget {
   final String bookId;
   final List<String> ownerIds;
@@ -451,31 +560,33 @@ class BookMini extends StatelessWidget {
         return Column(
           children: [
             ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: displayUrl != null
-                  ? Image.network(
-                displayUrl,
-                width: 48,
-                height: 68,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                    _placeholder(),
-              )
-                  : _placeholder(),
-            ),
-            const SizedBox(height: 6),
-            SizedBox(
-              width: 80,
-              child: Text(
-                book?.title ??
-                    (snapshot.connectionState == ConnectionState.waiting
-                        ? '...'
-                        : 'Book unavailable'),
-                style: const TextStyle(fontSize: 11),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                textAlign: TextAlign.center,
+              borderRadius: BorderRadius.circular(14),
+              child: Container(
+                width: 62,
+                height: 88,
+                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                child: displayUrl != null && displayUrl.isNotEmpty
+                    ? Image.network(
+                  displayUrl,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) =>
+                      _placeholder(context),
+                )
+                    : _placeholder(context),
               ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              book?.title ??
+                  (snapshot.connectionState == ConnectionState.waiting
+                      ? 'Loading...'
+                      : 'Book unavailable'),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
             ),
           ],
         );
@@ -496,18 +607,15 @@ class BookMini extends StatelessWidget {
     return null;
   }
 
-  Widget _placeholder() => Container(
-    width: 48,
-    height: 68,
-    decoration: BoxDecoration(
-      color: Colors.grey[200],
-      borderRadius: BorderRadius.circular(6),
-    ),
-    child: const Icon(Icons.book, color: Colors.grey),
-  );
+  Widget _placeholder(BuildContext context) {
+    return Icon(
+      Icons.menu_book_rounded,
+      color: Theme.of(context).colorScheme.primary,
+      size: 28,
+    );
+  }
 }
 
-// ─── Chat Input Bar ───────────────────────────────────────────────────────────
 class ChatInputBar extends StatelessWidget {
   final TextEditingController controller;
   final VoidCallback onSend;
@@ -524,16 +632,15 @@ class ChatInputBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: theme.colorScheme.surface,
         border: Border(
           top: BorderSide(
-            color: Theme.of(context)
-                .colorScheme
-                .outline
-                .withValues(alpha: 0.2),
+            color: theme.colorScheme.outline.withValues(alpha: 0.12),
           ),
         ),
       ),
@@ -542,14 +649,11 @@ class ChatInputBar extends StatelessWidget {
           children: [
             IconButton(
               onPressed: onCounterOffer,
-              icon: const Icon(Icons.swap_horiz_rounded),
               tooltip: 'Counter offer',
+              icon: const Icon(Icons.swap_horiz_rounded),
               color: onCounterOffer != null
-                  ? Theme.of(context).colorScheme.primary
-                  : Theme.of(context)
-                  .colorScheme
-                  .onSurface
-                  .withValues(alpha: 0.3),
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.28),
             ),
             Expanded(
               child: TextField(
@@ -558,23 +662,29 @@ class ChatInputBar extends StatelessWidget {
                 onChanged: (_) => onChanged(),
                 decoration: InputDecoration(
                   hintText: 'Message...',
+                  filled: true,
+                  fillColor: theme.colorScheme.surfaceContainerHighest
+                      .withValues(alpha: 0.75),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(999),
                     borderSide: BorderSide.none,
                   ),
-                  filled: true,
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 10,
+                    vertical: 11,
                   ),
                 ),
                 onSubmitted: (_) => onSend(),
               ),
             ),
-            IconButton(
+            const SizedBox(width: 4),
+            IconButton.filled(
               onPressed: onSend,
-              icon: const Icon(Icons.send_rounded),
-              color: Theme.of(context).colorScheme.primary,
+              icon: const Icon(Icons.send_rounded, size: 20),
+              color: theme.colorScheme.onPrimary,
+              style: IconButton.styleFrom(
+                backgroundColor: theme.colorScheme.primary,
+              ),
             ),
           ],
         ),

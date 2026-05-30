@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+
 import '../../features/books/data/services/google_books_service.dart';
 import '../../features/search/presentation/providers/search_provider.dart';
 
@@ -23,11 +24,13 @@ class _BookSearchModalState extends State<BookSearchModal> {
   @override
   void initState() {
     super.initState();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      final p = context.read<SearchProvider>();
-      p.clearSearch();
-      p.setSearchType(widget.isAuthor ? SearchType.author : SearchType.title);
+
+      final provider = context.read<SearchProvider>();
+      provider.clearSearch();
+      provider.setSearchType(widget.isAuthor ? SearchType.author : SearchType.title);
     });
   }
 
@@ -39,113 +42,169 @@ class _BookSearchModalState extends State<BookSearchModal> {
 
   void _handleSearch(SearchProvider provider) {
     final query = _controller.text.trim();
-    if (query.isNotEmpty) {
-      provider.setSearchType(
-          widget.isAuthor ? SearchType.author : SearchType.title);
-      provider.performSearch(query);
-      FocusScope.of(context).unfocus();
-    }
+
+    if (query.isEmpty) return;
+
+    provider.setSearchType(widget.isAuthor ? SearchType.author : SearchType.title);
+    provider.performSearch(query);
+    FocusScope.of(context).unfocus();
   }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<SearchProvider>();
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
     return Padding(
-      padding:
-      EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-        height: MediaQuery.of(context).size.height * 0.7,
-        decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          children: [
-            Container(
-              width: 40,
-              height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
-              decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(2)),
-            ),
-            TextField(
-              controller: _controller,
-              autofocus: true,
-              textInputAction: TextInputAction.search,
-              decoration: InputDecoration(
-                hintText: widget.isAuthor
-                    ? 'Search by author name...'
-                    : 'Search by book title...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.arrow_forward),
-                  onPressed: () => _handleSearch(provider),
-                ),
-                border:
-                OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-              ),
-              onSubmitted: (_) => _handleSearch(provider),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: provider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : provider.errorMessage != null
-                  ? Center(
-                  child: Text(provider.errorMessage!,
-                      style: const TextStyle(color: Colors.red),
-                      textAlign: TextAlign.center))
-                  : provider.results.isEmpty
-                  ? Center(
-                child: Text(
-                  _controller.text.isEmpty
-                      ? 'Type to search'
-                      : 'No results found',
-                  style: const TextStyle(color: Colors.grey),
-                ),
-              )
-                  : ListView.builder(
-                itemCount: provider.results.length,
-                itemBuilder: (ctx, i) {
-                  final b = provider.results[i];
-                  return ListTile(
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(4),
-                      child: b.coverUrl != null
-                          ? Image.network(
-                        b.coverUrl!,
-                        width: 40,
-                        height: 60,
-                        fit: BoxFit.cover,
-                        errorBuilder: (c, e, s) =>
-                        const Icon(Icons.book,
-                            size: 40),
-                      )
-                          : const Icon(Icons.book, size: 40),
-                    ),
-                    title: Text(
-                      widget.isAuthor ? b.authors : b.title,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Text(widget.isAuthor
-                        ? 'Known for: ${b.title}'
-                        : b.authors),
-                    onTap: () {
-                      widget.onSelect(
-                          b.title, b.authors, b.coverUrl);
-                      Navigator.of(context).pop();
-                    },
-                  );
-                },
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: bottomInset > 0 ? 0.9 : 0.72,
+        minChildSize: 0.45,
+        maxChildSize: 0.95,
+        builder: (context, scrollController) {
+          return Container(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+            decoration: BoxDecoration(
+              color: Theme.of(context).scaffoldBackgroundColor,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(24),
               ),
             ),
-          ],
-        ),
+            child: Column(
+              children: [
+                Container(
+                  width: 42,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                ),
+                TextField(
+                  controller: _controller,
+                  autofocus: true,
+                  textInputAction: TextInputAction.search,
+                  decoration: InputDecoration(
+                    hintText: widget.isAuthor
+                        ? 'Search by author name...'
+                        : 'Search by book title...',
+                    prefixIcon: const Icon(Icons.search_rounded),
+                    suffixIcon: IconButton(
+                      icon: const Icon(Icons.arrow_forward_rounded),
+                      onPressed: () => _handleSearch(provider),
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  onSubmitted: (_) => _handleSearch(provider),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: _SearchResults(
+                    provider: provider,
+                    controller: scrollController,
+                    isAuthor: widget.isAuthor,
+                    queryIsEmpty: _controller.text.trim().isEmpty,
+                    onSelect: widget.onSelect,
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
+    );
+  }
+}
+
+class _SearchResults extends StatelessWidget {
+  final SearchProvider provider;
+  final ScrollController controller;
+  final bool isAuthor;
+  final bool queryIsEmpty;
+  final void Function(String title, String authors, String? coverUrl) onSelect;
+
+  const _SearchResults({
+    required this.provider,
+    required this.controller,
+    required this.isAuthor,
+    required this.queryIsEmpty,
+    required this.onSelect,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (provider.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (provider.errorMessage != null) {
+      return Center(
+        child: Text(
+          provider.errorMessage!,
+          style: TextStyle(color: Theme.of(context).colorScheme.error),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+
+    if (provider.bookResults.isEmpty) {
+      return ListView(
+        controller: controller,
+        children: [
+          const SizedBox(height: 80),
+          Center(
+            child: Text(
+              queryIsEmpty ? 'Type to search' : 'No results found',
+              style: const TextStyle(color: Colors.grey),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return ListView.builder(
+      controller: controller,
+      itemCount: provider.bookResults.length,
+      itemBuilder: (context, index) {
+        final book = provider.bookResults[index];
+
+        return ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+          leading: ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: book.coverUrl != null
+                ? Image.network(
+              book.coverUrl!,
+              width: 42,
+              height: 62,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+              const Icon(Icons.book, size: 42),
+            )
+                : const Icon(Icons.book, size: 42),
+          ),
+          title: Text(
+            isAuthor ? book.authors : book.title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(fontWeight: FontWeight.w800),
+          ),
+          subtitle: Text(
+            isAuthor ? 'Known for: ${book.title}' : book.authors,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          trailing: const Icon(Icons.chevron_right_rounded),
+          onTap: () {
+            onSelect(book.title, book.authors, book.coverUrl);
+            Navigator.of(context).pop();
+          },
+        );
+      },
     );
   }
 }

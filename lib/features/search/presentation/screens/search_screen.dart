@@ -66,7 +66,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       children: [
                         if (!keyboardOpen) ...[
                           Text(
-                            'Discover',
+                            'Search',
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.w800,
                             ),
@@ -334,7 +334,19 @@ class _BookResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (provider.bookResults.isEmpty) {
+    final books = provider.bookResults
+        .map((result) {
+      try {
+        return result.toBook();
+      } catch (e) {
+        debugPrint('Skipping invalid book result: $e');
+        return null;
+      }
+    })
+        .whereType()
+        .toList();
+
+    if (books.isEmpty) {
       return _EmptySearchState(
         icon: query.trim().isEmpty ? Icons.search_rounded : Icons.search_off,
         title: query.trim().isEmpty ? 'Start exploring' : 'No books found',
@@ -346,10 +358,9 @@ class _BookResults extends StatelessWidget {
 
     return ListView.builder(
       padding: const EdgeInsets.only(bottom: 18),
-      itemCount: provider.bookResults.length,
+      itemCount: books.length,
       itemBuilder: (context, index) {
-        final fetchResult = provider.bookResults[index];
-        final book = fetchResult.toBook();
+        final book = books[index];
 
         return BookCard(
           book: book,

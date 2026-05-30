@@ -21,10 +21,10 @@ service cloud.firestore {
     }
 
     function canLockBookForSwap(uid, bookId, swapId) {
-      let swap = get(/databases/$(database)/documents/swap_requests/$(swapId)).data;
+      let swap = getAfter(/databases/$(database)/documents/swap_requests/$(swapId)).data;
 
       return isSwapParticipant(swapId)
-        && swap.status == 'pending'
+        && (swap.status == 'pending' || swap.status == 'accepted')
         && request.resource.data.lockedBySwapId == swapId
         && ((uid == swap.requesterId && bookId == swap.bookOfferedId)
          || (uid == swap.ownerId && bookId == swap.bookWantedId));

@@ -98,7 +98,7 @@ class _BookSearchModalState extends State<BookSearchModal> {
                   child: Text(provider.errorMessage!,
                       style: const TextStyle(color: Colors.red),
                       textAlign: TextAlign.center))
-                  : provider.results.isEmpty
+                  : provider.bookResults.isEmpty
                   ? Center(
                 child: Text(
                   _controller.text.isEmpty
@@ -108,9 +108,9 @@ class _BookSearchModalState extends State<BookSearchModal> {
                 ),
               )
                   : ListView.builder(
-                itemCount: provider.results.length,
+                itemCount: provider.bookResults.length,
                 itemBuilder: (ctx, i) {
-                  final b = provider.results[i];
+                  final b = provider.bookResults[i];
                   return ListTile(
                     leading: ClipRRect(
                       borderRadius: BorderRadius.circular(4),

@@ -136,6 +136,28 @@ class FollowService {
         .map((snap) => snap.docs.length);
   }
 
+  Stream<List<String>> getFollowers(String uid) {
+    if (uid.isEmpty) return Stream.value([]);
+
+    return _db
+        .collection('users')
+        .doc(uid)
+        .collection('followers')
+        .snapshots()
+        .map((snap) => snap.docs.map((doc) => doc.id).toList());
+  }
+
+  Stream<List<String>> getFollowing(String uid) {
+    if (uid.isEmpty) return Stream.value([]);
+
+    return _db
+        .collection('users')
+        .doc(uid)
+        .collection('following')
+        .snapshots()
+        .map((snap) => snap.docs.map((doc) => doc.id).toList());
+  }
+
   Future<Map<String, String?>> fetchUserInfo(String uid) async {
     try {
       final doc = await _db.collection('users').doc(uid).get();

@@ -17,6 +17,7 @@ import '../../../swaps/presentation/providers/swap_provider.dart';
 import '../../../wishlist/domain/models/wishlist_item.dart';
 import '../../../wishlist/presentation/providers/wishlist_provider.dart';
 import '../widgets/profile_badges.dart';
+import '../../../books/presentation/screens/follow_list_screen.dart';
 
 class PublicProfileScreen extends StatefulWidget {
   final String userId;
@@ -600,6 +601,18 @@ class _FollowCounts extends StatelessWidget {
 
   const _FollowCounts({required this.userId});
 
+  void _openList(BuildContext context, FollowListType type) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => FollowListScreen(
+          userId: userId,
+          type: type,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -614,6 +627,7 @@ class _FollowCounts extends StatelessWidget {
               value: snapshot.hasData ? '${snapshot.data}' : '-',
               label: 'Followers',
               color: theme.colorScheme.onSurface,
+              onTap: () => _openList(context, FollowListType.followers),
             );
           },
         ),
@@ -630,6 +644,7 @@ class _FollowCounts extends StatelessWidget {
               value: '${snapshot.data ?? 0}',
               label: 'Following',
               color: theme.colorScheme.onSurface,
+              onTap: () => _openList(context, FollowListType.following),
             );
           },
         ),
@@ -642,27 +657,36 @@ class _FollowCountText extends StatelessWidget {
   final String value;
   final String label;
   final Color color;
+  final VoidCallback onTap;
 
   const _FollowCountText({
     required this.value,
     required this.label,
     required this.color,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Text.rich(
-      TextSpan(
-        children: [
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(999),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: Text.rich(
           TextSpan(
-            text: value,
-            style: TextStyle(fontWeight: FontWeight.w900, color: color),
+            children: [
+              TextSpan(
+                text: value,
+                style: TextStyle(fontWeight: FontWeight.w900, color: color),
+              ),
+              TextSpan(
+                text: ' $label',
+                style: TextStyle(color: color.withValues(alpha: 0.65)),
+              ),
+            ],
           ),
-          TextSpan(
-            text: ' $label',
-            style: TextStyle(color: color.withValues(alpha: 0.65)),
-          ),
-        ],
+        ),
       ),
     );
   }

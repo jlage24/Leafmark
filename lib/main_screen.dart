@@ -49,42 +49,50 @@ class _MainScreenState extends State<MainScreen> {
         onDestinationSelected: _onTabTapped,
         destinations: [
           const NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home),
-            label: 'Home',
+            icon: Icon(Icons.explore_outlined),
+            selectedIcon: Icon(Icons.explore_rounded),
+            label: 'Discover',
           ),
           const NavigationDestination(
             icon: Icon(Icons.search_outlined),
-            selectedIcon: Icon(Icons.search),
+            selectedIcon: Icon(Icons.search_rounded),
             label: 'Search',
           ),
           NavigationDestination(
             icon: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(9),
               decoration: BoxDecoration(
                 color: scheme.primary,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.add, color: scheme.onPrimary, size: 26),
+              child: Icon(
+                Icons.qr_code_scanner_rounded,
+                color: scheme.onPrimary,
+                size: 24,
+              ),
             ),
             selectedIcon: Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(9),
               decoration: BoxDecoration(
                 color: scheme.primary,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.add, color: scheme.onPrimary, size: 26),
+              child: Icon(
+                Icons.qr_code_scanner_rounded,
+                color: scheme.onPrimary,
+                size: 24,
+              ),
             ),
-            label: '',
+            label: 'Scan',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.chat_bubble_outline),
-            selectedIcon: Icon(Icons.chat_bubble),
-            label: 'Chat',
+            icon: Icon(Icons.forum_outlined),
+            selectedIcon: Icon(Icons.forum_rounded),
+            label: 'Chats',
           ),
           const NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person),
+            icon: Icon(Icons.person_outline_rounded),
+            selectedIcon: Icon(Icons.person_rounded),
             label: 'Profile',
           ),
         ],

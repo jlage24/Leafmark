@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/app_theme.dart';
+import '../../../../core/theme_provider.dart';
 import '../../../../features/books/presentation/providers/book_shelf_provider.dart';
 import '../../../../features/books/presentation/screens/my_shelf_screen.dart';
 import '../../../books/presentation/providers/follow_provider.dart';
@@ -190,6 +191,38 @@ class ProfileScreen extends StatelessWidget {
           const SizedBox(height: 12),
           _MenuSection(
             children: [
+              Consumer<ThemeProvider>(
+                builder: (context, themeProvider, _) {
+                  return SwitchListTile(
+                    secondary: Container(
+                      width: 42,
+                      height: 42,
+                      decoration: BoxDecoration(
+                        color: Theme.of(context)
+                            .colorScheme
+                            .primary
+                            .withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Icon(
+                        themeProvider.isDarkMode
+                            ? Icons.dark_mode_rounded
+                            : Icons.light_mode_rounded,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    ),
+                    title: Text(
+                      'Dark mode',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    value: themeProvider.isDarkMode,
+                    onChanged: themeProvider.toggleTheme,
+                  );
+                },
+              ),
+
               _MenuItem(
                 iconData: Icons.logout_rounded,
                 iconBgColor: const Color(0xFFFCEBEB),

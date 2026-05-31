@@ -121,12 +121,35 @@ class NotificationsScreen extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final notification = notifications[index];
 
-                      return _NotificationCard(
-                        notification: notification,
-                        onTap: () => _handleNotificationTap(
-                          context,
-                          notification,
-                          provider,
+                      return Dismissible(
+                        key: ValueKey(notification.id),
+                        direction: DismissDirection.endToStart,
+                        background: Container(
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 7,
+                          ),
+                          padding: const EdgeInsets.only(right: 22),
+                          alignment: Alignment.centerRight,
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).colorScheme.error,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Colors.white,
+                          ),
+                        ),
+                        onDismissed: (_) async {
+                          await provider.deleteNotification(notification.id);
+                        },
+                        child: _NotificationCard(
+                          notification: notification,
+                          onTap: () => _handleNotificationTap(
+                            context,
+                            notification,
+                            provider,
+                          ),
                         ),
                       );
                     },
@@ -189,18 +212,51 @@ class _NotificationsHeader extends StatelessWidget {
               ],
             ),
           ),
-          StreamBuilder<int>(
-            stream: provider.unreadCount(),
-            builder: (context, snapshot) {
-              final count = snapshot.data ?? 0;
+          PopupMenuButton<String>(
+            onSelected: (value) async {
+              if (value == 'read') {
+                await provider.markAllAsRead();
+                return;
+              }
 
-              if (count <= 0) return const SizedBox.shrink();
+              if (value == 'clear') {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: const Text('Clear all notifications?'),
+                    content: const Text(
+                      'This will permanently remove all your notifications.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        child: const Text('Clear all'),
+                      ),
+                    ],
+                  ),
+                );
 
-              return TextButton(
-                onPressed: provider.markAllAsRead,
-                child: const Text('Mark read'),
-              );
+                if (!context.mounted) return;
+
+                if (confirmed == true) {
+                  await provider.clearAll();
+                }
+              }
             },
+            itemBuilder: (_) => const [
+              PopupMenuItem(
+                value: 'read',
+                child: Text('Mark all as read'),
+              ),
+              PopupMenuItem(
+                value: 'clear',
+                child: Text('Clear all'),
+              ),
+            ],
           ),
         ],
       ),

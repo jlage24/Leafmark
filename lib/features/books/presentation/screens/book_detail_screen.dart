@@ -118,11 +118,11 @@ class BookDetailScreen extends StatelessWidget {
     );
   }
 
-  void _showBookPickerSheet(BuildContext context, AuthProvider authProvider) {
-    final shelfBooks = context.read<BookShelfProvider>().availableBooks;
+  void _showBookPickerSheet(BuildContext pageContext, AuthProvider authProvider) {
+    final shelfBooks = pageContext.read<BookShelfProvider>().availableBooks;
 
     if (shelfBooks.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      ScaffoldMessenger.of(pageContext).showSnackBar(
         const SnackBar(
           content: Text('You need available books on your shelf to propose a swap.'),
           behavior: SnackBarBehavior.floating,
@@ -132,7 +132,7 @@ class BookDetailScreen extends StatelessWidget {
     }
 
     showModalBottomSheet(
-      context: context,
+      context: pageContext,
       showDragHandle: true,
       isScrollControlled: true,
       useSafeArea: true,
@@ -205,7 +205,7 @@ class BookDetailScreen extends StatelessWidget {
                             trailing: const Icon(Icons.chevron_right_rounded),
                             onTap: () {
                               Navigator.pop(sheetCtx);
-                              _submitSwap(context, authProvider, offeredBook);
+                              _submitSwap(pageContext, authProvider, offeredBook);
                             },
                           ),
                         );

@@ -174,24 +174,22 @@ class _RequestList extends StatelessWidget {
             final request = requests[index];
 
             return FutureBuilder<Book?>(
-              future: browseService.fetchBook(
-                request.ownerId,
-                request.bookWantedId,
-              ),
+              future: _fetchDisplayBook(browseService, request),
               builder: (context, bookSnapshot) {
                 final book = bookSnapshot.data;
+                final isBookLoading =
+                    bookSnapshot.connectionState == ConnectionState.waiting;
 
                 return FutureBuilder<String?>(
-                  future: isIncoming
-                      ? browseService.fetchDisplayName(request.requesterId)
-                      : Future.value(book?.ownerName),
+                  future: _fetchDisplayName(browseService, request),
                   builder: (context, nameSnapshot) {
-                    final name = nameSnapshot.data ??
-                        (isIncoming ? request.requesterId : request.ownerId);
+                    final name = _safeDisplayName(nameSnapshot.data);
 
                     return _RequestCard(
                       request: request,
                       book: book,
+                      fallbackTitle:
+                      isBookLoading ? 'Loading book...' : 'This book is no longer available',
                       name: name,
                       isIncoming: isIncoming,
                       onAccept: () async {
@@ -241,6 +239,41 @@ class _RequestList extends StatelessWidget {
     );
   }
 
+  Future<Book?> _fetchDisplayBook(
+      BrowseService browseService,
+      SwapRequest request,
+      ) {
+    if (request.status == SwapStatus.completed) {
+      return browseService.fetchBook(
+        request.requesterId,
+        request.bookWantedId,
+      );
+    }
+
+    return browseService.fetchBook(
+      request.ownerId,
+      request.bookWantedId,
+    );
+  }
+
+  Future<String?> _fetchDisplayName(
+      BrowseService browseService,
+      SwapRequest request,
+      ) {
+    final uid = isIncoming ? request.requesterId : request.ownerId;
+    return browseService.fetchDisplayName(uid);
+  }
+
+  String _safeDisplayName(String? value) {
+    final trimmed = value?.trim();
+
+    if (trimmed == null || trimmed.isEmpty) {
+      return 'LeafMark user';
+    }
+
+    return trimmed;
+  }
+
   void _showErrorSnackBar(BuildContext context, String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -257,6 +290,7 @@ class _RequestList extends StatelessWidget {
 class _RequestCard extends StatelessWidget {
   final SwapRequest request;
   final Book? book;
+  final String fallbackTitle;
   final String name;
   final bool isIncoming;
   final VoidCallback onAccept;
@@ -266,6 +300,7 @@ class _RequestCard extends StatelessWidget {
   const _RequestCard({
     required this.request,
     required this.book,
+    required this.fallbackTitle,
     required this.name,
     required this.isIncoming,
     required this.onAccept,
@@ -301,7 +336,7 @@ class _RequestCard extends StatelessWidget {
                 const SizedBox(width: 14),
                 Expanded(
                   child: _RequestInfo(
-                    title: book?.title ?? 'Loading book...',
+                    title: book?.title ?? fallbackTitle,
                     name: name,
                     isIncoming: isIncoming,
                     status: request.status,
@@ -570,10 +605,10 @@ class _LoadingRequestCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          Expanded(
+          const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
+              children: [
                 _LoadingLine(widthFactor: 0.82),
                 SizedBox(height: 10),
                 _LoadingLine(widthFactor: 0.46),

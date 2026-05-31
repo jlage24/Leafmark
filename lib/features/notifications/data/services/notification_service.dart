@@ -67,4 +67,24 @@ class NotificationService {
 
     await batch.commit();
   }
+
+  Future<void> deleteNotification(String notificationId) async {
+    await _notifications.doc(notificationId).delete();
+  }
+
+  Future<void> clearAllForUser(String uid) async {
+    if (uid.isEmpty) return;
+
+    final snapshot = await _notifications
+        .where('recipientId', isEqualTo: uid)
+        .get();
+
+    final batch = _db.batch();
+
+    for (final doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+
+    await batch.commit();
+  }
 }

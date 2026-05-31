@@ -30,4 +30,12 @@ class NotificationProvider extends ChangeNotifier {
   Future<void> markAllAsRead() {
     return _service.markAllAsRead(_uid);
   }
+
+  Future<void> deleteNotification(String notificationId) {
+    return _service.deleteNotification(notificationId);
+  }
+
+  Future<void> clearAll() {
+    return _service.clearAllForUser(_uid);
+  }
 }

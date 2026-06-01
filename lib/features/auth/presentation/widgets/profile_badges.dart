@@ -41,6 +41,7 @@ class ProfileBadges extends StatelessWidget {
                 final followersCount = followersSnapshot.data ?? 0;
 
                 final badges = _calculateBadges(
+                  context,
                   swapsCount: swapsCount,
                   averageRating: averageRating,
                   ratingsCount: ratings.length,
@@ -81,7 +82,8 @@ class ProfileBadges extends StatelessWidget {
   }
 
   // Deterministic badge logic mapping
-  List<Map<String, dynamic>> _calculateBadges({
+  List<Map<String, dynamic>> _calculateBadges(
+    BuildContext context, {
     required int swapsCount,
     required double averageRating,
     required int ratingsCount,
@@ -89,12 +91,13 @@ class ProfileBadges extends StatelessWidget {
     required int followersCount,
   }) {
     final badges = <Map<String, dynamic>>[];
+    final scheme = Theme.of(context).colorScheme;
 
     if (swapsCount >= 1) {
       badges.add({
         'label': 'First Swap',
         'icon': Icons.swap_horiz_rounded,
-        'color': AppTheme.secondary,
+        'color': scheme.secondary,
       });
     }
 
@@ -102,7 +105,7 @@ class ProfileBadges extends StatelessWidget {
       badges.add({
         'label': 'Trusted Swapper',
         'icon': Icons.handshake_rounded,
-        'color': AppTheme.primary,
+        'color': scheme.primary,
       });
     }
 
@@ -110,7 +113,7 @@ class ProfileBadges extends StatelessWidget {
       badges.add({
         'label': 'Well Rated',
         'icon': Icons.star_rounded,
-        'color': AppTheme.accent,
+        'color': scheme.tertiary,
       });
     }
 

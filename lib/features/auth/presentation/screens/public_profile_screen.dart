@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/app_theme.dart';
@@ -200,6 +201,20 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 currentUid: currentUid,
                 userId: widget.userId,
                 onReport: () => _showReportSheet(context),
+                onShare: () {
+                  final text = 'Check out ${widget.displayName} (@$username) on LeafMark! 📚✨';
+                  Clipboard.setData(ClipboardData(text: text));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Profile details copied for @$username!'),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 48),
               _PublicProfileInfo(
@@ -231,7 +246,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                       return Chip(
                         label: Text(author),
                         backgroundColor:
-                        AppTheme.primaryLight.withValues(alpha: 0.5),
+                        Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                         side: BorderSide.none,
                       );
                     }).toList(),
@@ -275,6 +290,7 @@ class _PublicProfileHero extends StatelessWidget {
   final String currentUid;
   final String userId;
   final VoidCallback onReport;
+  final VoidCallback onShare;
 
   const _PublicProfileHero({
     required this.displayName,
@@ -285,6 +301,7 @@ class _PublicProfileHero extends StatelessWidget {
     required this.currentUid,
     required this.userId,
     required this.onReport,
+    required this.onShare,
   });
 
   @override
@@ -301,7 +318,7 @@ class _PublicProfileHero extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(12, 18, 12, 0),
           decoration: BoxDecoration(
-            color: AppTheme.primary,
+            color: Theme.of(context).colorScheme.primary,
             image: hasBanner
                 ? DecorationImage(
               image: NetworkImage(bannerPictureUrl!),
@@ -318,7 +335,13 @@ class _PublicProfileHero extends StatelessWidget {
                 child: const Icon(Icons.arrow_back_rounded, size: 20),
               ),
               const Spacer(),
+              _HeroIconButton(
+                tooltip: 'Share profile',
+                onPressed: onShare,
+                child: const Icon(Icons.share_outlined, size: 20),
+              ),
               if (!isOwnProfile) ...[
+                const SizedBox(width: 8),
                 StreamBuilder<List<String>>(
                   stream:
                   context.read<BlockProvider>().getBlockedUsers(currentUid),
@@ -377,16 +400,16 @@ class _PublicProfileHero extends StatelessWidget {
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             child: CircleAvatar(
               radius: 38,
-              backgroundColor: AppTheme.primaryLight,
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.16),
               backgroundImage:
               hasAvatar ? NetworkImage(profilePictureUrl!) : null,
               child: !hasAvatar
                   ? Text(
                 initial,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               )
                   : null,
@@ -551,7 +574,7 @@ class _FollowButton extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: isFollowing
                   ? Theme.of(context).colorScheme.surfaceContainerHighest
-                  : AppTheme.primary,
+                  : Theme.of(context).colorScheme.primary,
               foregroundColor: isFollowing
                   ? Theme.of(context).colorScheme.onSurface
                   : Colors.white,
@@ -936,13 +959,13 @@ class _WishlistTile extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppTheme.primaryLight.withValues(alpha: 0.55),
+              color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(13),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.bookmark_outline_rounded,
               size: 19,
-              color: AppTheme.primary,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -1170,10 +1193,10 @@ class _StatCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (label == 'Rating' && value != '—') ...[
-                  const Icon(
+                  Icon(
                     Icons.star_rounded,
                     size: 17,
-                    color: AppTheme.accent,
+                    color: theme.colorScheme.tertiary,
                   ),
                   const SizedBox(width: 3),
                 ],

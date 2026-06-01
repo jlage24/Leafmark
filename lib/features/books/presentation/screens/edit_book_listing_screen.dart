@@ -667,6 +667,8 @@ class _ConditionPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
       children: BookCondition.values.map((condition) {
         final isSelected = condition == selected;
@@ -680,11 +682,11 @@ class _ConditionPicker extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppTheme.primary
-                    : AppTheme.primary.withValues(alpha: 0.07),
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.primary.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected ? AppTheme.primary : Colors.transparent,
+                  color: isSelected ? theme.colorScheme.primary : Colors.transparent,
                 ),
               ),
               child: Text(
@@ -693,7 +695,7 @@ class _ConditionPicker extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: isSelected ? Colors.white : AppTheme.primary,
+                  color: isSelected ? Colors.white : theme.colorScheme.primary,
                 ),
               ),
             ),

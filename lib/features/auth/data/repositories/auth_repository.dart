@@ -137,5 +137,56 @@ class AuthRepository {
     }
   }
 
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == null) {
+      throw FirebaseAuthException(
+        code: 'no-user-logged-in',
+        message: 'No authenticated user found.',
+      );
+    }
+
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: currentPassword,
+    );
+
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
+
+  Future<void> deleteAccount({required String password}) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == null) {
+      throw FirebaseAuthException(
+        code: 'no-user-logged-in',
+        message: 'No authenticated user found.',
+      );
+    }
+
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: password,
+    );
+
+    await user.reauthenticateWithCredential(credential);
+
+    // Get username before deleting document to free it up
+    final doc = await _db.collection('users').doc(user.uid).get();
+    final username = doc.data()?['username'] as String?;
+
+    final batch = _db.batch();
+    batch.delete(_db.collection('users').doc(user.uid));
+    if (username != null && username.isNotEmpty) {
+      batch.delete(_db.collection('usernames').doc(username.toLowerCase()));
+    }
+    await batch.commit();
+
+    await user.delete();
+  }
+
   Future<void> logout() => _auth.signOut();
 }

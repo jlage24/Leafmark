@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'firebase_options.dart';
 import 'core/app_theme.dart';
 import 'core/theme_provider.dart';
@@ -19,11 +20,14 @@ import 'features/notifications/presentation/providers/notification_provider.dart
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  runApp(const LeafMarkApp());
+  final prefs = await SharedPreferences.getInstance();
+  final savedTheme = prefs.getString('theme_mode');
+  runApp(LeafMarkApp(savedTheme: savedTheme));
 }
 
 class LeafMarkApp extends StatelessWidget {
-  const LeafMarkApp({super.key});
+  final String? savedTheme;
+  const LeafMarkApp({super.key, this.savedTheme});
 
   @override
   Widget build(BuildContext context) {
@@ -37,7 +41,7 @@ class LeafMarkApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => WishlistProvider()),
         ChangeNotifierProvider(create: (_) => BlockProvider()),
         ChangeNotifierProvider(create: (_) => FollowProvider()),
-        ChangeNotifierProvider(create: (_) => ThemeProvider()),
+        ChangeNotifierProvider(create: (_) => ThemeProvider(savedTheme)),
         ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
           create: (ctx) => ChatProvider(auth: ctx.read<AuthProvider>()),
           update: (ctx, auth, previous) =>

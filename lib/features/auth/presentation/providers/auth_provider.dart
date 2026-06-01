@@ -122,4 +122,60 @@ class AuthProvider extends ChangeNotifier {
       default: return 'An unknown error occurred. Try again.';
     }
   }
+
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _errorMessage = null;
+    try {
+      await _repo.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      notifyListeners();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _errorMessage = _parsePasswordError(e.code);
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'An unknown error occurred. Try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> deleteAccount({required String password}) async {
+    _errorMessage = null;
+    try {
+      await _repo.deleteAccount(password: password);
+      _user = null;
+      _status = AuthStatus.unauthenticated;
+      notifyListeners();
+      return true;
+    } on FirebaseAuthException catch (e) {
+      _errorMessage = _parsePasswordError(e.code);
+      notifyListeners();
+      return false;
+    } catch (e) {
+      _errorMessage = 'An unknown error occurred. Try again.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  String _parsePasswordError(String code) {
+    switch (code) {
+      case 'wrong-password':
+      case 'invalid-credential':
+        return 'Current password incorrect.';
+      case 'weak-password':
+        return 'Your new password should be at least 6 characters long.';
+      case 'requires-recent-login':
+        return 'Please log out and log back in to perform this action.';
+      default:
+        return 'An unknown error occurred. Try again.';
+    }
+  }
 }

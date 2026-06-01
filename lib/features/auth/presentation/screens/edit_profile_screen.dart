@@ -80,7 +80,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: isBanner ? 'Crop banner' : 'Crop profile photo',
-          toolbarColor: AppTheme.primary,
+          toolbarColor: Theme.of(context).colorScheme.primary,
           toolbarWidgetColor: Colors.white,
           lockAspectRatio: true,
           hideBottomControls: false,
@@ -427,7 +427,7 @@ class _ProfilePhotoEditor extends StatelessWidget {
               child: Container(
                 height: 128,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   borderRadius: BorderRadius.circular(24),
                   image: hasBanner
                       ? DecorationImage(
@@ -473,16 +473,16 @@ class _ProfilePhotoEditor extends StatelessWidget {
                 backgroundColor: theme.scaffoldBackgroundColor,
                 child: CircleAvatar(
                   radius: 47,
-                  backgroundColor: AppTheme.primaryLight,
+                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.16),
                   backgroundImage: hasAvatar
                       ? selectedImage != null
                       ? FileImage(selectedImage!) as ImageProvider
                       : NetworkImage(currentPhotoUrl!)
                       : null,
                   child: !hasAvatar
-                      ? const Icon(
+                      ? Icon(
                     Icons.camera_alt_outlined,
-                    color: AppTheme.primary,
+                    color: Theme.of(context).colorScheme.primary,
                     size: 30,
                   )
                       : null,
@@ -499,7 +499,7 @@ class _ProfilePhotoEditor extends StatelessWidget {
                 width: 34,
                 height: 34,
                 decoration: BoxDecoration(
-                  color: AppTheme.primary,
+                  color: Theme.of(context).colorScheme.primary,
                   shape: BoxShape.circle,
                   border: Border.all(
                     color: theme.scaffoldBackgroundColor,

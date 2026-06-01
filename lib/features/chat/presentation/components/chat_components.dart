@@ -429,10 +429,14 @@ class ActionButtons extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: () => _handleReject(context),
             icon: const Icon(Icons.close_rounded, size: 17),
-            label: const Text('Reject'),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text('Reject'),
+            ),
             style: OutlinedButton.styleFrom(
               foregroundColor: Colors.red.shade700,
               side: BorderSide(color: Colors.red.withValues(alpha: 0.45)),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
             ),
           ),
         ),
@@ -441,7 +445,13 @@ class ActionButtons extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: onCounter,
             icon: const Icon(Icons.compare_arrows_rounded, size: 17),
-            label: const Text('Counter'),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text('Counter'),
+            ),
+            style: OutlinedButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+            ),
           ),
         ),
         const SizedBox(width: 8),
@@ -449,7 +459,13 @@ class ActionButtons extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: () => _handleAccept(context),
             icon: const Icon(Icons.check_rounded, size: 17),
-            label: const Text('Accept'),
+            label: const FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text('Accept'),
+            ),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+            ),
           ),
         ),
       ],

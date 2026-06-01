@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../../core/app_theme.dart';
@@ -26,6 +27,37 @@ class ProfileScreen extends StatelessWidget {
     await context.read<AuthProvider>().logout();
   }
 
+  void _showChangePasswordDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const ChangePasswordDialog(),
+    );
+  }
+
+  void _shareProfile(BuildContext context, String displayName, String username) {
+    final text = 'Check out $displayName (@$username) on LeafMark! 📚✨';
+    Clipboard.setData(ClipboardData(text: text));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Profile details copied for @$username!'),
+        backgroundColor: Theme.of(context).colorScheme.primary,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => const DeleteAccountDialog(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = context.watch<AuthProvider>().user;
@@ -51,6 +83,11 @@ class ProfileScreen extends StatelessWidget {
                 context,
                 MaterialPageRoute(builder: (_) => const EditProfileScreen()),
               );
+            },
+            onShare: () {
+              if (user != null) {
+                _shareProfile(context, user.displayName, user.username);
+              }
             },
           ),
           const SizedBox(height: 48),
@@ -133,7 +170,7 @@ class ProfileScreen extends StatelessWidget {
                 children: user.favoriteAuthors.map((author) {
                   return Chip(
                     label: Text(author),
-                    backgroundColor: AppTheme.primaryLight.withValues(alpha: 0.5),
+                    backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
                     side: BorderSide.none,
                   );
                 }).toList(),
@@ -153,8 +190,8 @@ class ProfileScreen extends StatelessWidget {
             children: [
               _MenuItem(
                 iconData: Icons.menu_book_outlined,
-                iconBgColor: const Color(0xFFEAF3DE),
-                iconColor: const Color(0xFF3B6D11),
+                iconBgColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                iconColor: theme.colorScheme.primary,
                 title: 'My Shelf',
                 subtitle: '${shelf.books.length} books available',
                 onTap: () => Navigator.push(
@@ -164,8 +201,8 @@ class ProfileScreen extends StatelessWidget {
               ),
               _MenuItem(
                 iconData: Icons.history_rounded,
-                iconBgColor: const Color(0xFFE8F0FA),
-                iconColor: const Color(0xFF2A5BA8),
+                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.12),
+                iconColor: theme.colorScheme.secondary,
                 title: 'Exchange History',
                 subtitle: 'Your completed swaps',
                 onTap: () => Navigator.push(
@@ -175,8 +212,8 @@ class ProfileScreen extends StatelessWidget {
               ),
               _MenuItem(
                 iconData: Icons.bookmark_outline_rounded,
-                iconBgColor: const Color(0xFFF3EAF5),
-                iconColor: const Color(0xFF7A3BA1),
+                iconBgColor: theme.colorScheme.tertiary.withValues(alpha: 0.12),
+                iconColor: theme.colorScheme.tertiary,
                 title: 'My Wishlist',
                 subtitle: 'Books you\'re looking for',
                 onTap: () => Navigator.push(
@@ -224,11 +261,30 @@ class ProfileScreen extends StatelessWidget {
               ),
 
               _MenuItem(
+                iconData: Icons.lock_outline_rounded,
+                iconBgColor: theme.colorScheme.primary.withValues(alpha: 0.12),
+                iconColor: theme.colorScheme.primary,
+                title: 'Change Password',
+                subtitle: 'Update your account password',
+                onTap: () => _showChangePasswordDialog(context),
+              ),
+
+              _MenuItem(
+                iconData: Icons.delete_forever_rounded,
+                iconBgColor: theme.colorScheme.error.withValues(alpha: 0.12),
+                iconColor: theme.colorScheme.error,
+                title: 'Delete Account',
+                titleColor: theme.colorScheme.error,
+                subtitle: 'Permanently delete your data',
+                onTap: () => _showDeleteAccountDialog(context),
+              ),
+
+              _MenuItem(
                 iconData: Icons.logout_rounded,
-                iconBgColor: const Color(0xFFFCEBEB),
-                iconColor: const Color(0xFFA32D2D),
+                iconBgColor: theme.colorScheme.error.withValues(alpha: 0.12),
+                iconColor: theme.colorScheme.error,
                 title: 'Logout',
-                titleColor: const Color(0xFFA32D2D),
+                titleColor: theme.colorScheme.error,
                 onTap: () => _logout(context),
               ),
             ],
@@ -246,6 +302,7 @@ class _ProfileHero extends StatelessWidget {
   final String? profilePictureUrl;
   final String? bannerPictureUrl;
   final VoidCallback onEdit;
+  final VoidCallback onShare;
 
   const _ProfileHero({
     required this.title,
@@ -254,6 +311,7 @@ class _ProfileHero extends StatelessWidget {
     required this.profilePictureUrl,
     required this.bannerPictureUrl,
     required this.onEdit,
+    required this.onShare,
   });
 
   @override
@@ -270,7 +328,7 @@ class _ProfileHero extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(16, 18, 16, 0),
           decoration: BoxDecoration(
-            color: AppTheme.primary,
+            color: Theme.of(context).colorScheme.primary,
             image: hasBanner
                 ? DecorationImage(
               image: NetworkImage(bannerPictureUrl!),
@@ -284,7 +342,7 @@ class _ProfileHero extends StatelessWidget {
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: AppTheme.primaryLight,
+                  color: Theme.of(context).colorScheme.onPrimary,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -317,6 +375,12 @@ class _ProfileHero extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               _HeroIconButton(
+                tooltip: 'Share profile',
+                onPressed: onShare,
+                child: const Icon(Icons.share_outlined, size: 20),
+              ),
+              const SizedBox(width: 8),
+              _HeroIconButton(
                 tooltip: 'Edit profile',
                 onPressed: onEdit,
                 child: const Icon(Icons.edit_outlined, size: 20),
@@ -331,16 +395,16 @@ class _ProfileHero extends StatelessWidget {
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             child: CircleAvatar(
               radius: 38,
-              backgroundColor: AppTheme.primaryLight,
+              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.16),
               backgroundImage:
               hasAvatar ? NetworkImage(profilePictureUrl!) : null,
               child: !hasAvatar
                   ? Text(
                 initial,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 30,
                   fontWeight: FontWeight.w800,
-                  color: AppTheme.primary,
+                  color: Theme.of(context).colorScheme.primary,
                 ),
               )
                   : null,
@@ -584,7 +648,7 @@ class _StatCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (label == 'Rating' && value != '—') ...[
-                  const Icon(Icons.star_rounded, size: 17, color: AppTheme.accent),
+                  Icon(Icons.star_rounded, size: 17, color: theme.colorScheme.tertiary),
                   const SizedBox(width: 3),
                 ],
                 Text(
@@ -669,6 +733,513 @@ class _MenuItem extends StatelessWidget {
       subtitle: subtitle != null ? Text(subtitle!) : null,
       trailing: subtitle != null ? const Icon(Icons.chevron_right_rounded) : null,
       onTap: onTap,
+    );
+  }
+}
+
+class ChangePasswordDialog extends StatefulWidget {
+  const ChangePasswordDialog({super.key});
+
+  @override
+  State<ChangePasswordDialog> createState() => _ChangePasswordDialogState();
+}
+
+class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+
+  bool _obscureCurrent = true;
+  bool _obscureNew = true;
+  bool _obscureConfirm = true;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.changePassword(
+      currentPassword: _currentPasswordController.text,
+      newPassword: _newPasswordController.text,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (success) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Password changed successfully!'),
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    } else {
+      setState(() {
+        _errorMessage = authProvider.errorMessage;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Dialog(
+      backgroundColor: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Change Password',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 20,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      style: IconButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(36, 36),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                if (_errorMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.error.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          color: theme.colorScheme.error,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
+                            style: TextStyle(
+                              color: theme.colorScheme.error,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                TextFormField(
+                  controller: _currentPasswordController,
+                  obscureText: _obscureCurrent,
+                  decoration: InputDecoration(
+                    labelText: 'Current Password',
+                    hintText: '••••••••',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureCurrent
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                      ),
+                      onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
+                    ),
+                  ),
+                  validator: (val) => val == null || val.isEmpty
+                      ? 'Please enter your current password'
+                      : null,
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _newPasswordController,
+                  obscureText: _obscureNew,
+                  decoration: InputDecoration(
+                    labelText: 'New Password',
+                    hintText: 'At least 6 characters',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureNew
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                      ),
+                      onPressed: () => setState(() => _obscureNew = !_obscureNew),
+                    ),
+                  ),
+                  validator: (val) {
+                    if (val == null || val.isEmpty) {
+                      return 'Please enter a new password';
+                    }
+                    if (val.length < 6) {
+                      return 'Password must be at least 6 characters';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 16),
+                TextFormField(
+                  controller: _confirmPasswordController,
+                  obscureText: _obscureConfirm,
+                  decoration: InputDecoration(
+                    labelText: 'Confirm New Password',
+                    hintText: '••••••••',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirm
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                      ),
+                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    ),
+                  ),
+                  validator: (val) {
+                    if (val != _newPasswordController.text) {
+                      return 'Passwords do not match';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.primary,
+                        foregroundColor: theme.colorScheme.onPrimary,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                            )
+                          : const Text(
+                              'Change',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class DeleteAccountDialog extends StatefulWidget {
+  const DeleteAccountDialog({super.key});
+
+  @override
+  State<DeleteAccountDialog> createState() => _DeleteAccountDialogState();
+}
+
+class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
+  final _formKey = GlobalKey<FormState>();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
+  bool _isLoading = false;
+  String? _errorMessage;
+
+  @override
+  void dispose() {
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    final authProvider = context.read<AuthProvider>();
+    context.read<BookShelfProvider>().clearBooks();
+
+    final success = await authProvider.deleteAccount(
+      password: _passwordController.text,
+    );
+
+    if (!mounted) return;
+
+    setState(() {
+      _isLoading = false;
+    });
+
+    if (success) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Your account has been deleted.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+        ),
+      );
+    } else {
+      setState(() {
+        _errorMessage = authProvider.errorMessage;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Dialog(
+      backgroundColor: theme.colorScheme.surface,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: SingleChildScrollView(
+          child: Form(
+            key: _formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Delete Account',
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 20,
+                        color: theme.colorScheme.error,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      style: IconButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        minimumSize: const Size(36, 36),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: theme.colorScheme.error.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.warning_amber_rounded,
+                        color: theme.colorScheme.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Warning: This action is permanent and cannot be undone. All your books, swaps, and profile data will be deleted.',
+                          style: TextStyle(
+                            color: theme.colorScheme.error,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 20),
+                if (_errorMessage != null) ...[
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: theme.colorScheme.error.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.error_outline_rounded,
+                          color: theme.colorScheme.error,
+                          size: 18,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _errorMessage!,
+                            style: TextStyle(
+                              color: theme.colorScheme.error,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                TextFormField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    labelText: 'Confirm Password',
+                    hintText: 'Enter your password to confirm deletion',
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_rounded
+                            : Icons.visibility_rounded,
+                      ),
+                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                  ),
+                  validator: (val) => val == null || val.isEmpty
+                      ? 'Please enter your password to confirm deletion'
+                      : null,
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    ElevatedButton(
+                      onPressed: _isLoading ? null : _submit,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: theme.colorScheme.error,
+                        foregroundColor: theme.colorScheme.onError,
+                        elevation: 0,
+                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: _isLoading
+                          ? SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.2,
+                                color: theme.colorScheme.onError,
+                              ),
+                            )
+                          : const Text(
+                              'Delete',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

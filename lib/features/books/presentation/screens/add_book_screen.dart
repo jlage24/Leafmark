@@ -325,7 +325,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('"${book.title}" added to your shelf!'),
-          backgroundColor: AppTheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -443,7 +443,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
                       ? null
                       : _saveBook,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -488,6 +488,8 @@ class _IsbnInputRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -522,20 +524,20 @@ class _IsbnInputRow extends StatelessWidget {
             child: FilledButton(
               onPressed: isLoading ? null : onLookup,
               style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
-                foregroundColor: AppTheme.primary,
+                backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.15),
+                foregroundColor: theme.colorScheme.primary,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: isLoading
-                  ? const SizedBox(
+                  ? SizedBox(
                 width: 18,
                 height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2.2,
-                  color: AppTheme.primary,
+                  color: theme.colorScheme.primary,
                 ),
               )
                   : const Icon(Icons.search_rounded),
@@ -950,7 +952,7 @@ class _CategorySelector extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            border: Border.all(color: AppTheme.divider),
+            border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.25)),
             borderRadius: BorderRadius.circular(12),
           ),
           child: DropdownButtonHideUnderline(
@@ -985,6 +987,8 @@ class _ConditionPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
       children: BookCondition.values.map((condition) {
         final isSelected = condition == selected;
@@ -998,11 +1002,11 @@ class _ConditionPicker extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 9),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppTheme.primary
-                    : AppTheme.primary.withValues(alpha: 0.07),
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.primary.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: isSelected ? AppTheme.primary : Colors.transparent,
+                  color: isSelected ? theme.colorScheme.primary : Colors.transparent,
                 ),
               ),
               child: Text(
@@ -1011,7 +1015,7 @@ class _ConditionPicker extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : AppTheme.primary,
+                  color: isSelected ? Colors.white : theme.colorScheme.primary,
                 ),
               ),
             ),

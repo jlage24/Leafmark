@@ -129,8 +129,8 @@ class _IsbnScannerScreenState extends State<IsbnScannerScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_isProcessing)
-                      const CircularProgressIndicator(
-                        color: AppTheme.primary,
+                      CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.primary,
                         strokeWidth: 2.5,
                       )
                     else ...[
@@ -158,12 +158,12 @@ class _IsbnScannerScreenState extends State<IsbnScannerScreen>
                           ),
                         );
                       },
-                      icon: const Icon(Icons.edit_outlined,
-                          size: 16, color: AppTheme.primary),
-                      label: const Text(
+                      icon: Icon(Icons.edit_outlined,
+                          size: 16, color: Theme.of(context).colorScheme.primary),
+                      label: Text(
                         'Enter ISBN manually',
                         style: TextStyle(
-                          color: AppTheme.primary,
+                          color: Theme.of(context).colorScheme.primary,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -189,6 +189,7 @@ class _ScannerOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final cutoutSize = size.width * 0.72;
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return AnimatedBuilder(
       animation: pulseAnimation,
@@ -198,6 +199,7 @@ class _ScannerOverlay extends StatelessWidget {
           painter: _OverlayPainter(
             cutoutSize: cutoutSize * pulseAnimation.value,
             cornerRadius: 16,
+            primaryColor: primaryColor,
           ),
         );
       },
@@ -208,8 +210,13 @@ class _ScannerOverlay extends StatelessWidget {
 class _OverlayPainter extends CustomPainter {
   final double cutoutSize;
   final double cornerRadius;
+  final Color primaryColor;
 
-  _OverlayPainter({required this.cutoutSize, required this.cornerRadius});
+  _OverlayPainter({
+    required this.cutoutSize,
+    required this.cornerRadius,
+    required this.primaryColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -234,7 +241,7 @@ class _OverlayPainter extends CustomPainter {
 
     // Draw corner brackets
     final bracketPaint = Paint()
-      ..color = AppTheme.primary
+      ..color = primaryColor
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -283,6 +290,8 @@ class _OverlayIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -290,19 +299,19 @@ class _OverlayIconButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: isActive
-              ? AppTheme.primary.withValues(alpha: 0.2)
+              ? primaryColor.withValues(alpha: 0.2)
               : Colors.white.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isActive
-                ? AppTheme.primary.withValues(alpha: 0.6)
+                ? primaryColor.withValues(alpha: 0.6)
                 : Colors.white.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
         child: Icon(
           icon,
-          color: isActive ? AppTheme.primary : Colors.white,
+          color: isActive ? primaryColor : Colors.white,
           size: 20,
         ),
       ),

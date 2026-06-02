@@ -27,11 +27,13 @@ class BookFetchResult {
   });
 
   factory BookFetchResult.fromGoogleBooksJson(
-      Map<String, dynamic> json,
-      String fallbackIsbn,
-      ) {
+    Map<String, dynamic> json,
+    String fallbackIsbn,
+  ) {
     final rawAuthors = json['authors'];
-    final authors = rawAuthors is List ? rawAuthors.join(', ') : 'Unknown author';
+    final authors = rawAuthors is List
+        ? rawAuthors.join(', ')
+        : 'Unknown author';
 
     String extractedIsbn = fallbackIsbn;
     final identifiers = json['industryIdentifiers'] as List<dynamic>?;
@@ -55,7 +57,7 @@ class BookFetchResult {
 
     final imageLinks = json['imageLinks'] as Map<String, dynamic>?;
     String? coverUrl =
-    (imageLinks?['thumbnail'] ?? imageLinks?['smallThumbnail']) as String?;
+        (imageLinks?['thumbnail'] ?? imageLinks?['smallThumbnail']) as String?;
 
     if (coverUrl != null) {
       coverUrl = coverUrl.replaceFirst('http://', 'https://');
@@ -79,11 +81,8 @@ class BookFetchResult {
     );
   }
 
-  factory BookFetchResult.empty(String isbn) => BookFetchResult(
-    isbn: isbn,
-    title: '',
-    authors: '',
-  );
+  factory BookFetchResult.empty(String isbn) =>
+      BookFetchResult(isbn: isbn, title: '', authors: '');
 
   BookFetchResult copyWith({
     String? isbn,
@@ -134,21 +133,11 @@ class BookFetchResult {
 
     if (joined.trim().isEmpty) return null;
 
-    if (_containsAny(joined, [
-      'juvenile',
-      'young adult',
-      'children',
-      'teen',
-    ])) {
+    if (_containsAny(joined, ['juvenile', 'young adult', 'children', 'teen'])) {
       return 'Children & Young Adult';
     }
 
-    if (_containsAny(joined, [
-      'comic',
-      'comics',
-      'graphic novel',
-      'manga',
-    ])) {
+    if (_containsAny(joined, ['comic', 'comics', 'graphic novel', 'manga'])) {
       return 'Comics & Manga';
     }
 

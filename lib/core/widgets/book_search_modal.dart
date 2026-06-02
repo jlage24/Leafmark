@@ -30,7 +30,9 @@ class _BookSearchModalState extends State<BookSearchModal> {
 
       final provider = context.read<SearchProvider>();
       provider.clearSearch();
-      provider.setSearchType(widget.isAuthor ? SearchType.author : SearchType.title);
+      provider.setSearchType(
+        widget.isAuthor ? SearchType.author : SearchType.title,
+      );
     });
   }
 
@@ -45,7 +47,9 @@ class _BookSearchModalState extends State<BookSearchModal> {
 
     if (query.isEmpty) return;
 
-    provider.setSearchType(widget.isAuthor ? SearchType.author : SearchType.title);
+    provider.setSearchType(
+      widget.isAuthor ? SearchType.author : SearchType.title,
+    );
     provider.performSearch(query);
     FocusScope.of(context).unfocus();
   }
@@ -173,18 +177,21 @@ class _SearchResults extends StatelessWidget {
         final book = provider.bookResults[index];
 
         return ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 2,
+            vertical: 4,
+          ),
           leading: ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: book.coverUrl != null
                 ? Image.network(
-              book.coverUrl!,
-              width: 42,
-              height: 62,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) =>
-              const Icon(Icons.book, size: 42),
-            )
+                    book.coverUrl!,
+                    width: 42,
+                    height: 62,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.book, size: 42),
+                  )
                 : const Icon(Icons.book, size: 42),
           ),
           title: Text(

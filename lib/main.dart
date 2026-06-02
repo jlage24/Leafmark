@@ -44,13 +44,12 @@ class LeafMarkApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ThemeProvider(savedTheme)),
         ChangeNotifierProxyProvider<AuthProvider, ChatProvider>(
           create: (ctx) => ChatProvider(auth: ctx.read<AuthProvider>()),
-          update: (ctx, auth, previous) =>
-          previous ?? ChatProvider(auth: auth),
+          update: (ctx, auth, previous) => previous ?? ChatProvider(auth: auth),
         ),
         ChangeNotifierProxyProvider<AuthProvider, NotificationProvider>(
           create: (ctx) => NotificationProvider(auth: ctx.read<AuthProvider>()),
           update: (ctx, auth, previous) =>
-          previous ?? NotificationProvider(auth: auth),
+              previous ?? NotificationProvider(auth: auth),
         ),
       ],
       child: Consumer<ThemeProvider>(

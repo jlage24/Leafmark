@@ -43,7 +43,8 @@ class Rating {
       rating: data['rating']?.toInt() ?? 0,
       bookConditionRating: data['bookConditionRating']?.toInt() ?? 0,
       comment: data['comment'],
-      createdAt: (data['createdAt'] as Timestamp).toDate(), // Convert back to DateTime
+      createdAt: (data['createdAt'] as Timestamp)
+          .toDate(), // Convert back to DateTime
     );
   }
 }

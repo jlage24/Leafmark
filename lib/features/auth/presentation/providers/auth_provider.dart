@@ -8,17 +8,17 @@ enum AuthStatus { unknown, authenticated, unauthenticated }
 class AuthProvider extends ChangeNotifier {
   final _repo = AuthRepository();
 
-  AppUser?   _user;
+  AppUser? _user;
   AuthStatus _status = AuthStatus.unknown;
-  String?    _errorMessage;
+  String? _errorMessage;
 
-  AppUser?   get user         => _user;
-  AuthStatus get status       => _status;
-  String?    get errorMessage => _errorMessage;
+  AppUser? get user => _user;
+  AuthStatus get status => _status;
+  String? get errorMessage => _errorMessage;
 
   AuthProvider() {
     _repo.authStateChanges.listen((user) {
-      _user   = user;
+      _user = user;
       _status = user != null
           ? AuthStatus.authenticated
           : AuthStatus.unauthenticated;
@@ -27,11 +27,11 @@ class AuthProvider extends ChangeNotifier {
   }
 
   Future<bool> register(
-      String email,
-      String password,
-      String displayName,
-      String username,
-      ) async {
+    String email,
+    String password,
+    String displayName,
+    String username,
+  ) async {
     _errorMessage = null;
     try {
       _user = await _repo.register(email, password, displayName, username);
@@ -79,18 +79,23 @@ class AuthProvider extends ChangeNotifier {
     _errorMessage = null;
 
     try {
-      await _repo.updateProfile(
-        uid: _user!.uid,
-        bio: bio,
-        profilePictureUrl: profilePictureUrl,
-        bannerPictureUrl: bannerPictureUrl,
-        favoriteAuthors: favoriteAuthors,
-        favoriteBookTitle: favoriteBookTitle,
-        favoriteBookAuthor: favoriteBookAuthor,
-        favoriteBookCoverUrl: favoriteBookCoverUrl,
-      ).timeout(const Duration(seconds: 5), onTimeout: () {
-        throw Exception("Network timeout.");
-      });
+      await _repo
+          .updateProfile(
+            uid: _user!.uid,
+            bio: bio,
+            profilePictureUrl: profilePictureUrl,
+            bannerPictureUrl: bannerPictureUrl,
+            favoriteAuthors: favoriteAuthors,
+            favoriteBookTitle: favoriteBookTitle,
+            favoriteBookAuthor: favoriteBookAuthor,
+            favoriteBookCoverUrl: favoriteBookCoverUrl,
+          )
+          .timeout(
+            const Duration(seconds: 5),
+            onTimeout: () {
+              throw Exception("Network timeout.");
+            },
+          );
 
       _user = _user!.copyWith(
         bio: bio,
@@ -103,7 +108,6 @@ class AuthProvider extends ChangeNotifier {
       );
       notifyListeners();
       return true;
-
     } catch (e) {
       _errorMessage = 'Failed to update profile. Try again.';
       notifyListeners();
@@ -115,11 +119,16 @@ class AuthProvider extends ChangeNotifier {
     switch (code) {
       case 'user-not-found':
       case 'wrong-password':
-      case 'invalid-credential': return 'Email or password incorrect.';
-      case 'email-already-in-use': return 'This email is already in use.';
-      case 'weak-password':        return 'Your password should be at least 6 characters long.';
-      case 'network-request-failed': return 'Could not connect to the internet.';
-      default: return 'An unknown error occurred. Try again.';
+      case 'invalid-credential':
+        return 'Email or password incorrect.';
+      case 'email-already-in-use':
+        return 'This email is already in use.';
+      case 'weak-password':
+        return 'Your password should be at least 6 characters long.';
+      case 'network-request-failed':
+        return 'Could not connect to the internet.';
+      default:
+        return 'An unknown error occurred. Try again.';
     }
   }
 

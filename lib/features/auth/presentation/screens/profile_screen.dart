@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 
 import '../../../../core/app_theme.dart';
 import '../../../../core/theme_provider.dart';
@@ -19,8 +20,30 @@ import '../widgets/profile_badges.dart';
 import 'edit_profile_screen.dart';
 import '../../../books/presentation/screens/follow_list_screen.dart';
 
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  late final Stream<int> _exchangeCountStream;
+  late final Stream<List<Rating>> _ratingsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    final uid = context.read<AuthProvider>().user?.uid ?? '';
+    _exchangeCountStream = context
+        .read<SwapProvider>()
+        .exchangeCount(uid)
+        .shareValue();
+    _ratingsStream = context
+        .read<RatingProvider>()
+        .getRatingsForUser(uid)
+        .shareValue();
+  }
 
   Future<void> _logout(BuildContext context) async {
     context.read<BookShelfProvider>().clearBooks();
@@ -35,7 +58,11 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _shareProfile(BuildContext context, String displayName, String username) {
+  void _shareProfile(
+    BuildContext context,
+    String displayName,
+    String username,
+  ) {
     final text = 'Check out $displayName (@$username) on LeafMark! 📚✨';
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -43,9 +70,7 @@ class ProfileScreen extends StatelessWidget {
         content: Text('Profile details copied for @$username!'),
         backgroundColor: Theme.of(context).colorScheme.primary,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
@@ -108,7 +133,9 @@ class ProfileScreen extends StatelessWidget {
                   Text(
                     '@${user!.username}',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.58,
+                      ),
                     ),
                   ),
                 ],
@@ -128,7 +155,7 @@ class ProfileScreen extends StatelessWidget {
                     _StatCard(label: 'Books', value: '${shelf.books.length}'),
                     const SizedBox(width: 10),
                     StreamBuilder<int>(
-                      stream: context.read<SwapProvider>().exchangeCount(user?.uid ?? ''),
+                      stream: _exchangeCountStream,
                       builder: (context, snapshot) {
                         return _StatCard(
                           label: 'Swaps',
@@ -138,14 +165,18 @@ class ProfileScreen extends StatelessWidget {
                     ),
                     const SizedBox(width: 10),
                     StreamBuilder<List<Rating>>(
-                      stream: context.read<RatingProvider>().getRatingsForUser(user?.uid ?? ''),
+                      stream: _ratingsStream,
                       builder: (context, snapshot) {
                         var ratingValue = '—';
 
                         if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                           final ratings = snapshot.data!;
-                          final total = ratings.fold<int>(0, (sum, item) => sum + item.rating);
-                          ratingValue = (total / ratings.length).toStringAsFixed(1);
+                          final total = ratings.fold<int>(
+                            0,
+                            (sum, item) => sum + item.rating,
+                          );
+                          ratingValue = (total / ratings.length)
+                              .toStringAsFixed(1);
                         }
 
                         return _StatCard(label: 'Rating', value: ratingValue);
@@ -170,13 +201,16 @@ class ProfileScreen extends StatelessWidget {
                 children: user.favoriteAuthors.map((author) {
                   return Chip(
                     label: Text(author),
-                    backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.15),
+                    backgroundColor: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.15),
                     side: BorderSide.none,
                   );
                 }).toList(),
               ),
             ),
-          if (user?.favoriteBookTitle != null && user!.favoriteBookTitle!.isNotEmpty)
+          if (user?.favoriteBookTitle != null &&
+              user!.favoriteBookTitle!.isNotEmpty)
             _ProfileSection(
               title: 'Favorite Book',
               child: _FavoriteBookCard(
@@ -201,13 +235,17 @@ class ProfileScreen extends StatelessWidget {
               ),
               _MenuItem(
                 iconData: Icons.history_rounded,
-                iconBgColor: theme.colorScheme.secondary.withValues(alpha: 0.12),
+                iconBgColor: theme.colorScheme.secondary.withValues(
+                  alpha: 0.12,
+                ),
                 iconColor: theme.colorScheme.secondary,
                 title: 'Exchange History',
                 subtitle: 'Your completed swaps',
                 onTap: () => Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ExchangeHistoryScreen()),
+                  MaterialPageRoute(
+                    builder: (_) => const ExchangeHistoryScreen(),
+                  ),
                 ),
               ),
               _MenuItem(
@@ -235,10 +273,9 @@ class ProfileScreen extends StatelessWidget {
                       width: 42,
                       height: 42,
                       decoration: BoxDecoration(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .primary
-                            .withValues(alpha: 0.12),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.12),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Icon(
@@ -295,7 +332,7 @@ class ProfileScreen extends StatelessWidget {
   }
 }
 
-class _ProfileHero extends StatelessWidget {
+class _ProfileHero extends StatefulWidget {
   final String title;
   final String displayName;
   final String initial;
@@ -315,9 +352,28 @@ class _ProfileHero extends StatelessWidget {
   });
 
   @override
+  State<_ProfileHero> createState() => _ProfileHeroState();
+}
+
+class _ProfileHeroState extends State<_ProfileHero> {
+  late final Stream<int> _unreadCountStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _unreadCountStream = context
+        .read<NotificationProvider>()
+        .unreadCount()
+        .shareValue();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final hasBanner = bannerPictureUrl != null && bannerPictureUrl!.isNotEmpty;
-    final hasAvatar = profilePictureUrl != null && profilePictureUrl!.isNotEmpty;
+    final hasBanner =
+        widget.bannerPictureUrl != null && widget.bannerPictureUrl!.isNotEmpty;
+    final hasAvatar =
+        widget.profilePictureUrl != null &&
+        widget.profilePictureUrl!.isNotEmpty;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -331,16 +387,16 @@ class _ProfileHero extends StatelessWidget {
             color: Theme.of(context).colorScheme.primary,
             image: hasBanner
                 ? DecorationImage(
-              image: NetworkImage(bannerPictureUrl!),
-              fit: BoxFit.cover,
-            )
+                    image: NetworkImage(widget.bannerPictureUrl!),
+                    fit: BoxFit.cover,
+                  )
                 : null,
           ),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                title,
+                widget.title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                   color: Theme.of(context).colorScheme.onPrimary,
                   fontWeight: FontWeight.w800,
@@ -348,7 +404,7 @@ class _ProfileHero extends StatelessWidget {
               ),
               const Spacer(),
               StreamBuilder<int>(
-                stream: context.read<NotificationProvider>().unreadCount(),
+                stream: _unreadCountStream,
                 builder: (context, snapshot) {
                   final count = snapshot.data ?? 0;
 
@@ -376,13 +432,13 @@ class _ProfileHero extends StatelessWidget {
               const SizedBox(width: 8),
               _HeroIconButton(
                 tooltip: 'Share profile',
-                onPressed: onShare,
+                onPressed: widget.onShare,
                 child: const Icon(Icons.share_outlined, size: 20),
               ),
               const SizedBox(width: 8),
               _HeroIconButton(
                 tooltip: 'Edit profile',
-                onPressed: onEdit,
+                onPressed: widget.onEdit,
                 child: const Icon(Icons.edit_outlined, size: 20),
               ),
             ],
@@ -395,18 +451,21 @@ class _ProfileHero extends StatelessWidget {
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             child: CircleAvatar(
               radius: 38,
-              backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.16),
-              backgroundImage:
-              hasAvatar ? NetworkImage(profilePictureUrl!) : null,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.16),
+              backgroundImage: hasAvatar
+                  ? NetworkImage(widget.profilePictureUrl!)
+                  : null,
               child: !hasAvatar
                   ? Text(
-                initial,
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  color: Theme.of(context).colorScheme.primary,
-                ),
-              )
+                      widget.initial,
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    )
                   : null,
             ),
           ),
@@ -442,19 +501,37 @@ class _HeroIconButton extends StatelessWidget {
   }
 }
 
-class _FollowCounts extends StatelessWidget {
+class _FollowCounts extends StatefulWidget {
   final String userId;
 
   const _FollowCounts({required this.userId});
+
+  @override
+  State<_FollowCounts> createState() => _FollowCountsState();
+}
+
+class _FollowCountsState extends State<_FollowCounts> {
+  late final Stream<int> _followersStream;
+  late final Stream<int> _followingStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _followersStream = context
+        .read<FollowProvider>()
+        .getFollowersCount(widget.userId)
+        .shareValue();
+    _followingStream = context
+        .read<FollowProvider>()
+        .getFollowingCount(widget.userId)
+        .shareValue();
+  }
 
   void _openList(BuildContext context, FollowListType type) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => FollowListScreen(
-          userId: userId,
-          type: type,
-        ),
+        builder: (_) => FollowListScreen(userId: widget.userId, type: type),
       ),
     );
   }
@@ -467,7 +544,7 @@ class _FollowCounts extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         StreamBuilder<int>(
-          stream: context.read<FollowProvider>().getFollowersCount(userId),
+          stream: _followersStream,
           builder: (context, snapshot) {
             return _FollowCountText(
               value: snapshot.hasData ? '${snapshot.data}' : '-',
@@ -484,7 +561,7 @@ class _FollowCounts extends StatelessWidget {
           color: theme.colorScheme.outline.withValues(alpha: 0.25),
         ),
         StreamBuilder<int>(
-          stream: context.read<FollowProvider>().getFollowingCount(userId),
+          stream: _followingStream,
           builder: (context, snapshot) {
             return _FollowCountText(
               value: '${snapshot.data ?? 0}',
@@ -542,10 +619,7 @@ class _ProfileSection extends StatelessWidget {
   final String title;
   final Widget child;
 
-  const _ProfileSection({
-    required this.title,
-    required this.child,
-  });
+  const _ProfileSection({required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -566,7 +640,12 @@ class _ProfileSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900)),
+          Text(
+            title,
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
+          ),
           const SizedBox(height: 12),
           child,
         ],
@@ -600,10 +679,11 @@ class _FavoriteBookCard extends StatelessWidget {
             color: Colors.grey[200],
             child: hasCover
                 ? Image.network(
-              coverUrl!,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) => const Icon(Icons.book, color: Colors.grey),
-            )
+                    coverUrl!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) =>
+                        const Icon(Icons.book, color: Colors.grey),
+                  )
                 : const Icon(Icons.book, color: Colors.grey),
           ),
         ),
@@ -612,7 +692,13 @@ class _FavoriteBookCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
               if (author != null && author!.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(author!, style: Theme.of(context).textTheme.bodyMedium),
@@ -639,7 +725,9 @@ class _StatCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 13),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.75),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.75,
+          ),
           borderRadius: BorderRadius.circular(18),
         ),
         child: Column(
@@ -648,12 +736,18 @@ class _StatCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (label == 'Rating' && value != '—') ...[
-                  Icon(Icons.star_rounded, size: 17, color: theme.colorScheme.tertiary),
+                  Icon(
+                    Icons.star_rounded,
+                    size: 17,
+                    color: theme.colorScheme.tertiary,
+                  ),
                   const SizedBox(width: 3),
                 ],
                 Text(
                   value,
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ],
             ),
@@ -731,7 +825,9 @@ class _MenuItem extends StatelessWidget {
         ),
       ),
       subtitle: subtitle != null ? Text(subtitle!) : null,
-      trailing: subtitle != null ? const Icon(Icons.chevron_right_rounded) : null,
+      trailing: subtitle != null
+          ? const Icon(Icons.chevron_right_rounded)
+          : null,
       onTap: onTap,
     );
   }
@@ -809,9 +905,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
 
     return Dialog(
       backgroundColor: theme.colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: SingleChildScrollView(
@@ -833,7 +927,9 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       style: IconButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(36, 36),
@@ -844,7 +940,10 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                 const SizedBox(height: 16),
                 if (_errorMessage != null) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -887,7 +986,8 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                             ? Icons.visibility_off_rounded
                             : Icons.visibility_rounded,
                       ),
-                      onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
+                      onPressed: () =>
+                          setState(() => _obscureCurrent = !_obscureCurrent),
                     ),
                   ),
                   validator: (val) => val == null || val.isEmpty
@@ -907,7 +1007,8 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                             ? Icons.visibility_off_rounded
                             : Icons.visibility_rounded,
                       ),
-                      onPressed: () => setState(() => _obscureNew = !_obscureNew),
+                      onPressed: () =>
+                          setState(() => _obscureNew = !_obscureNew),
                     ),
                   ),
                   validator: (val) {
@@ -933,7 +1034,8 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                             ? Icons.visibility_off_rounded
                             : Icons.visibility_rounded,
                       ),
-                      onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                      onPressed: () =>
+                          setState(() => _obscureConfirm = !_obscureConfirm),
                     ),
                   ),
                   validator: (val) {
@@ -948,9 +1050,14 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -970,7 +1077,10 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                         backgroundColor: theme.colorScheme.primary,
                         foregroundColor: theme.colorScheme.onPrimary,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -986,9 +1096,7 @@ class _ChangePasswordDialogState extends State<ChangePasswordDialog> {
                             )
                           : const Text(
                               'Change',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: TextStyle(fontWeight: FontWeight.w700),
                             ),
                     ),
                   ],
@@ -1068,9 +1176,7 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
 
     return Dialog(
       backgroundColor: theme.colorScheme.surface,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
         padding: const EdgeInsets.all(24.0),
         child: SingleChildScrollView(
@@ -1093,7 +1199,9 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                     ),
                     IconButton(
                       icon: const Icon(Icons.close),
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       style: IconButton.styleFrom(
                         padding: EdgeInsets.zero,
                         minimumSize: const Size(36, 36),
@@ -1103,7 +1211,10 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                 ),
                 const SizedBox(height: 16),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.error.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -1135,7 +1246,10 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                 const SizedBox(height: 20),
                 if (_errorMessage != null) ...[
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
@@ -1178,7 +1292,8 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                             ? Icons.visibility_off_rounded
                             : Icons.visibility_rounded,
                       ),
-                      onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
                   validator: (val) => val == null || val.isEmpty
@@ -1190,9 +1305,14 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     TextButton(
-                      onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+                      onPressed: _isLoading
+                          ? null
+                          : () => Navigator.of(context).pop(),
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -1212,7 +1332,10 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                         backgroundColor: theme.colorScheme.error,
                         foregroundColor: theme.colorScheme.onError,
                         elevation: 0,
-                        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 22,
+                          vertical: 12,
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -1228,9 +1351,7 @@ class _DeleteAccountDialogState extends State<DeleteAccountDialog> {
                             )
                           : const Text(
                               'Delete',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w700,
-                              ),
+                              style: TextStyle(fontWeight: FontWeight.w700),
                             ),
                     ),
                   ],

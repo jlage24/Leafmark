@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 
 import '../../../../core/widgets/book_search_modal.dart';
 import '../../../../features/search/presentation/providers/search_provider.dart';
@@ -7,33 +8,45 @@ import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/models/wishlist_item.dart';
 import '../providers/wishlist_provider.dart';
 
-class WishlistScreen extends StatelessWidget {
+class WishlistScreen extends StatefulWidget {
   final String uid;
   final bool readOnly;
 
-  const WishlistScreen({
-    super.key,
-    required this.uid,
-    this.readOnly = false,
-  });
+  const WishlistScreen({super.key, required this.uid, this.readOnly = false});
+
+  @override
+  State<WishlistScreen> createState() => _WishlistScreenState();
+}
+
+class _WishlistScreenState extends State<WishlistScreen> {
+  late final Stream<List<WishlistItem>> _wishlistStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _wishlistStream = context
+        .read<WishlistProvider>()
+        .getWishlist(widget.uid)
+        .shareValue();
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      floatingActionButton: readOnly
+      floatingActionButton: widget.readOnly
           ? null
           : FloatingActionButton(
-        tooltip: 'Add book',
-        onPressed: () => _showAddSheet(context),
-        child: const Icon(Icons.add_rounded),
-      ),
+              tooltip: 'Add book',
+              onPressed: () => _showAddSheet(context),
+              child: const Icon(Icons.add_rounded),
+            ),
       body: SafeArea(
         child: Column(
           children: [
-            _WishlistHeader(readOnly: readOnly),
+            _WishlistHeader(readOnly: widget.readOnly),
             Expanded(
               child: StreamBuilder<List<WishlistItem>>(
-                stream: context.read<WishlistProvider>().getWishlist(uid),
+                stream: _wishlistStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const _WishlistLoadingState();
@@ -52,8 +65,10 @@ class WishlistScreen extends StatelessWidget {
                   if (items.isEmpty) {
                     return _WishlistMessageState(
                       icon: Icons.bookmark_outline_rounded,
-                      title: readOnly ? 'Empty wishlist' : 'Your wishlist is empty',
-                      message: readOnly
+                      title: widget.readOnly
+                          ? 'Empty wishlist'
+                          : 'Your wishlist is empty',
+                      message: widget.readOnly
                           ? 'This user has no books on their wishlist yet.'
                           : 'Add books you are looking for and make future swaps easier.',
                     );
@@ -67,11 +82,12 @@ class WishlistScreen extends StatelessWidget {
 
                       return _WishlistCard(
                         item: item,
-                        readOnly: readOnly,
+                        readOnly: widget.readOnly,
                         onRemove: () {
-                          context
-                              .read<WishlistProvider>()
-                              .removeItem(uid, item.id);
+                          context.read<WishlistProvider>().removeItem(
+                            widget.uid,
+                            item.id,
+                          );
                         },
                       );
                     },
@@ -86,14 +102,12 @@ class WishlistScreen extends StatelessWidget {
   }
 
   void _showAddSheet(BuildContext context) {
-    final searchProvider = context.read<SearchProvider>();
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (modalContext) => ChangeNotifierProvider.value(
-        value: searchProvider,
+      builder: (modalContext) => ChangeNotifierProvider(
+        create: (_) => SearchProvider(),
         child: BookSearchModal(
           isAuthor: false,
           onSelect: (title, authors, coverUrl) async {
@@ -101,10 +115,12 @@ class WishlistScreen extends StatelessWidget {
             final wishlistProvider = context.read<WishlistProvider>();
             final messenger = ScaffoldMessenger.of(context);
 
-            final current = await wishlistProvider.getWishlist(providerUid).first;
+            final current = await wishlistProvider
+                .getWishlist(providerUid)
+                .first;
 
             final alreadyExists = current.any(
-                  (item) => item.title.toLowerCase() == title.toLowerCase(),
+              (item) => item.title.toLowerCase() == title.toLowerCase(),
             );
 
             if (alreadyExists) {
@@ -205,8 +221,9 @@ class _WishlistCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final authors =
-    item.authors.isNotEmpty ? item.authors.join(', ') : 'Unknown author';
+    final authors = item.authors.isNotEmpty
+        ? item.authors.join(', ')
+        : 'Unknown author';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
@@ -256,7 +273,9 @@ class _WishlistCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.62,
+                      ),
                     ),
                   ),
                 ],

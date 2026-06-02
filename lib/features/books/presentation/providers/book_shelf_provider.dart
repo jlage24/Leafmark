@@ -10,13 +10,12 @@ class BookShelfProvider extends ChangeNotifier {
   List<Book> _books = [];
   List<Book> get books => List.unmodifiable(_books);
 
-  List<Book> get availableBooks =>
-      _books.where((b) => !b.isLocked).toList();
+  List<Book> get availableBooks => _books.where((b) => !b.isLocked).toList();
 
   String get _collectionPath => 'users/$_uid/shelf';
 
   BookShelfProvider({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   Future<void> loadBooks(String uid, String? ownerName) async {
     _uid = uid;
@@ -29,10 +28,7 @@ class BookShelfProvider extends ChangeNotifier {
   }
 
   Future<void> addBook(Book book) async {
-    final bookWithOwner = book.copyWith(
-      ownerId: _uid,
-      ownerName: _ownerName,
-    );
+    final bookWithOwner = book.copyWith(ownerId: _uid, ownerName: _ownerName);
     if (_uid == null) {
       _books.add(bookWithOwner);
       notifyListeners();
@@ -90,10 +86,9 @@ class BookShelfProvider extends ChangeNotifier {
     required String bookId,
     required String swapId,
   }) async {
-    await _db
-        .collection('users/$bookOwnerId/shelf')
-        .doc(bookId)
-        .update({'lockedBySwapId': swapId});
+    await _db.collection('users/$bookOwnerId/shelf').doc(bookId).update({
+      'lockedBySwapId': swapId,
+    });
 
     _updateLocalLock(bookId, swapId);
   }
@@ -102,10 +97,9 @@ class BookShelfProvider extends ChangeNotifier {
     required String bookOwnerId,
     required String bookId,
   }) async {
-    await _db
-        .collection('users/$bookOwnerId/shelf')
-        .doc(bookId)
-        .update({'lockedBySwapId': null});
+    await _db.collection('users/$bookOwnerId/shelf').doc(bookId).update({
+      'lockedBySwapId': null,
+    });
     _updateLocalLock(bookId, null);
   }
 

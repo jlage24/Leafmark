@@ -1,17 +1,30 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../domain/models/chat_metadata.dart';
 import '../providers/chat_provider.dart';
 import 'chat_screen.dart';
 
-class ChatListScreen extends StatelessWidget {
+class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
 
   @override
+  State<ChatListScreen> createState() => _ChatListScreenState();
+}
+
+class _ChatListScreenState extends State<ChatListScreen> {
+  late final Stream<List<ChatMetadata>> _chatsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _chatsStream = context.read<ChatProvider>().getChats().shareValue();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final chatProvider = context.read<ChatProvider>();
     final currentUid = context.read<AuthProvider>().user?.uid ?? '';
 
     return Scaffold(
@@ -21,7 +34,7 @@ class ChatListScreen extends StatelessWidget {
             const _ChatsHeader(),
             Expanded(
               child: StreamBuilder<List<ChatMetadata>>(
-                stream: chatProvider.getChats(),
+                stream: _chatsStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const _ChatsLoadingState();
@@ -51,7 +64,7 @@ class ChatListScreen extends StatelessWidget {
                     itemBuilder: (context, index) {
                       final chat = chats[index];
                       final otherUid = chat.participantIds.firstWhere(
-                            (id) => id != currentUid,
+                        (id) => id != currentUid,
                         orElse: () => '',
                       );
 
@@ -128,11 +141,7 @@ class _ChatTile extends StatefulWidget {
   final ChatMetadata chat;
   final String otherUid;
 
-  const _ChatTile({
-    super.key,
-    required this.chat,
-    required this.otherUid,
-  });
+  const _ChatTile({super.key, required this.chat, required this.otherUid});
 
   @override
   State<_ChatTile> createState() => _ChatTileState();
@@ -210,16 +219,10 @@ class _ChatTileState extends State<_ChatTile> {
             padding: const EdgeInsets.all(14),
             child: Row(
               children: [
-                _ChatAvatar(
-                  name: name,
-                  photoUrl: _photoUrl,
-                ),
+                _ChatAvatar(name: name, photoUrl: _photoUrl),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: _ChatPreview(
-                    name: name,
-                    lastMessage: lastMessage,
-                  ),
+                  child: _ChatPreview(name: name, lastMessage: lastMessage),
                 ),
                 const SizedBox(width: 10),
                 _ChatTrailing(time: widget.chat.lastMessageAt),
@@ -236,10 +239,7 @@ class _ChatAvatar extends StatelessWidget {
   final String name;
   final String? photoUrl;
 
-  const _ChatAvatar({
-    required this.name,
-    required this.photoUrl,
-  });
+  const _ChatAvatar({required this.name, required this.photoUrl});
 
   @override
   Widget build(BuildContext context) {
@@ -256,12 +256,12 @@ class _ChatAvatar extends StatelessWidget {
       child: ClipOval(
         child: photoUrl != null && photoUrl!.isNotEmpty
             ? Image.network(
-          photoUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) {
-            return _AvatarInitial(initial: initial);
-          },
-        )
+                photoUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) {
+                  return _AvatarInitial(initial: initial);
+                },
+              )
             : _AvatarInitial(initial: initial),
       ),
     );
@@ -293,10 +293,7 @@ class _ChatPreview extends StatelessWidget {
   final String name;
   final String lastMessage;
 
-  const _ChatPreview({
-    required this.name,
-    required this.lastMessage,
-  });
+  const _ChatPreview({required this.name, required this.lastMessage});
 
   @override
   Widget build(BuildContext context) {
@@ -413,10 +410,7 @@ class _LoadingChatCard extends StatelessWidget {
           Container(
             width: 54,
             height: 54,
-            decoration: BoxDecoration(
-              color: baseColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: baseColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -486,11 +480,7 @@ class _ChatsMessageState extends StatelessWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 38,
-                color: theme.colorScheme.primary,
-              ),
+              child: Icon(icon, size: 38, color: theme.colorScheme.primary),
             ),
             const SizedBox(height: 18),
             Text(

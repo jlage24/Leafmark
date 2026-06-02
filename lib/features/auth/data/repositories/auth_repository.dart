@@ -4,7 +4,7 @@ import '../../domain/models/app_user.dart';
 
 class AuthRepository {
   final _auth = FirebaseAuth.instance;
-  final _db   = FirebaseFirestore.instance;
+  final _db = FirebaseFirestore.instance;
 
   Stream<AppUser?> get authStateChanges async* {
     await for (final user in _auth.authStateChanges()) {
@@ -40,11 +40,11 @@ class AuthRepository {
   }
 
   Future<AppUser> register(
-      String email,
-      String password,
-      String displayName,
-      String username,
-      ) async {
+    String email,
+    String password,
+    String displayName,
+    String username,
+  ) async {
     final normalizedUsername = username.trim().toLowerCase();
 
     if (await isUsernameTaken(normalizedUsername)) {
@@ -125,12 +125,17 @@ class AuthRepository {
   }) async {
     final Map<String, dynamic> updates = {};
     if (bio != null) updates['bio'] = bio;
-    if (profilePictureUrl != null) updates['profilePictureUrl'] = profilePictureUrl;
-    if (bannerPictureUrl != null) updates['bannerPictureUrl'] = bannerPictureUrl;
+    if (profilePictureUrl != null)
+      updates['profilePictureUrl'] = profilePictureUrl;
+    if (bannerPictureUrl != null)
+      updates['bannerPictureUrl'] = bannerPictureUrl;
     if (favoriteAuthors != null) updates['favoriteAuthors'] = favoriteAuthors;
-    if (favoriteBookTitle != null) updates['favoriteBookTitle'] = favoriteBookTitle;
-    if (favoriteBookAuthor != null) updates['favoriteBookAuthor'] = favoriteBookAuthor;
-    if (favoriteBookCoverUrl != null) updates['favoriteBookCoverUrl'] = favoriteBookCoverUrl;
+    if (favoriteBookTitle != null)
+      updates['favoriteBookTitle'] = favoriteBookTitle;
+    if (favoriteBookAuthor != null)
+      updates['favoriteBookAuthor'] = favoriteBookAuthor;
+    if (favoriteBookCoverUrl != null)
+      updates['favoriteBookCoverUrl'] = favoriteBookCoverUrl;
 
     if (updates.isNotEmpty) {
       await _db.collection('users').doc(uid).update(updates);

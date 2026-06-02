@@ -5,7 +5,7 @@ class NotificationService {
   final FirebaseFirestore _db;
 
   NotificationService({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   CollectionReference<Map<String, dynamic>> get _notifications =>
       _db.collection('notifications');
@@ -19,9 +19,9 @@ class NotificationService {
   }
 
   Future<void> createNotification(
-      AppNotification notification, {
-        String? notificationId,
-      }) async {
+    AppNotification notification, {
+    String? notificationId,
+  }) async {
     await notificationDocument(notificationId).set(notification.toMap());
   }
 
@@ -34,9 +34,9 @@ class NotificationService {
         .snapshots()
         .map(
           (snapshot) => snapshot.docs
-          .map((doc) => AppNotification.fromMap(doc.data(), doc.id))
-          .toList(),
-    );
+              .map((doc) => AppNotification.fromMap(doc.data(), doc.id))
+              .toList(),
+        );
   }
 
   Stream<int> unreadCount(String uid) {

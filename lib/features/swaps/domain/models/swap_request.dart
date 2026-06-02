@@ -1,12 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum SwapStatus {
-  pending,
-  accepted,
-  rejected,
-  completed,
-  cancelled,
-}
+enum SwapStatus { pending, accepted, rejected, completed, cancelled }
 
 class SwapRequest {
   final String id;
@@ -54,9 +48,7 @@ class SwapRequest {
       bookWantedId: map['bookWantedId'] ?? '',
       status: SwapStatus.values.byName(map['status'] ?? 'pending'),
       createdAt: (map['createdAt'] as Timestamp).toDate(),
-      completedAt: rawCompletedAt is Timestamp
-          ? rawCompletedAt.toDate()
-          : null,
+      completedAt: rawCompletedAt is Timestamp ? rawCompletedAt.toDate() : null,
     );
   }
 }

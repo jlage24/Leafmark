@@ -142,9 +142,7 @@ class _SearchCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: scheme.surface.withValues(alpha: 0.92),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: scheme.outline.withValues(alpha: 0.22),
-        ),
+        border: Border.all(color: scheme.outline.withValues(alpha: 0.22)),
       ),
       child: Row(
         children: [
@@ -224,9 +222,7 @@ class _TargetSelector extends StatelessWidget {
           return scheme.onSurface.withValues(alpha: 0.72);
         }),
         side: WidgetStatePropertyAll(
-          BorderSide(
-            color: scheme.outline.withValues(alpha: 0.22),
-          ),
+          BorderSide(color: scheme.outline.withValues(alpha: 0.22)),
         ),
         shape: WidgetStatePropertyAll(
           RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
@@ -343,10 +339,7 @@ class _SearchResults extends StatelessWidget {
           padding: const EdgeInsets.all(24),
           child: Text(
             provider.errorMessage!,
-            style: TextStyle(
-              color: theme.colorScheme.error,
-              fontSize: 15,
-            ),
+            style: TextStyle(color: theme.colorScheme.error, fontSize: 15),
             textAlign: TextAlign.center,
           ),
         ),
@@ -365,22 +358,19 @@ class _BookResults extends StatelessWidget {
   final SearchProvider provider;
   final String query;
 
-  const _BookResults({
-    required this.provider,
-    required this.query,
-  });
+  const _BookResults({required this.provider, required this.query});
 
   @override
   Widget build(BuildContext context) {
     final books = provider.bookResults
         .map((result) {
-      try {
-        return result.toBook();
-      } catch (e) {
-        debugPrint('Skipping invalid book result: $e');
-        return null;
-      }
-    })
+          try {
+            return result.toBook();
+          } catch (e) {
+            debugPrint('Skipping invalid book result: $e');
+            return null;
+          }
+        })
         .whereType()
         .toList();
 
@@ -425,10 +415,7 @@ class _UserResults extends StatelessWidget {
   final List<AppUser> users;
   final String query;
 
-  const _UserResults({
-    required this.users,
-    required this.query,
-  });
+  const _UserResults({required this.users, required this.query});
 
   @override
   Widget build(BuildContext context) {
@@ -463,8 +450,9 @@ class _UserResultCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final displayName =
-    user.displayName.isNotEmpty ? user.displayName : 'LeafMark user';
+    final displayName = user.displayName.isNotEmpty
+        ? user.displayName
+        : 'LeafMark user';
     final initial = displayName.trim().isNotEmpty
         ? displayName.trim()[0].toUpperCase()
         : '?';
@@ -475,10 +463,8 @@ class _UserResultCard extends StatelessWidget {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => PublicProfileScreen(
-              userId: user.uid,
-              displayName: displayName,
-            ),
+            builder: (_) =>
+                PublicProfileScreen(userId: user.uid, displayName: displayName),
           ),
         );
       },
@@ -487,9 +473,7 @@ class _UserResultCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: scheme.surface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: scheme.outline.withValues(alpha: 0.18),
-          ),
+          border: Border.all(color: scheme.outline.withValues(alpha: 0.18)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.035),
@@ -505,15 +489,17 @@ class _UserResultCard extends StatelessWidget {
               backgroundColor: scheme.primary.withValues(alpha: 0.16),
               foregroundColor: scheme.primary,
               backgroundImage:
-              user.profilePictureUrl != null && user.profilePictureUrl!.isNotEmpty
+                  user.profilePictureUrl != null &&
+                      user.profilePictureUrl!.isNotEmpty
                   ? NetworkImage(user.profilePictureUrl!)
                   : null,
-              child: user.profilePictureUrl == null ||
-                  user.profilePictureUrl!.isEmpty
+              child:
+                  user.profilePictureUrl == null ||
+                      user.profilePictureUrl!.isEmpty
                   ? Text(
-                initial,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              )
+                      initial,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    )
                   : null,
             ),
             const SizedBox(width: 14),
@@ -585,9 +571,7 @@ class _EmptySearchState extends StatelessWidget {
       builder: (context, constraints) {
         return SingleChildScrollView(
           child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: constraints.maxHeight,
-            ),
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
             child: Center(
               child: Padding(
                 padding: const EdgeInsets.all(24),

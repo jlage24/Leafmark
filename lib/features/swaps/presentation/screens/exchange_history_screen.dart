@@ -132,10 +132,7 @@ class _HistoryTile extends StatelessWidget {
   final SwapRequest swap;
   final String uid;
 
-  const _HistoryTile({
-    required this.swap,
-    required this.uid,
-  });
+  const _HistoryTile({required this.swap, required this.uid});
 
   @override
   Widget build(BuildContext context) {
@@ -229,7 +226,9 @@ class _HistoryCard extends StatelessWidget {
                 children: [
                   Text(
                     book?.title ??
-                        (isLoading ? 'Loading exchanged book...' : 'Exchanged book'),
+                        (isLoading
+                            ? 'Loading exchanged book...'
+                            : 'Exchanged book'),
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleMedium?.copyWith(
@@ -243,7 +242,9 @@ class _HistoryCard extends StatelessWidget {
                       Icon(
                         Icons.person_outline_rounded,
                         size: 16,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.55,
+                        ),
                       ),
                       const SizedBox(width: 4),
                       Expanded(
@@ -252,7 +253,9 @@ class _HistoryCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.62,
+                            ),
                           ),
                         ),
                       ),
@@ -264,13 +267,17 @@ class _HistoryCard extends StatelessWidget {
                       Icon(
                         Icons.calendar_today_outlined,
                         size: 14,
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.45,
+                        ),
                       ),
                       const SizedBox(width: 5),
                       Text(
                         DateFormat('dd MMM yyyy').format(date),
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.52),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.52,
+                          ),
                         ),
                       ),
                     ],
@@ -291,10 +298,7 @@ class _HistoryData {
   final Book? book;
   final String partnerName;
 
-  const _HistoryData({
-    required this.book,
-    required this.partnerName,
-  });
+  const _HistoryData({required this.book, required this.partnerName});
 }
 
 class _BookCover extends StatelessWidget {
@@ -317,11 +321,11 @@ class _BookCover extends StatelessWidget {
         child: displayUrl == null || displayUrl.isEmpty
             ? const _PlaceholderCover()
             : Image.network(
-          displayUrl,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) =>
-          const _PlaceholderCover(),
-        ),
+                displayUrl,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const _PlaceholderCover(),
+              ),
       ),
     );
   }

@@ -33,14 +33,15 @@ class ChatMessage {
     'createdAt': Timestamp.fromDate(createdAt),
   };
 
-  factory ChatMessage.fromMap(Map<String, dynamic> map, String id) => ChatMessage(
-    id: id,
-    senderId: map['senderId'] as String,
-    type: MessageType.values.byName(map['type'] as String),
-    text: map['text'] as String?,
-    bookOfferedId: map['bookOfferedId'] as String?,
-    bookOfferedOwnerId: map['bookOfferedOwnerId'] as String?,
-    bookWantedId: map['bookWantedId'] as String?,
-    createdAt: (map['createdAt'] as Timestamp).toDate(),
-  );
+  factory ChatMessage.fromMap(Map<String, dynamic> map, String id) =>
+      ChatMessage(
+        id: id,
+        senderId: map['senderId'] as String,
+        type: MessageType.values.byName(map['type'] as String),
+        text: map['text'] as String?,
+        bookOfferedId: map['bookOfferedId'] as String?,
+        bookOfferedOwnerId: map['bookOfferedOwnerId'] as String?,
+        bookWantedId: map['bookWantedId'] as String?,
+        createdAt: (map['createdAt'] as Timestamp).toDate(),
+      );
 }

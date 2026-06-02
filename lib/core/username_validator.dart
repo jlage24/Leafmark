@@ -5,8 +5,12 @@ class UsernameValidator {
   static const _maxLength = 30;
 
   static const _reservedWords = {
-    'admin', 'leafmark', 'support', 'help',
-    'official', 'moderator',
+    'admin',
+    'leafmark',
+    'support',
+    'help',
+    'official',
+    'moderator',
   };
 
   // a-z, 0-9, underscores, dots

@@ -48,8 +48,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
     _chatProvider = context.read<ChatProvider>();
     final currentUid = context.read<AuthProvider>().user?.uid ?? '';
 
-    _hasRatedFuture =
-        context.read<RatingProvider>().hasRated(widget.swapId, currentUid);
+    _hasRatedFuture = context.read<RatingProvider>().hasRated(
+      widget.swapId,
+      currentUid,
+    );
 
     _metaStream = _chatProvider.chatStream(widget.swapId);
     _messagesStream = _chatProvider.getMessages(widget.swapId);
@@ -106,10 +108,7 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
     _controller.clear();
 
-    await _chatProvider.sendText(
-      swapId: widget.swapId,
-      text: text,
-    );
+    await _chatProvider.sendText(swapId: widget.swapId, text: text);
   }
 
   void _openPublicProfile() {
@@ -169,10 +168,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                   'Pick one of your available books to offer instead.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.62),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.62),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -259,13 +257,19 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
 
                             return ListView.builder(
                               reverse: true,
-                              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+                              padding: const EdgeInsets.fromLTRB(
+                                16,
+                                12,
+                                16,
+                                16,
+                              ),
                               itemCount: messages.length,
                               itemBuilder: (context, index) {
                                 final message = messages[index];
                                 final isMe = message.senderId == currentUid;
                                 final isLast = index == 0;
-                                final isSeen = isMe &&
+                                final isSeen =
+                                    isMe &&
                                     isLast &&
                                     otherLastRead != null &&
                                     otherLastRead.isAfter(message.createdAt);
@@ -288,9 +292,9 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                                   onCounter: isMe
                                       ? null
                                       : () => _showCounterOfferSheet(
-                                    bookWantedId:
-                                    message.bookOfferedId ?? '',
-                                  ),
+                                          bookWantedId:
+                                              message.bookOfferedId ?? '',
+                                        ),
                                 );
                               },
                             );
@@ -299,8 +303,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
                       ),
                       if (typingUids.isNotEmpty)
                         const Padding(
-                          padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
                           child: Align(
                             alignment: Alignment.centerLeft,
                             child: TypingIndicator(),
@@ -319,10 +325,10 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildInputArea(
-      BuildContext context,
-      ChatStatus status,
-      String currentUid,
-      ) {
+    BuildContext context,
+    ChatStatus status,
+    String currentUid,
+  ) {
     final theme = Theme.of(context);
 
     if (status == ChatStatus.completed) {
@@ -341,28 +347,28 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             action: hasRated
                 ? null
                 : FilledButton.icon(
-              onPressed: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => RateExchangeScreen(
-                      swapId: widget.swapId,
-                      revieweeId: widget.otherUserId,
-                    ),
+                    onPressed: () async {
+                      await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RateExchangeScreen(
+                            swapId: widget.swapId,
+                            revieweeId: widget.otherUserId,
+                          ),
+                        ),
+                      );
+
+                      if (!mounted) return;
+
+                      setState(() {
+                        _hasRatedFuture = context
+                            .read<RatingProvider>()
+                            .hasRated(widget.swapId, currentUid);
+                      });
+                    },
+                    icon: const Icon(Icons.star_rounded),
+                    label: const Text('Rate this exchange'),
                   ),
-                );
-
-                if (!mounted) return;
-
-                setState(() {
-                  _hasRatedFuture = context
-                      .read<RatingProvider>()
-                      .hasRated(widget.swapId, currentUid);
-                });
-              },
-              icon: const Icon(Icons.star_rounded),
-              label: const Text('Rate this exchange'),
-            ),
           );
         },
       );
@@ -377,44 +383,44 @@ class _ChatScreenState extends State<ChatScreen> with WidgetsBindingObserver {
             iconColor: theme.colorScheme.primary,
             title: 'Books are reserved',
             message:
-            'Use this chat to arrange where and when to meet. Only complete the exchange after both people have physically traded the books.',
+                'Use this chat to arrange where and when to meet. Only complete the exchange after both people have physically traded the books.',
             action: FilledButton.icon(
               onPressed: context.watch<SwapProvider>().isLoading
                   ? null
                   : () async {
-                try {
-                  await context
-                      .read<SwapProvider>()
-                      .completePhysicalExchange(widget.swapId);
+                      try {
+                        await context
+                            .read<SwapProvider>()
+                            .completePhysicalExchange(widget.swapId);
 
-                  if (!context.mounted) return;
+                        if (!context.mounted) return;
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: const Text('Exchange completed!'),
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  );
-                } catch (e) {
-                  if (!context.mounted) return;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: const Text('Exchange completed!'),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        );
+                      } catch (e) {
+                        if (!context.mounted) return;
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        e.toString().replaceAll('Exception: ', ''),
-                      ),
-                      backgroundColor: theme.colorScheme.error,
-                      behavior: SnackBarBehavior.floating,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                    ),
-                  );
-                }
-              },
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              e.toString().replaceAll('Exception: ', ''),
+                            ),
+                            backgroundColor: theme.colorScheme.error,
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                          ),
+                        );
+                      }
+                    },
               icon: const Icon(Icons.done_all_rounded),
               label: const Text('Mark as completed'),
             ),
@@ -497,12 +503,12 @@ class _ChatHeader extends StatelessWidget {
                           : null,
                       child: photoUrl == null || photoUrl!.isEmpty
                           ? Text(
-                        initial,
-                        style: TextStyle(
-                          color: theme.colorScheme.onPrimaryContainer,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      )
+                              initial,
+                              style: TextStyle(
+                                color: theme.colorScheme.onPrimaryContainer,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            )
                           : null,
                     ),
                     const SizedBox(width: 12),
@@ -518,7 +524,9 @@ class _ChatHeader extends StatelessWidget {
                     ),
                     Icon(
                       Icons.chevron_right_rounded,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.38),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.38,
+                      ),
                     ),
                   ],
                 ),
@@ -566,17 +574,17 @@ class _CounterOfferBookTile extends StatelessWidget {
                   color: theme.colorScheme.primary.withValues(alpha: 0.08),
                   child: coverUrl != null && coverUrl!.isNotEmpty
                       ? Image.network(
-                    coverUrl!,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Icon(
-                      Icons.menu_book_rounded,
-                      color: theme.colorScheme.primary,
-                    ),
-                  )
+                          coverUrl!,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) => Icon(
+                            Icons.menu_book_rounded,
+                            color: theme.colorScheme.primary,
+                          ),
+                        )
                       : Icon(
-                    Icons.menu_book_rounded,
-                    color: theme.colorScheme.primary,
-                  ),
+                          Icons.menu_book_rounded,
+                          color: theme.colorScheme.primary,
+                        ),
                 ),
               ),
               const SizedBox(width: 12),
@@ -731,8 +739,6 @@ class _ChatLoadingState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Center(
-      child: CircularProgressIndicator(strokeWidth: 2),
-    );
+    return const Center(child: CircularProgressIndicator(strokeWidth: 2));
   }
 }

@@ -51,7 +51,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         SnackBar(
           content: Text('Welcome, ${_nameController.text.trim()}! 🎉'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       );
       Navigator.of(context).popUntil((route) => route.isFirst);
@@ -60,7 +62,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
         SnackBar(
           content: Text(auth.errorMessage ?? 'Unknown error.'),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
         ),
       );
     }
@@ -109,7 +113,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     'Join LeafMark and start exchanging books.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.62,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 28),
@@ -138,7 +144,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               prefixIcon: Icon(Icons.person_outline_rounded),
                             ),
                             validator: (value) =>
-                            value != null && value.trim().isNotEmpty ? null : 'Name required',
+                                value != null && value.trim().isNotEmpty
+                                ? null
+                                : 'Name required',
                           ),
                           const SizedBox(height: 16),
                           TextFormField(
@@ -153,8 +161,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               final lower = value.toLowerCase();
 
                               if (value != lower) {
-                                _usernameController.value =
-                                    _usernameController.value.copyWith(
+                                _usernameController.value = _usernameController
+                                    .value
+                                    .copyWith(
                                       text: lower,
                                       selection: TextSelection.collapsed(
                                         offset: lower.length,
@@ -175,7 +184,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             ),
                             validator: (value) {
                               final email = value?.trim() ?? '';
-                              return email.contains('@') ? null : 'Invalid email';
+                              return email.contains('@')
+                                  ? null
+                                  : 'Invalid email';
                             },
                           ),
                           const SizedBox(height: 16),
@@ -185,7 +196,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             textInputAction: TextInputAction.done,
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              prefixIcon: const Icon(Icons.lock_outline_rounded),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline_rounded,
+                              ),
                               suffixIcon: IconButton(
                                 onPressed: () {
                                   setState(() {
@@ -200,8 +213,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ),
                             validator: (value) {
-                              if (value == null || value.isEmpty) return 'Password is required';
-                              if (value.length < 8) return 'At least 8 characters';
+                              if (value == null || value.isEmpty)
+                                return 'Password is required';
+                              if (value.length < 8)
+                                return 'At least 8 characters';
                               if (!value.contains(RegExp(r'[A-Z]'))) {
                                 return 'Include at least one uppercase letter';
                               }
@@ -221,14 +236,18 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             child: FilledButton(
                               onPressed: _loading ? null : _submit,
                               style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                               ),
                               child: _loading
                                   ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
                                   : const Text('Register'),
                             ),
                           ),

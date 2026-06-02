@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../data/services/browse_service.dart';
@@ -18,9 +19,20 @@ class _BrowseScreenState extends State<BrowseScreen> {
   String? _selectedCategory;
   final TextEditingController _locationController = TextEditingController();
   String _locationQuery = '';
+  late final Stream<List<Book>> _availableBooksStream;
 
   bool get _hasActiveFilters =>
       _selectedCategory != null || _locationQuery.isNotEmpty;
+
+  @override
+  void initState() {
+    super.initState();
+    final uid = context.read<AuthProvider>().user?.uid ?? '';
+    final browseService = BrowseService();
+    _availableBooksStream = browseService
+        .browseAvailableBooks(uid)
+        .shareValue();
+  }
 
   @override
   void dispose() {
@@ -40,19 +52,13 @@ class _BrowseScreenState extends State<BrowseScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => BookDetailScreen(
-          book: book,
-          isOwner: false,
-        ),
+        builder: (context) => BookDetailScreen(book: book, isOwner: false),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final uid = context.read<AuthProvider>().user?.uid ?? '';
-    final browseService = BrowseService();
-
     return Scaffold(
       body: SafeArea(
         child: Column(
@@ -73,15 +79,16 @@ class _BrowseScreenState extends State<BrowseScreen> {
               selectedCategory: _selectedCategory,
               onCategorySelected: (category) {
                 setState(() {
-                  _selectedCategory =
-                  _selectedCategory == category ? null : category;
+                  _selectedCategory = _selectedCategory == category
+                      ? null
+                      : category;
                 });
               },
             ),
             const SizedBox(height: 4),
             Expanded(
               child: StreamBuilder<List<Book>>(
-                stream: browseService.browseAvailableBooks(uid),
+                stream: _availableBooksStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const _BrowseLoadingState();
@@ -106,7 +113,7 @@ class _BrowseScreenState extends State<BrowseScreen> {
                       if (_selectedCategory != null) {
                         matchesCategory =
                             book.category?.trim().toLowerCase() ==
-                                _selectedCategory!.trim().toLowerCase();
+                            _selectedCategory!.trim().toLowerCase();
                       }
 
                       if (_locationQuery.isNotEmpty) {
@@ -130,10 +137,10 @@ class _BrowseScreenState extends State<BrowseScreen> {
                           : 'When other readers add books, they will appear here.',
                       action: _hasActiveFilters
                           ? TextButton.icon(
-                        onPressed: _clearFilters,
-                        icon: const Icon(Icons.clear_rounded),
-                        label: const Text('Clear filters'),
-                      )
+                              onPressed: _clearFilters,
+                              icon: const Icon(Icons.clear_rounded),
+                              label: const Text('Clear filters'),
+                            )
                           : null,
                     );
                   }
@@ -193,10 +200,7 @@ class _DiscoverHeader extends StatelessWidget {
             ),
           ),
           if (hasActiveFilters)
-            TextButton(
-              onPressed: onClearFilters,
-              child: const Text('Clear'),
-            ),
+            TextButton(onPressed: onClearFilters, child: const Text('Clear')),
         ],
       ),
     );
@@ -343,10 +347,7 @@ class _DiscoverFeed extends StatelessWidget {
         if (remainingBooks.isNotEmpty) ...[
           const _SectionTitle(title: 'All books'),
           ...remainingBooks.map(
-                (book) => BookCard(
-              book: book,
-              onTap: () => onBookTap(book),
-            ),
+            (book) => BookCard(book: book, onTap: () => onBookTap(book)),
           ),
         ],
       ],
@@ -442,10 +443,7 @@ class _FeaturedBookCard extends StatelessWidget {
   final Book book;
   final VoidCallback onTap;
 
-  const _FeaturedBookCard({
-    required this.book,
-    required this.onTap,
-  });
+  const _FeaturedBookCard({required this.book, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -482,11 +480,11 @@ class _FeaturedBookCard extends StatelessWidget {
                   color: theme.colorScheme.primary.withValues(alpha: 0.08),
                   child: displayUrl != null && displayUrl.isNotEmpty
                       ? Image.network(
-                    displayUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                    const Icon(Icons.book_rounded, size: 36),
-                  )
+                          displayUrl,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.book_rounded, size: 36),
+                        )
                       : const Icon(Icons.book_rounded, size: 36),
                 ),
               ),
@@ -518,7 +516,9 @@ class _FeaturedBookCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.58,
+                        ),
                       ),
                     ),
                     const SizedBox(height: 12),
@@ -561,10 +561,7 @@ class _MiniBadge extends StatelessWidget {
   final IconData icon;
   final String text;
 
-  const _MiniBadge({
-    required this.icon,
-    required this.text,
-  });
+  const _MiniBadge({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
@@ -605,9 +602,9 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.fromLTRB(20, 2, 20, 6),
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          fontWeight: FontWeight.w900,
-        ),
+        style: Theme.of(
+          context,
+        ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
       ),
     );
   }
@@ -725,11 +722,7 @@ class _BrowseMessageState extends StatelessWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 38,
-                color: theme.colorScheme.primary,
-              ),
+              child: Icon(icon, size: 38, color: theme.colorScheme.primary),
             ),
             const SizedBox(height: 18),
             Text(
@@ -747,10 +740,7 @@ class _BrowseMessageState extends StatelessWidget {
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
               ),
             ),
-            if (action != null) ...[
-              const SizedBox(height: 16),
-              action!,
-            ],
+            if (action != null) ...[const SizedBox(height: 16), action!],
           ],
         ),
       ),

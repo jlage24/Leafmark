@@ -24,7 +24,7 @@ class _TypingIndicatorState extends State<TypingIndicator>
 
     _controllers = List.generate(
       3,
-          (index) => AnimationController(
+      (index) => AnimationController(
         vsync: this,
         duration: const Duration(milliseconds: 420),
       ),
@@ -33,9 +33,9 @@ class _TypingIndicatorState extends State<TypingIndicator>
     _animations = _controllers
         .map(
           (controller) => Tween<double>(begin: 0, end: -6).animate(
-        CurvedAnimation(parent: controller, curve: Curves.easeInOut),
-      ),
-    )
+            CurvedAnimation(parent: controller, curve: Curves.easeInOut),
+          ),
+        )
         .toList();
 
     for (var i = 0; i < 3; i++) {
@@ -62,7 +62,9 @@ class _TypingIndicatorState extends State<TypingIndicator>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.85),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.85,
+        ),
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(18),
           topRight: Radius.circular(18),
@@ -109,13 +111,17 @@ class TextBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bubbleColor =
-    isMe ? theme.colorScheme.primary : theme.colorScheme.surfaceContainerHighest;
-    final textColor = isMe ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface;
+    final bubbleColor = isMe
+        ? theme.colorScheme.primary
+        : theme.colorScheme.surfaceContainerHighest;
+    final textColor = isMe
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.onSurface;
 
     return Column(
-      crossAxisAlignment:
-      isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+      crossAxisAlignment: isMe
+          ? CrossAxisAlignment.end
+          : CrossAxisAlignment.start,
       children: [
         Align(
           alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -292,7 +298,8 @@ class _ProposalCardState extends State<ProposalCard> {
   }
 
   List<String> _offeredBookOwnerCandidates() {
-    final originalOwnerId = widget.message.bookOfferedOwnerId ??
+    final originalOwnerId =
+        widget.message.bookOfferedOwnerId ??
         (widget.isMe ? widget.currentUid : widget.otherUserId);
 
     final otherParticipantId = originalOwnerId == widget.currentUid
@@ -303,7 +310,8 @@ class _ProposalCardState extends State<ProposalCard> {
   }
 
   List<String> _wantedBookOwnerCandidates() {
-    final offeredOwnerId = widget.message.bookOfferedOwnerId ??
+    final offeredOwnerId =
+        widget.message.bookOfferedOwnerId ??
         (widget.isMe ? widget.currentUid : widget.otherUserId);
 
     final originalWantedOwnerId = offeredOwnerId == widget.currentUid
@@ -408,9 +416,7 @@ class ActionButtons extends StatelessWidget {
       SnackBar(
         content: Text(message),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }
@@ -580,14 +586,16 @@ class BookMini extends StatelessWidget {
               child: Container(
                 width: 62,
                 height: 88,
-                color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.08),
+                color: Theme.of(
+                  context,
+                ).colorScheme.primary.withValues(alpha: 0.08),
                 child: displayUrl != null && displayUrl.isNotEmpty
                     ? Image.network(
-                  displayUrl,
-                  fit: BoxFit.cover,
-                  errorBuilder: (context, error, stackTrace) =>
-                      _placeholder(context),
-                )
+                        displayUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            _placeholder(context),
+                      )
                     : _placeholder(context),
               ),
             ),
@@ -597,9 +605,9 @@ class BookMini extends StatelessWidget {
                   (snapshot.connectionState == ConnectionState.waiting
                       ? 'Loading...'
                       : 'Book unavailable'),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,

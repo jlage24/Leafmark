@@ -82,49 +82,54 @@ class BookDetailScreen extends StatelessWidget {
       bottomNavigationBar: isCatalogView
           ? null
           : _BottomActionBar(
-        isOwner: isOwner,
-        isReserved: book.isLocked,
-        isLoading: swapProvider.isLoading,
-        bottomPadding: bottomPadding,
-        onViewOwner: book.ownerId == null
-            ? null
-            : () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PublicProfileScreen(
-              userId: book.ownerId!,
-              displayName: book.ownerName ?? 'LeafMark user',
-            ),
-          ),
-        ),
-        onRequestSwap: isOwner || book.isLocked
-            ? null
-            : () => _showBookPickerSheet(context, authProvider),
-        onEditListing: isOwner && !book.isLocked
-            ? () async {
-          final updatedBook = await Navigator.push<Book>(
-            context,
-            MaterialPageRoute(
-              builder: (_) => EditBookListingScreen(book: book),
-            ),
-          );
+              isOwner: isOwner,
+              isReserved: book.isLocked,
+              isLoading: swapProvider.isLoading,
+              bottomPadding: bottomPadding,
+              onViewOwner: book.ownerId == null
+                  ? null
+                  : () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => PublicProfileScreen(
+                          userId: book.ownerId!,
+                          displayName: book.ownerName ?? 'LeafMark user',
+                        ),
+                      ),
+                    ),
+              onRequestSwap: isOwner || book.isLocked
+                  ? null
+                  : () => _showBookPickerSheet(context, authProvider),
+              onEditListing: isOwner && !book.isLocked
+                  ? () async {
+                      final updatedBook = await Navigator.push<Book>(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => EditBookListingScreen(book: book),
+                        ),
+                      );
 
-          if (updatedBook != null && context.mounted) {
-            Navigator.pop(context);
-          }
-        }
-            : null,
-      ),
+                      if (updatedBook != null && context.mounted) {
+                        Navigator.pop(context);
+                      }
+                    }
+                  : null,
+            ),
     );
   }
 
-  void _showBookPickerSheet(BuildContext pageContext, AuthProvider authProvider) {
+  void _showBookPickerSheet(
+    BuildContext pageContext,
+    AuthProvider authProvider,
+  ) {
     final shelfBooks = pageContext.read<BookShelfProvider>().availableBooks;
 
     if (shelfBooks.isEmpty) {
       ScaffoldMessenger.of(pageContext).showSnackBar(
         const SnackBar(
-          content: Text('You need available books on your shelf to propose a swap.'),
+          content: Text(
+            'You need available books on your shelf to propose a swap.',
+          ),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -161,10 +166,9 @@ class BookDetailScreen extends StatelessWidget {
                     'Pick one of your available books to start a swap request.',
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withValues(alpha: 0.62),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.onSurface.withValues(alpha: 0.62),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -172,10 +176,12 @@ class BookDetailScreen extends StatelessWidget {
                     child: ListView.separated(
                       controller: scrollController,
                       itemCount: shelfBooks.length,
-                      separatorBuilder: (context, index) => const SizedBox(height: 8),
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 8),
                       itemBuilder: (ctx, index) {
                         final offeredBook = shelfBooks[index];
-                        final displayUrl = offeredBook.conditionPhotoUrls.isNotEmpty
+                        final displayUrl =
+                            offeredBook.conditionPhotoUrls.isNotEmpty
                             ? offeredBook.conditionPhotoUrls.first
                             : offeredBook.coverUrl;
 
@@ -195,7 +201,9 @@ class BookDetailScreen extends StatelessWidget {
                               offeredBook.title,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w800),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                             subtitle: Text(
                               '${offeredBook.authors} · ${offeredBook.condition.label}',
@@ -205,7 +213,11 @@ class BookDetailScreen extends StatelessWidget {
                             trailing: const Icon(Icons.chevron_right_rounded),
                             onTap: () {
                               Navigator.pop(sheetCtx);
-                              _submitSwap(pageContext, authProvider, offeredBook);
+                              _submitSwap(
+                                pageContext,
+                                authProvider,
+                                offeredBook,
+                              );
                             },
                           ),
                         );
@@ -222,10 +234,10 @@ class BookDetailScreen extends StatelessWidget {
   }
 
   Future<void> _submitSwap(
-      BuildContext context,
-      AuthProvider authProvider,
-      Book offeredBook,
-      ) async {
+    BuildContext context,
+    AuthProvider authProvider,
+    Book offeredBook,
+  ) async {
     final swapProvider = context.read<SwapProvider>();
     final chatProvider = context.read<ChatProvider>();
     final colorScheme = Theme.of(context).colorScheme;
@@ -291,12 +303,12 @@ class BookDetailScreen extends StatelessWidget {
   }
 
   void _showResultDialog(
-      BuildContext context, {
-        required String title,
-        required String message,
-        required IconData icon,
-        required Color iconColor,
-      }) {
+    BuildContext context, {
+    required String title,
+    required String message,
+    required IconData icon,
+    required Color iconColor,
+  }) {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -355,11 +367,7 @@ class _BookGalleryAppBarState extends State<_BookGalleryAppBar> {
       pinned: true,
       stretch: true,
       elevation: 0,
-      title: Text(
-        widget.title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+      title: Text(widget.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       flexibleSpace: FlexibleSpaceBar(
         background: Stack(
           fit: StackFit.expand,
@@ -375,7 +383,7 @@ class _BookGalleryAppBarState extends State<_BookGalleryAppBar> {
                     widget.imageUrls[index],
                     fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) =>
-                    const _PlaceholderCover(),
+                        const _PlaceholderCover(),
                   );
                 },
               )
@@ -413,13 +421,20 @@ class _BookGalleryAppBarState extends State<_BookGalleryAppBar> {
                       icon: widget.hasRealPhotos
                           ? Icons.verified_outlined
                           : Icons.info_outline_rounded,
-                      label: widget.hasRealPhotos ? 'Real photos' : 'Cover only',
-                      color: widget.hasRealPhotos ? Colors.green : Colors.blueGrey,
+                      label: widget.hasRealPhotos
+                          ? 'Real photos'
+                          : 'Cover only',
+                      color: widget.hasRealPhotos
+                          ? Colors.green
+                          : Colors.blueGrey,
                     ),
                   const Spacer(),
                   if (hasImages && widget.imageUrls.length > 1)
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
                       decoration: BoxDecoration(
                         color: Colors.black.withValues(alpha: 0.55),
                         borderRadius: BorderRadius.circular(999),
@@ -559,10 +574,7 @@ class _OwnerCard extends StatelessWidget {
   final Book book;
   final bool isOwner;
 
-  const _OwnerCard({
-    required this.book,
-    required this.isOwner,
-  });
+  const _OwnerCard({required this.book, required this.isOwner});
 
   @override
   Widget build(BuildContext context) {
@@ -572,24 +584,23 @@ class _OwnerCard extends StatelessWidget {
         : '?';
 
     return Material(
-      color: Theme.of(context)
-          .colorScheme
-          .surfaceContainerHighest
-          .withValues(alpha: 0.55),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
       borderRadius: BorderRadius.circular(22),
       child: InkWell(
         borderRadius: BorderRadius.circular(22),
         onTap: book.ownerId == null
             ? null
             : () => Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (_) => PublicProfileScreen(
-              userId: book.ownerId!,
-              displayName: ownerName,
-            ),
-          ),
-        ),
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PublicProfileScreen(
+                    userId: book.ownerId!,
+                    displayName: ownerName,
+                  ),
+                ),
+              ),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
@@ -618,10 +629,9 @@ class _OwnerCard extends StatelessWidget {
                           ? 'This book is currently on your shelf.'
                           : 'View profile, shelf, reviews and wishlist.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context)
-                            .colorScheme
-                            .onSurface
-                            .withValues(alpha: 0.62),
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.onSurface.withValues(alpha: 0.62),
                       ),
                     ),
                   ],
@@ -708,7 +718,9 @@ class _NotesSection extends StatelessWidget {
           Expanded(
             child: Text(
               notes,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.35),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(height: 1.35),
             ),
           ),
         ],
@@ -746,17 +758,20 @@ class _SwapReadinessSection extends StatelessWidget {
       icon = Icons.lock_outline_rounded;
       color = Colors.orange.shade700;
       title = 'Currently reserved';
-      message = 'This book is involved in another swap and cannot be requested right now.';
+      message =
+          'This book is involved in another swap and cannot be requested right now.';
     } else if (hasRealPhotos) {
       icon = Icons.verified_outlined;
       color = Colors.green.shade700;
       title = 'Ready to swap';
-      message = 'This listing includes real condition photos uploaded by the owner.';
+      message =
+          'This listing includes real condition photos uploaded by the owner.';
     } else {
       icon = Icons.info_outline_rounded;
       color = Colors.blueGrey.shade700;
       title = 'Ask before swapping';
-      message = 'This listing only shows the cover. You can ask for more details in chat.';
+      message =
+          'This listing only shows the cover. You can ask for more details in chat.';
     }
 
     return _SectionCard(
@@ -861,16 +876,18 @@ class _BottomActionBar extends StatelessWidget {
           Expanded(
             flex: 2,
             child: FilledButton.icon(
-              onPressed: disabledText != null || isLoading ? null : primaryAction,
+              onPressed: disabledText != null || isLoading
+                  ? null
+                  : primaryAction,
               icon: isLoading
                   ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    )
                   : Icon(primaryIcon),
               label: Text(disabledText ?? primaryLabel),
               style: FilledButton.styleFrom(
@@ -888,10 +905,7 @@ class _SectionCard extends StatelessWidget {
   final String title;
   final Widget child;
 
-  const _SectionCard({
-    required this.title,
-    required this.child,
-  });
+  const _SectionCard({required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -914,9 +928,9 @@ class _SectionCard extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 14),
           child,
@@ -953,19 +967,18 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               label,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.58),
+                color: Theme.of(
+                  context,
+                ).colorScheme.onSurface.withValues(alpha: 0.58),
               ),
             ),
           ),
           Expanded(
             child: Text(
               value,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
             ),
           ),
         ],
@@ -1060,13 +1073,13 @@ class _MiniBookCover extends StatelessWidget {
       borderRadius: BorderRadius.circular(10),
       child: url != null
           ? Image.network(
-        url!,
-        width: 42,
-        height: 60,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) =>
-        const _MiniPlaceholderCover(),
-      )
+              url!,
+              width: 42,
+              height: 60,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  const _MiniPlaceholderCover(),
+            )
           : const _MiniPlaceholderCover(),
     );
   }

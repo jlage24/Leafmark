@@ -58,19 +58,18 @@ class AppUser {
     String? favoriteBookTitle,
     String? favoriteBookAuthor,
     String? favoriteBookCoverUrl,
-  }) =>
-      AppUser(
-        uid: uid,
-        email: email ?? this.email,
-        displayName: displayName ?? this.displayName,
-        username: username ?? this.username,
-        bio: bio ?? this.bio,
-        profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
-        bannerPictureUrl: bannerPictureUrl ?? this.bannerPictureUrl,
-        favoriteAuthors: favoriteAuthors ?? this.favoriteAuthors,
-        rating: rating ?? this.rating,
-        favoriteBookTitle: favoriteBookTitle ?? this.favoriteBookTitle,
-        favoriteBookAuthor: favoriteBookAuthor ?? this.favoriteBookAuthor,
-        favoriteBookCoverUrl: favoriteBookCoverUrl ?? this.favoriteBookCoverUrl,
-      );
+  }) => AppUser(
+    uid: uid,
+    email: email ?? this.email,
+    displayName: displayName ?? this.displayName,
+    username: username ?? this.username,
+    bio: bio ?? this.bio,
+    profilePictureUrl: profilePictureUrl ?? this.profilePictureUrl,
+    bannerPictureUrl: bannerPictureUrl ?? this.bannerPictureUrl,
+    favoriteAuthors: favoriteAuthors ?? this.favoriteAuthors,
+    rating: rating ?? this.rating,
+    favoriteBookTitle: favoriteBookTitle ?? this.favoriteBookTitle,
+    favoriteBookAuthor: favoriteBookAuthor ?? this.favoriteBookAuthor,
+    favoriteBookCoverUrl: favoriteBookCoverUrl ?? this.favoriteBookCoverUrl,
+  );
 }

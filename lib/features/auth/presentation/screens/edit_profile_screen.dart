@@ -136,10 +136,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       : 'Choose and crop the photo that appears as your avatar.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.62),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.62),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -228,14 +227,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _openSearchModal(bool isAuthor) {
-    final searchProvider = context.read<SearchProvider>();
-
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (modalContext) => ChangeNotifierProvider.value(
-        value: searchProvider,
+      builder: (modalContext) => ChangeNotifierProvider(
+        create: (_) => SearchProvider(),
         child: BookSearchModal(
           isAuthor: isAuthor,
           onSelect: (title, authors, cover) {
@@ -284,7 +281,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               const SizedBox(height: 30),
               _SectionCard(
                 title: 'About you',
-                subtitle: 'Add a short bio so other readers know who they are swapping with.',
+                subtitle:
+                    'Add a short bio so other readers know who they are swapping with.',
                 child: LeafmarkTextField(
                   controller: _bioController,
                   label: 'Bio',
@@ -331,26 +329,26 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 subtitle: 'Pick one book that represents your taste.',
                 child: _favBookTitle != null
                     ? _FavoriteBookTile(
-                  title: _favBookTitle!,
-                  author: _favBookAuthor,
-                  coverUrl: _favBookCoverUrl,
-                  onEdit: () => _openSearchModal(false),
-                  onRemove: () {
-                    setState(() {
-                      _favBookTitle = null;
-                      _favBookAuthor = null;
-                      _favBookCoverUrl = null;
-                    });
-                  },
-                )
+                        title: _favBookTitle!,
+                        author: _favBookAuthor,
+                        coverUrl: _favBookCoverUrl,
+                        onEdit: () => _openSearchModal(false),
+                        onRemove: () {
+                          setState(() {
+                            _favBookTitle = null;
+                            _favBookAuthor = null;
+                            _favBookCoverUrl = null;
+                          });
+                        },
+                      )
                     : SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _openSearchModal(false),
-                    icon: const Icon(Icons.search_rounded),
-                    label: const Text('Search favorite book'),
-                  ),
-                ),
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _openSearchModal(false),
+                          icon: const Icon(Icons.search_rounded),
+                          label: const Text('Search favorite book'),
+                        ),
+                      ),
               ),
               const SizedBox(height: 28),
               SizedBox(
@@ -362,13 +360,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   child: _isSaving
                       ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: Colors.white,
+                            strokeWidth: 2,
+                          ),
+                        )
                       : const Text('Save Changes'),
                 ),
               ),
@@ -408,9 +406,11 @@ class _ProfilePhotoEditor extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasAvatar = selectedImage != null ||
+    final hasAvatar =
+        selectedImage != null ||
         (currentPhotoUrl != null && currentPhotoUrl!.isNotEmpty);
-    final hasBanner = selectedBanner != null ||
+    final hasBanner =
+        selectedBanner != null ||
         (currentBannerUrl != null && currentBannerUrl!.isNotEmpty);
 
     return SizedBox(
@@ -431,11 +431,11 @@ class _ProfilePhotoEditor extends StatelessWidget {
                   borderRadius: BorderRadius.circular(24),
                   image: hasBanner
                       ? DecorationImage(
-                    image: selectedBanner != null
-                        ? FileImage(selectedBanner!) as ImageProvider
-                        : NetworkImage(currentBannerUrl!),
-                    fit: BoxFit.cover,
-                  )
+                          image: selectedBanner != null
+                              ? FileImage(selectedBanner!) as ImageProvider
+                              : NetworkImage(currentBannerUrl!),
+                          fit: BoxFit.cover,
+                        )
                       : null,
                   boxShadow: [
                     BoxShadow(
@@ -473,18 +473,20 @@ class _ProfilePhotoEditor extends StatelessWidget {
                 backgroundColor: theme.scaffoldBackgroundColor,
                 child: CircleAvatar(
                   radius: 47,
-                  backgroundColor: Theme.of(context).colorScheme.primary.withValues(alpha: 0.16),
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.16),
                   backgroundImage: hasAvatar
                       ? selectedImage != null
-                      ? FileImage(selectedImage!) as ImageProvider
-                      : NetworkImage(currentPhotoUrl!)
+                            ? FileImage(selectedImage!) as ImageProvider
+                            : NetworkImage(currentPhotoUrl!)
                       : null,
                   child: !hasAvatar
                       ? Icon(
-                    Icons.camera_alt_outlined,
-                    color: Theme.of(context).colorScheme.primary,
-                    size: 30,
-                  )
+                          Icons.camera_alt_outlined,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 30,
+                        )
                       : null,
                 ),
               ),
@@ -573,10 +575,9 @@ class _ImageOptionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Theme.of(context)
-          .colorScheme
-          .surfaceContainerHighest
-          .withValues(alpha: 0.55),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -590,9 +591,9 @@ class _ImageOptionTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w800),
                 ),
               ),
               const Icon(Icons.chevron_right_rounded),
@@ -679,10 +680,9 @@ class _FavoriteBookTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Theme.of(context)
-            .colorScheme
-            .surfaceContainerHighest
-            .withValues(alpha: 0.55),
+        color: Theme.of(
+          context,
+        ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
         borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
@@ -695,11 +695,11 @@ class _FavoriteBookTile extends StatelessWidget {
               color: Colors.grey[200],
               child: hasCover
                   ? Image.network(
-                coverUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.book, color: Colors.grey),
-              )
+                      coverUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.book, color: Colors.grey),
+                    )
                   : const Icon(Icons.book, color: Colors.grey),
             ),
           ),
@@ -712,9 +712,9 @@ class _FavoriteBookTile extends StatelessWidget {
                   title,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w900),
                 ),
                 if (author != null && author!.isNotEmpty) ...[
                   const SizedBox(height: 3),

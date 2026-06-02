@@ -5,7 +5,7 @@ class RatingService {
   final FirebaseFirestore _firestore;
 
   RatingService({FirebaseFirestore? firestore})
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+    : _firestore = firestore ?? FirebaseFirestore.instance;
 
   Future<void> submitRating(Rating rating) async {
     await _firestore.collection('ratings').doc(rating.id).set(rating.toMap());
@@ -16,9 +16,10 @@ class RatingService {
         .collection('ratings')
         .where('revieweeId', isEqualTo: uid)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-        .map((doc) => Rating.fromDocument(doc))
-        .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Rating.fromDocument(doc)).toList(),
+        );
   }
 
   Future<bool> hasRated(String swapId, String reviewerId) async {

@@ -6,7 +6,7 @@ class RatingProvider extends ChangeNotifier {
   final RatingService _ratingService;
 
   RatingProvider({RatingService? ratingService})
-      : _ratingService = ratingService ?? RatingService();
+    : _ratingService = ratingService ?? RatingService();
 
   bool _isLoading = false;
   String? _errorMessage;
@@ -22,7 +22,10 @@ class RatingProvider extends ChangeNotifier {
 
     try {
       // Security check: Make sure they haven't already rated this exact swap
-      final alreadyRated = await _ratingService.hasRated(rating.swapId, rating.reviewerId);
+      final alreadyRated = await _ratingService.hasRated(
+        rating.swapId,
+        rating.reviewerId,
+      );
       if (alreadyRated) {
         _errorMessage = 'You have already rated this exchange.';
         _isLoading = false;
@@ -41,8 +44,9 @@ class RatingProvider extends ChangeNotifier {
       return false;
     }
   }
+
   Stream<List<Rating>> getRatingsForUser(String uid) {
-      return _ratingService.getRatingsForUser(uid);
+    return _ratingService.getRatingsForUser(uid);
   }
 
   // Checks if the current user has already rated this swap

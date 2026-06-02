@@ -3,24 +3,24 @@ import '../../../auth/domain/models/app_user.dart';
 
 abstract class UserSearchRepository {
   Future<List<AppUser>> searchUsers(
-      String query, {
-        String? excludeUid,
-        int limit = 20,
-      });
+    String query, {
+    String? excludeUid,
+    int limit = 20,
+  });
 }
 
 class UserSearchService implements UserSearchRepository {
   final FirebaseFirestore _db;
 
   UserSearchService({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+    : _db = firestore ?? FirebaseFirestore.instance;
 
   @override
   Future<List<AppUser>> searchUsers(
-      String query, {
-        String? excludeUid,
-        int limit = 20,
-      }) async {
+    String query, {
+    String? excludeUid,
+    int limit = 20,
+  }) async {
     final normalizedQuery = query.trim().toLowerCase();
 
     if (normalizedQuery.isEmpty) {
@@ -49,10 +49,12 @@ class UserSearchService implements UserSearchRepository {
 
         final user = AppUser.fromMap(doc.data(), doc.id);
 
-        final matchesUsername =
-        user.username.toLowerCase().contains(normalizedQuery);
-        final matchesDisplayName =
-        user.displayName.toLowerCase().contains(normalizedQuery);
+        final matchesUsername = user.username.toLowerCase().contains(
+          normalizedQuery,
+        );
+        final matchesDisplayName = user.displayName.toLowerCase().contains(
+          normalizedQuery,
+        );
 
         if (matchesUsername || matchesDisplayName) {
           usersById[doc.id] = user;
@@ -65,17 +67,17 @@ class UserSearchService implements UserSearchRepository {
     final users = usersById.values.toList();
 
     users.sort((a, b) {
-      final aUsernameStarts =
-      a.username.toLowerCase().startsWith(normalizedQuery);
-      final bUsernameStarts =
-      b.username.toLowerCase().startsWith(normalizedQuery);
+      final aUsernameStarts = a.username.toLowerCase().startsWith(
+        normalizedQuery,
+      );
+      final bUsernameStarts = b.username.toLowerCase().startsWith(
+        normalizedQuery,
+      );
 
       if (aUsernameStarts && !bUsernameStarts) return -1;
       if (!aUsernameStarts && bUsernameStarts) return 1;
 
-      return a.displayName.toLowerCase().compareTo(
-        b.displayName.toLowerCase(),
-      );
+      return a.displayName.toLowerCase().compareTo(b.displayName.toLowerCase());
     });
 
     return users.take(limit).toList();

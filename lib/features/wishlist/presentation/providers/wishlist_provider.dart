@@ -6,7 +6,7 @@ class WishlistProvider extends ChangeNotifier {
   final WishlistService _service;
 
   WishlistProvider({WishlistService? service})
-      : _service = service ?? WishlistService();
+    : _service = service ?? WishlistService();
 
   Stream<List<WishlistItem>> getWishlist(String uid) =>
       _service.getWishlist(uid);

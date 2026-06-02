@@ -1,28 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 
 import '../../../auth/presentation/screens/public_profile_screen.dart';
 import '../providers/follow_provider.dart';
 
-enum FollowListType {
-  followers,
-  following,
-}
+enum FollowListType { followers, following }
 
-class FollowListScreen extends StatelessWidget {
+class FollowListScreen extends StatefulWidget {
   final String userId;
   final FollowListType type;
 
-  const FollowListScreen({
-    super.key,
-    required this.userId,
-    required this.type,
-  });
+  const FollowListScreen({super.key, required this.userId, required this.type});
+
+  @override
+  State<FollowListScreen> createState() => _FollowListScreenState();
+}
+
+class _FollowListScreenState extends State<FollowListScreen> {
+  late final Stream<List<String>> _usersStream;
+
+  @override
+  void initState() {
+    super.initState();
+    final provider = context.read<FollowProvider>();
+    final isFollowers = widget.type == FollowListType.followers;
+    _usersStream =
+        (isFollowers
+                ? provider.getFollowers(widget.userId)
+                : provider.getFollowing(widget.userId))
+            .shareValue();
+  }
 
   @override
   Widget build(BuildContext context) {
     final provider = context.read<FollowProvider>();
-    final isFollowers = type == FollowListType.followers;
+    final isFollowers = widget.type == FollowListType.followers;
 
     return Scaffold(
       body: SafeArea(
@@ -36,9 +49,7 @@ class FollowListScreen extends StatelessWidget {
             ),
             Expanded(
               child: StreamBuilder<List<String>>(
-                stream: isFollowers
-                    ? provider.getFollowers(userId)
-                    : provider.getFollowing(userId),
+                stream: _usersStream,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const _FollowListLoadingState();
@@ -103,10 +114,7 @@ class _FollowListHeader extends StatelessWidget {
   final String title;
   final String subtitle;
 
-  const _FollowListHeader({
-    required this.title,
-    required this.subtitle,
-  });
+  const _FollowListHeader({required this.title, required this.subtitle});
 
   @override
   Widget build(BuildContext context) {
@@ -201,12 +209,12 @@ class _FollowUserCard extends StatelessWidget {
           backgroundImage: hasPhoto ? NetworkImage(photoUrl!) : null,
           child: !hasPhoto
               ? Text(
-            initial,
-            style: TextStyle(
-              color: theme.colorScheme.onPrimaryContainer,
-              fontWeight: FontWeight.w900,
-            ),
-          )
+                  initial,
+                  style: TextStyle(
+                    color: theme.colorScheme.onPrimaryContainer,
+                    fontWeight: FontWeight.w900,
+                  ),
+                )
               : null,
         ),
         title: Text(
@@ -228,10 +236,8 @@ class _FollowUserCard extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (_) => PublicProfileScreen(
-                userId: userId,
-                displayName: displayName,
-              ),
+              builder: (_) =>
+                  PublicProfileScreen(userId: userId, displayName: displayName),
             ),
           );
         },
@@ -272,10 +278,7 @@ class _LoadingUserCard extends StatelessWidget {
           Container(
             width: 50,
             height: 50,
-            decoration: BoxDecoration(
-              color: baseColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: baseColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -345,11 +348,7 @@ class _FollowListMessageState extends StatelessWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 38,
-                color: theme.colorScheme.primary,
-              ),
+              child: Icon(icon, size: 38, color: theme.colorScheme.primary),
             ),
             const SizedBox(height: 18),
             Text(

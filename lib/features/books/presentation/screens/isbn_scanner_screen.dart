@@ -28,8 +28,10 @@ class _IsbnScannerScreenState extends State<IsbnScannerScreen>
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),)..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
 
@@ -56,17 +58,13 @@ class _IsbnScannerScreenState extends State<IsbnScannerScreen>
     _scannerController.stop();
 
     Navigator.of(context)
-        .push(
-      MaterialPageRoute(
-        builder: (_) => AddBookScreen(isbn: cleaned),
-      ),
-    )
+        .push(MaterialPageRoute(builder: (_) => AddBookScreen(isbn: cleaned)))
         .then((_) {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-        _scannerController.start();
-      }
-    });
+          if (mounted) {
+            setState(() => _isProcessing = false);
+            _scannerController.start();
+          }
+        });
   }
 
   void _toggleTorch() {
@@ -158,8 +156,11 @@ class _IsbnScannerScreenState extends State<IsbnScannerScreen>
                           ),
                         );
                       },
-                      icon: Icon(Icons.edit_outlined,
-                          size: 16, color: Theme.of(context).colorScheme.primary),
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
                       label: Text(
                         'Enter ISBN manually',
                         style: TextStyle(
@@ -251,25 +252,49 @@ class _OverlayPainter extends CustomPainter {
     final r = cornerRadius;
 
     // Top-left
-    canvas.drawLine(Offset(rect.left + r, rect.top),
-        Offset(rect.left + r + bracketLen, rect.top), bracketPaint);
-    canvas.drawLine(Offset(rect.left, rect.top + r),
-        Offset(rect.left, rect.top + r + bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(rect.left + r, rect.top),
+      Offset(rect.left + r + bracketLen, rect.top),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(rect.left, rect.top + r),
+      Offset(rect.left, rect.top + r + bracketLen),
+      bracketPaint,
+    );
     // Top-right
-    canvas.drawLine(Offset(rect.right - r, rect.top),
-        Offset(rect.right - r - bracketLen, rect.top), bracketPaint);
-    canvas.drawLine(Offset(rect.right, rect.top + r),
-        Offset(rect.right, rect.top + r + bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(rect.right - r, rect.top),
+      Offset(rect.right - r - bracketLen, rect.top),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(rect.right, rect.top + r),
+      Offset(rect.right, rect.top + r + bracketLen),
+      bracketPaint,
+    );
     // Bottom-left
-    canvas.drawLine(Offset(rect.left + r, rect.bottom),
-        Offset(rect.left + r + bracketLen, rect.bottom), bracketPaint);
-    canvas.drawLine(Offset(rect.left, rect.bottom - r),
-        Offset(rect.left, rect.bottom - r - bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(rect.left + r, rect.bottom),
+      Offset(rect.left + r + bracketLen, rect.bottom),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(rect.left, rect.bottom - r),
+      Offset(rect.left, rect.bottom - r - bracketLen),
+      bracketPaint,
+    );
     // Bottom-right
-    canvas.drawLine(Offset(rect.right - r, rect.bottom),
-        Offset(rect.right - r - bracketLen, rect.bottom), bracketPaint);
-    canvas.drawLine(Offset(rect.right, rect.bottom - r),
-        Offset(rect.right, rect.bottom - r - bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(rect.right - r, rect.bottom),
+      Offset(rect.right - r - bracketLen, rect.bottom),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(rect.right, rect.bottom - r),
+      Offset(rect.right, rect.bottom - r - bracketLen),
+      bracketPaint,
+    );
   }
 
   @override

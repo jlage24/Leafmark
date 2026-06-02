@@ -128,10 +128,7 @@ class _RequestList extends StatelessWidget {
   final Stream<List<SwapRequest>> stream;
   final bool isIncoming;
 
-  const _RequestList({
-    required this.stream,
-    required this.isIncoming,
-  });
+  const _RequestList({required this.stream, required this.isIncoming});
 
   @override
   Widget build(BuildContext context) {
@@ -188,8 +185,9 @@ class _RequestList extends StatelessWidget {
                     return _RequestCard(
                       request: request,
                       book: book,
-                      fallbackTitle:
-                      isBookLoading ? 'Loading book...' : 'This book is no longer available',
+                      fallbackTitle: isBookLoading
+                          ? 'Loading book...'
+                          : 'This book is no longer available',
                       name: name,
                       isIncoming: isIncoming,
                       onAccept: () async {
@@ -198,10 +196,7 @@ class _RequestList extends StatelessWidget {
                         } catch (e) {
                           if (!context.mounted) return;
 
-                          _showErrorSnackBar(
-                            context,
-                            'Failed to accept swap.',
-                          );
+                          _showErrorSnackBar(context, 'Failed to accept swap.');
                         }
                       },
                       onReject: () async {
@@ -210,10 +205,7 @@ class _RequestList extends StatelessWidget {
                         } catch (e) {
                           if (!context.mounted) return;
 
-                          _showErrorSnackBar(
-                            context,
-                            'Failed to reject swap.',
-                          );
+                          _showErrorSnackBar(context, 'Failed to reject swap.');
                         }
                       },
                       onCancel: () async {
@@ -222,10 +214,7 @@ class _RequestList extends StatelessWidget {
                         } catch (e) {
                           if (!context.mounted) return;
 
-                          _showErrorSnackBar(
-                            context,
-                            'Failed to cancel swap.',
-                          );
+                          _showErrorSnackBar(context, 'Failed to cancel swap.');
                         }
                       },
                     );
@@ -240,26 +229,20 @@ class _RequestList extends StatelessWidget {
   }
 
   Future<Book?> _fetchDisplayBook(
-      BrowseService browseService,
-      SwapRequest request,
-      ) {
+    BrowseService browseService,
+    SwapRequest request,
+  ) {
     if (request.status == SwapStatus.completed) {
-      return browseService.fetchBook(
-        request.requesterId,
-        request.bookWantedId,
-      );
+      return browseService.fetchBook(request.requesterId, request.bookWantedId);
     }
 
-    return browseService.fetchBook(
-      request.ownerId,
-      request.bookWantedId,
-    );
+    return browseService.fetchBook(request.ownerId, request.bookWantedId);
   }
 
   Future<String?> _fetchDisplayName(
-      BrowseService browseService,
-      SwapRequest request,
-      ) {
+    BrowseService browseService,
+    SwapRequest request,
+  ) {
     final uid = isIncoming ? request.requesterId : request.ownerId;
     return browseService.fetchDisplayName(uid);
   }
@@ -279,9 +262,7 @@ class _RequestList extends StatelessWidget {
       SnackBar(
         content: Text(message),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }
@@ -347,10 +328,7 @@ class _RequestCard extends StatelessWidget {
             if (isPending) ...[
               const SizedBox(height: 14),
               isIncoming
-                  ? _IncomingActions(
-                onAccept: onAccept,
-                onReject: onReject,
-              )
+                  ? _IncomingActions(onAccept: onAccept, onReject: onReject)
                   : _OutgoingActions(onCancel: onCancel),
             ],
           ],
@@ -377,19 +355,19 @@ class _BookCover extends StatelessWidget {
         color: theme.colorScheme.primary.withValues(alpha: 0.08),
         child: coverUrl != null && coverUrl!.isNotEmpty
             ? Image.network(
-          coverUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => Icon(
-            Icons.menu_book_rounded,
-            color: theme.colorScheme.primary,
-            size: 34,
-          ),
-        )
+                coverUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) => Icon(
+                  Icons.menu_book_rounded,
+                  color: theme.colorScheme.primary,
+                  size: 34,
+                ),
+              )
             : Icon(
-          Icons.menu_book_rounded,
-          color: theme.colorScheme.primary,
-          size: 34,
-        ),
+                Icons.menu_book_rounded,
+                color: theme.colorScheme.primary,
+                size: 34,
+              ),
       ),
     );
   }
@@ -445,10 +423,7 @@ class _IncomingActions extends StatelessWidget {
   final VoidCallback onAccept;
   final VoidCallback onReject;
 
-  const _IncomingActions({
-    required this.onAccept,
-    required this.onReject,
-  });
+  const _IncomingActions({required this.onAccept, required this.onReject});
 
   @override
   Widget build(BuildContext context) {
@@ -487,10 +462,7 @@ class _OutgoingActions extends StatelessWidget {
       width: double.infinity,
       child: OutlinedButton.icon(
         onPressed: onCancel,
-        icon: Icon(
-          Icons.cancel_outlined,
-          color: theme.colorScheme.error,
-        ),
+        icon: Icon(Icons.cancel_outlined, color: theme.colorScheme.error),
         label: Text(
           'Cancel request',
           style: TextStyle(color: theme.colorScheme.error),
@@ -674,11 +646,7 @@ class _RequestsMessageState extends StatelessWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 38,
-                color: theme.colorScheme.primary,
-              ),
+              child: Icon(icon, size: 38, color: theme.colorScheme.primary),
             ),
             const SizedBox(height: 18),
             Text(

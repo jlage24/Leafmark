@@ -67,9 +67,48 @@ class BookShelfProvider extends ChangeNotifier {
   }
 
   Future<void> removeBook(String id) async {
-    if (_uid != null) {
-      await _db.collection(_collectionPath).doc(id).delete();
+    try {
+      final book = _books.firstWhere((b) => b.id == id);
+      if (book.isLocked) {
+        throw Exception('Cannot remove a reserved book. Please cancel the swap first.');
+      }
+    } catch (e) {
+      if (e is StateError) {
+        // Book not found locally, proceed anyway
+      } else {
+        rethrow;
+      }
     }
+
+    if (_uid != null) {
+      final batch = _db.batch();
+      final bookRef = _db.collection(_collectionPath).doc(id);
+      batch.delete(bookRef);
+
+      final q1 = await _db.collection('swap_requests')
+          .where('status', isEqualTo: 'pending')
+          .where('bookOfferedId', isEqualTo: id)
+          .get();
+          
+      final q2 = await _db.collection('swap_requests')
+          .where('status', isEqualTo: 'pending')
+          .where('bookWantedId', isEqualTo: id)
+          .get();
+          
+      final processed = <String>{};
+      for (final doc in [...q1.docs, ...q2.docs]) {
+        if (!processed.add(doc.id)) continue;
+        batch.update(doc.reference, {'status': 'cancelled'});
+        batch.update(_db.collection('chats').doc(doc.id), {
+          'status': 'cancelled',
+          'lastMessage': 'Swap automatically cancelled because a book was removed.',
+          'lastMessageAt': FieldValue.serverTimestamp(),
+        });
+      }
+      
+      await batch.commit();
+    }
+
     _books.removeWhere((b) => b.id == id);
     notifyListeners();
   }

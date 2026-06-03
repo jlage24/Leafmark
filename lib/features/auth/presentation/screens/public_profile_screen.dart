@@ -171,16 +171,45 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           }
 
           final data = snap.data;
-          final username = data?['username'] as String? ?? '';
-          final bio = data?['bio'] as String?;
-          final profilePicUrl = data?['profilePictureUrl'] as String?;
-          final bannerPicUrl = data?['bannerPictureUrl'] as String?;
+          
+          if (data == null || data.isEmpty) {
+            return Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.person_off_rounded, 
+                    size: 64, 
+                    color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.3)
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'This user no longer exists.', 
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                  FilledButton.icon(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.arrow_back_rounded),
+                    label: const Text('Go back'),
+                  ),
+                ],
+              ),
+            );
+          }
+
+          final username = data['username'] as String? ?? '';
+          final bio = data['bio'] as String?;
+          final profilePicUrl = data['profilePictureUrl'] as String?;
+          final bannerPicUrl = data['bannerPictureUrl'] as String?;
           final favoriteAuthors = List<String>.from(
-            data?['favoriteAuthors'] ?? [],
+            data['favoriteAuthors'] ?? [],
           );
-          final favBookTitle = data?['favoriteBookTitle'] as String?;
-          final favBookAuthor = data?['favoriteBookAuthor'] as String?;
-          final favBookCoverUrl = data?['favoriteBookCoverUrl'] as String?;
+          final favBookTitle = data['favoriteBookTitle'] as String?;
+          final favBookAuthor = data['favoriteBookAuthor'] as String?;
+          final favBookCoverUrl = data['favoriteBookCoverUrl'] as String?;
 
           final initial = widget.displayName.isNotEmpty
               ? widget.displayName[0].toUpperCase()

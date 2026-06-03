@@ -64,6 +64,38 @@ class ChatService {
     await docRef.set(metadata.toMap());
   }
 
+  Future<void> deleteChat(String swapId, String currentUid) async {
+    final docRef = _chats.doc(swapId);
+    final snap = await docRef.get();
+    
+    if (!snap.exists) return;
+    
+    final data = snap.data() as Map<String, dynamic>;
+    final hiddenBy = List<String>.from(data['hiddenBy'] ?? []);
+    final participants = List<String>.from(data['participantIds'] ?? []);
+    
+    if (!hiddenBy.contains(currentUid)) {
+      hiddenBy.add(currentUid);
+    }
+    
+    // If all participants have hidden the chat, we can safely delete it.
+    final allHidden = participants.isNotEmpty && participants.every((p) => hiddenBy.contains(p));
+    
+    if (allHidden) {
+      final messagesSnap = await docRef.collection('messages').get();
+      final batch = _db.batch();
+      for (final doc in messagesSnap.docs) {
+        batch.delete(doc.reference);
+      }
+      batch.delete(docRef);
+      await batch.commit();
+    } else {
+      await docRef.update({
+        'hiddenBy': FieldValue.arrayUnion([currentUid]),
+      });
+    }
+  }
+
   Future<void> sendMessage({
     required String swapId,
     required ChatMessage message,
@@ -117,6 +149,7 @@ class ChatService {
     batch.update(chatRef, {
       'lastMessage': message.text ?? _lastMessagePreview(message.type),
       'lastMessageAt': Timestamp.fromDate(message.createdAt),
+      'hiddenBy': [],
     });
 
     if (recipientId != null) {
@@ -289,6 +322,8 @@ class ChatService {
       List<String> blockedUids,
     ) {
       return chats.where((chat) {
+        if (chat.hiddenBy.contains(uid)) return false;
+        
         final otherUid = chat.participantIds.firstWhere(
           (id) => id != uid,
           orElse: () => '',

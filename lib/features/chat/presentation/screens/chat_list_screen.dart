@@ -17,6 +17,7 @@ class ChatListScreen extends StatefulWidget {
 
 class _ChatListScreenState extends State<ChatListScreen> {
   late final Stream<List<ChatMetadata>> _chatsStream;
+  final Set<String> _dismissedChatIds = {};
 
   @override
   void initState() {
@@ -49,7 +50,8 @@ class _ChatListScreenState extends State<ChatListScreen> {
                     );
                   }
 
-                  final chats = snapshot.data ?? [];
+                  final allChats = snapshot.data ?? [];
+                  final chats = allChats.where((c) => !_dismissedChatIds.contains(c.swapId)).toList();
 
                   if (chats.isEmpty) {
                     return const _ChatsMessageState(
@@ -73,6 +75,11 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         key: ValueKey(chat.swapId),
                         chat: chat,
                         otherUid: otherUid,
+                        onDismissed: () {
+                          setState(() {
+                            _dismissedChatIds.add(chat.swapId);
+                          });
+                        },
                       );
                     },
                   );
@@ -141,8 +148,14 @@ class _ChatsHeader extends StatelessWidget {
 class _ChatTile extends StatefulWidget {
   final ChatMetadata chat;
   final String otherUid;
+  final VoidCallback onDismissed;
 
-  const _ChatTile({super.key, required this.chat, required this.otherUid});
+  const _ChatTile({
+    super.key,
+    required this.chat,
+    required this.otherUid,
+    required this.onDismissed,
+  });
 
   @override
   State<_ChatTile> createState() => _ChatTileState();
@@ -188,46 +201,73 @@ class _ChatTileState extends State<_ChatTile> {
     final name = _displayName ?? widget.otherUid;
     final lastMessage = widget.chat.lastMessage ?? 'Swap proposal';
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Material(
-        color: Colors.transparent,
-        borderRadius: BorderRadius.circular(20),
-        child: InkWell(
+    return Dismissible(
+      key: ValueKey(widget.chat.swapId),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.error,
           borderRadius: BorderRadius.circular(20),
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => ChatScreen(
-                swapId: widget.chat.swapId,
-                otherUserName: name,
-                otherUserId: widget.otherUid,
-              ),
+        ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(Icons.delete_outline_rounded, color: Colors.white),
+      ),
+      onDismissed: (_) {
+        widget.onDismissed();
+        context.read<ChatProvider>().deleteChat(widget.chat.swapId);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Chat deleted'),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(14),
             ),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(14),
-            child: Row(
-              children: [
-                _ChatAvatar(name: name, photoUrl: _photoUrl),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: _ChatPreview(name: name, lastMessage: lastMessage),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 7),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(20),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(20),
+            onTap: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => ChatScreen(
+                  swapId: widget.chat.swapId,
+                  otherUserName: name,
+                  otherUserId: widget.otherUid,
                 ),
-                const SizedBox(width: 10),
-                _ChatTrailing(time: widget.chat.lastMessageAt),
-              ],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  _ChatAvatar(name: name, photoUrl: _photoUrl),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: _ChatPreview(name: name, lastMessage: lastMessage),
+                  ),
+                  const SizedBox(width: 10),
+                  _ChatTrailing(time: widget.chat.lastMessageAt),
+                ],
+              ),
             ),
           ),
         ),

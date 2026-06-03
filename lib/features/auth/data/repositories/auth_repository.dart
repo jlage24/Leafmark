@@ -188,6 +188,68 @@ class AuthRepository {
     final doc = await _db.collection('users').doc(user.uid).get();
     final username = doc.data()?['username'] as String?;
 
+    // Helper to delete all documents in a collection
+    Future<void> deleteCollection(String collectionPath) async {
+      final snapshot = await _db.collection(collectionPath).get();
+      if (snapshot.docs.isEmpty) return;
+      final b = _db.batch();
+      for (final doc in snapshot.docs) {
+        b.delete(doc.reference);
+      }
+      await b.commit();
+    }
+
+    // Delete user subcollections
+    await deleteCollection('users/${user.uid}/shelf');
+    await deleteCollection('users/${user.uid}/wishlist');
+    await deleteCollection('users/${user.uid}/followers');
+    await deleteCollection('users/${user.uid}/following');
+    await deleteCollection('users/${user.uid}/blocked');
+
+    // Wipe swaps and chats involving the user
+    final swapsAsRequester = await _db.collection('swap_requests').where('requesterId', isEqualTo: user.uid).get();
+    final swapsAsOwner = await _db.collection('swap_requests').where('ownerId', isEqualTo: user.uid).get();
+    
+    final swapBatch = _db.batch();
+    final processedSwaps = <String>{};
+    for (final doc in [...swapsAsRequester.docs, ...swapsAsOwner.docs]) {
+      if (!processedSwaps.add(doc.id)) continue;
+      
+      // Delete the messages subcollection of this chat
+      await deleteCollection('chats/${doc.id}/messages');
+      
+      swapBatch.delete(doc.reference);
+      swapBatch.delete(_db.collection('chats').doc(doc.id));
+    }
+    await swapBatch.commit();
+
+    // Wipe ratings
+    final ratingsAsReviewer = await _db.collection('ratings').where('reviewerId', isEqualTo: user.uid).get();
+    final ratingsAsReviewee = await _db.collection('ratings').where('revieweeId', isEqualTo: user.uid).get();
+    final ratingBatch = _db.batch();
+    for (final doc in [...ratingsAsReviewer.docs, ...ratingsAsReviewee.docs]) {
+      ratingBatch.delete(doc.reference);
+    }
+    await ratingBatch.commit();
+
+    // Wipe reports
+    final reportsAsReporter = await _db.collection('reports').where('reporterId', isEqualTo: user.uid).get();
+    final reportsAsReported = await _db.collection('reports').where('reportedUid', isEqualTo: user.uid).get();
+    final reportBatch = _db.batch();
+    for (final doc in [...reportsAsReporter.docs, ...reportsAsReported.docs]) {
+      reportBatch.delete(doc.reference);
+    }
+    await reportBatch.commit();
+
+    // Wipe notifications
+    final notifsAsRecipient = await _db.collection('notifications').where('recipientId', isEqualTo: user.uid).get();
+    final notifsAsSender = await _db.collection('notifications').where('senderId', isEqualTo: user.uid).get();
+    final notifBatch = _db.batch();
+    for (final doc in [...notifsAsRecipient.docs, ...notifsAsSender.docs]) {
+      notifBatch.delete(doc.reference);
+    }
+    await notifBatch.commit();
+
     final batch = _db.batch();
     batch.delete(_db.collection('users').doc(user.uid));
     if (username != null && username.isNotEmpty) {

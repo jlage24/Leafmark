@@ -6,15 +6,20 @@ class CloudinaryService {
   static const _cloudName = 'dwfixj8mf';
   static const _uploadPreset = 'leafmark_unsigned';
 
-  static Future<String?> uploadImage(File file, String folder) async {
+  static Future<String?> uploadImage(File file, String folder, {String? publicId}) async {
     final uri = Uri.parse(
       'https://api.cloudinary.com/v1_1/$_cloudName/image/upload',
     );
 
     final request = http.MultipartRequest('POST', uri)
       ..fields['upload_preset'] = _uploadPreset
-      ..fields['folder'] = folder
-      ..files.add(await http.MultipartFile.fromPath('file', file.path));
+      ..fields['folder'] = folder;
+
+    if (publicId != null) {
+      request.fields['public_id'] = publicId;
+    }
+
+    request.files.add(await http.MultipartFile.fromPath('file', file.path));
 
     final response = await request.send();
     if (response.statusCode == 200) {

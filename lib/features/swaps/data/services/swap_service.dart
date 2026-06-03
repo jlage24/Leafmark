@@ -132,25 +132,42 @@ class SwapService {
     batch.update(offeredBookRef, {'lockedBySwapId': swap.id});
     batch.update(wantedBookRef, {'lockedBySwapId': swap.id});
 
-    if (actorUid == swap.ownerId) {
-      final otherRequests = await _db
-          .collection(_collection)
-          .where('status', isEqualTo: SwapStatus.pending.name)
-          .where('ownerId', isEqualTo: swap.ownerId)
-          .get();
+    final q1 = _db
+        .collection(_collection)
+        .where('status', isEqualTo: SwapStatus.pending.name)
+        .where('bookOfferedId', isEqualTo: requesterBookId)
+        .get();
+    final q2 = _db
+        .collection(_collection)
+        .where('status', isEqualTo: SwapStatus.pending.name)
+        .where('bookWantedId', isEqualTo: requesterBookId)
+        .get();
+    final q3 = _db
+        .collection(_collection)
+        .where('status', isEqualTo: SwapStatus.pending.name)
+        .where('bookOfferedId', isEqualTo: ownerBookId)
+        .get();
+    final q4 = _db
+        .collection(_collection)
+        .where('status', isEqualTo: SwapStatus.pending.name)
+        .where('bookWantedId', isEqualTo: ownerBookId)
+        .get();
 
-      for (final doc in otherRequests.docs) {
-        if (doc.id == swap.id) continue;
+    final results = await Future.wait([q1, q2, q3, q4]);
+    final Set<String> processedIds = {swap.id};
 
-        final data = doc.data();
+    for (final snapshot in results) {
+      for (final doc in snapshot.docs) {
+        if (processedIds.contains(doc.id)) continue;
+        processedIds.add(doc.id);
 
-        final conflictsWithWanted =
-            data['bookWantedId'] == ownerBookId ||
-            data['bookOfferedId'] == ownerBookId;
-
-        if (conflictsWithWanted) {
-          batch.update(doc.reference, {'status': SwapStatus.rejected.name});
-        }
+        batch.update(doc.reference, {'status': SwapStatus.cancelled.name});
+        batch.update(_db.collection('chats').doc(doc.id), {
+          'status': 'cancelled',
+          'lastMessage':
+              'Swap automatically cancelled because a book became unavailable.',
+          'lastMessageAt': FieldValue.serverTimestamp(),
+        });
       }
     }
 

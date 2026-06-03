@@ -1136,7 +1136,6 @@ class _FullScreenGallery extends StatefulWidget {
   final int initialIndex;
 
   const _FullScreenGallery({
-    super.key,
     required this.imageUrls,
     required this.initialIndex,
   });

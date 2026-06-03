@@ -213,10 +213,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               ),
                             ),
                             validator: (value) {
-                              if (value == null || value.isEmpty)
+                              if (value == null || value.isEmpty) {
                                 return 'Password is required';
-                              if (value.length < 8)
+                              }
+                              if (value.length < 8) {
                                 return 'At least 8 characters';
+                              }
                               if (!value.contains(RegExp(r'[A-Z]'))) {
                                 return 'Include at least one uppercase letter';
                               }

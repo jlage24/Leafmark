@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/app_theme.dart';
 import '../../../ratings/domain/models/rating.dart';
 import '../../../ratings/presentation/providers/rating_provider.dart';
 import '../../../swaps/presentation/providers/swap_provider.dart';

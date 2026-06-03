@@ -3,7 +3,6 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:leafmark/core/app_theme.dart';
 import 'package:leafmark/core/cloudinary_service.dart';
 import 'package:leafmark/core/leafmark_text_field.dart';
 import 'package:leafmark/features/auth/presentation/providers/auth_provider.dart';
@@ -62,12 +61,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickImage(ImageSource source, {required bool isBanner}) async {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     final pickedFile = await _picker.pickImage(
       source: source,
       imageQuality: 85,
     );
 
     if (pickedFile == null) return;
+
+    if (!mounted) return;
 
     final croppedFile = await ImageCropper().cropImage(
       sourcePath: pickedFile.path,
@@ -80,7 +83,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       uiSettings: [
         AndroidUiSettings(
           toolbarTitle: isBanner ? 'Crop banner' : 'Crop profile photo',
-          toolbarColor: Theme.of(context).colorScheme.primary,
+          toolbarColor: primaryColor,
           toolbarWidgetColor: Colors.white,
           lockAspectRatio: true,
           hideBottomControls: false,

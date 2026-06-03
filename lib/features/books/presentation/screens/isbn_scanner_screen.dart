@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import '../../../../core/app_theme.dart';
 import 'add_book_screen.dart';
 
 class IsbnScannerScreen extends StatefulWidget {

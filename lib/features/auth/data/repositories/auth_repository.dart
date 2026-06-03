@@ -125,17 +125,22 @@ class AuthRepository {
   }) async {
     final Map<String, dynamic> updates = {};
     if (bio != null) updates['bio'] = bio;
-    if (profilePictureUrl != null)
+    if (profilePictureUrl != null) {
       updates['profilePictureUrl'] = profilePictureUrl;
-    if (bannerPictureUrl != null)
+    }
+    if (bannerPictureUrl != null) {
       updates['bannerPictureUrl'] = bannerPictureUrl;
+    }
     if (favoriteAuthors != null) updates['favoriteAuthors'] = favoriteAuthors;
-    if (favoriteBookTitle != null)
+    if (favoriteBookTitle != null) {
       updates['favoriteBookTitle'] = favoriteBookTitle;
-    if (favoriteBookAuthor != null)
+    }
+    if (favoriteBookAuthor != null) {
       updates['favoriteBookAuthor'] = favoriteBookAuthor;
-    if (favoriteBookCoverUrl != null)
+    }
+    if (favoriteBookCoverUrl != null) {
       updates['favoriteBookCoverUrl'] = favoriteBookCoverUrl;
+    }
 
     if (updates.isNotEmpty) {
       await _db.collection('users').doc(uid).update(updates);

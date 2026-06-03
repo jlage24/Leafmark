@@ -3,7 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
 
-import '../../../../core/app_theme.dart';
 import '../../../../core/theme_provider.dart';
 import '../../../../features/books/presentation/providers/book_shelf_provider.dart';
 import '../../../../features/books/presentation/screens/my_shelf_screen.dart';

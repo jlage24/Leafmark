@@ -4,7 +4,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
 
-import '../../../../core/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../books/data/services/browse_service.dart';
 import '../../../books/domain/models/book.dart';

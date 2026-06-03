@@ -12,8 +12,8 @@ class ChatProvider extends ChangeNotifier {
   final Map<String, Timer> _typingTimers = {};
 
   ChatProvider({ChatService? service, required AuthProvider auth})
-      : _service = service ?? ChatService(),
-        _auth = auth;
+    : _service = service ?? ChatService(),
+      _auth = auth;
 
   String get _uid => _auth.user?.uid ?? '';
 
@@ -30,13 +30,9 @@ class ChatProvider extends ChangeNotifier {
   Future<void> createChat({
     required String swapId,
     required List<String> participantIds,
-  }) =>
-      _service.createChat(swapId: swapId, participantIds: participantIds);
+  }) => _service.createChat(swapId: swapId, participantIds: participantIds);
 
-  Future<void> sendText({
-    required String swapId,
-    required String text,
-  }) async {
+  Future<void> sendText({required String swapId, required String text}) async {
     if (text.trim().isEmpty) return;
     await stopTyping(swapId);
     final message = ChatMessage(
@@ -54,28 +50,26 @@ class ChatProvider extends ChangeNotifier {
     required String bookOfferedId,
     required String bookOfferedOwnerId,
     required String bookWantedId,
-  }) =>
-      _service.sendProposal(
-        swapId: swapId,
-        senderId: _uid,
-        bookOfferedId: bookOfferedId,
-        bookOfferedOwnerId: bookOfferedOwnerId,
-        bookWantedId: bookWantedId,
-      );
+  }) => _service.sendProposal(
+    swapId: swapId,
+    senderId: _uid,
+    bookOfferedId: bookOfferedId,
+    bookOfferedOwnerId: bookOfferedOwnerId,
+    bookWantedId: bookWantedId,
+  );
 
   Future<void> sendCounterOffer({
     required String swapId,
     required String bookOfferedId,
     required String bookOfferedOwnerId,
     required String bookWantedId,
-  }) =>
-      _service.sendCounterOffer(
-        swapId: swapId,
-        senderId: _uid,
-        bookOfferedId: bookOfferedId,
-        bookOfferedOwnerId: bookOfferedOwnerId,
-        bookWantedId: bookWantedId,
-      );
+  }) => _service.sendCounterOffer(
+    swapId: swapId,
+    senderId: _uid,
+    bookOfferedId: bookOfferedId,
+    bookOfferedOwnerId: bookOfferedOwnerId,
+    bookWantedId: bookWantedId,
+  );
 
   Future<void> updateChatStatus(String swapId, ChatStatus status) =>
       _service.updateChatStatus(swapId, status);
@@ -108,9 +102,9 @@ class ChatProvider extends ChangeNotifier {
   }
 
   Stream<List<String>> typingStream(String swapId) {
-    return _service.typingStream(swapId).map(
-          (uids) => uids.where((uid) => uid != _uid).toList(),
-    );
+    return _service
+        .typingStream(swapId)
+        .map((uids) => uids.where((uid) => uid != _uid).toList());
   }
 
   // ── Read receipts ─────────────────────────────────────────────────────────

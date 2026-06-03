@@ -75,9 +75,7 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
         onPressed: () {
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => const IsbnScannerScreen(),
-            ),
+            MaterialPageRoute(builder: (context) => const IsbnScannerScreen()),
           );
         },
         child: const Icon(Icons.qr_code_scanner_rounded),
@@ -90,28 +88,26 @@ class _MyShelfScreenState extends State<MyShelfScreen> {
               child: books.isEmpty
                   ? const _EmptyShelfState()
                   : ListView.builder(
-                padding: const EdgeInsets.only(bottom: 96),
-                itemCount: books.length,
-                itemBuilder: (context, index) {
-                  final book = books[index];
+                      padding: const EdgeInsets.only(bottom: 96),
+                      itemCount: books.length,
+                      itemBuilder: (context, index) {
+                        final book = books[index];
 
-                  return BookCard(
-                    book: book,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => BookDetailScreen(
-                            book: book,
-                            isOwner: true,
-                          ),
-                        ),
-                      );
-                    },
-                    onLongPress: () => _showDeleteSheet(context, book),
-                  );
-                },
-              ),
+                        return BookCard(
+                          book: book,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    BookDetailScreen(book: book, isOwner: true),
+                              ),
+                            );
+                          },
+                          onLongPress: () => _showDeleteSheet(context, book),
+                        );
+                      },
+                    ),
             ),
           ],
         ),
@@ -326,18 +322,15 @@ class _SheetBookCover extends StatelessWidget {
         height: 82,
         color: theme.colorScheme.primary.withValues(alpha: 0.08),
         child: imageUrl == null || imageUrl!.isEmpty
-            ? Icon(
-          Icons.menu_book_rounded,
-          color: theme.colorScheme.primary,
-        )
+            ? Icon(Icons.menu_book_rounded, color: theme.colorScheme.primary)
             : CachedNetworkImage(
-          imageUrl: imageUrl!,
-          fit: BoxFit.cover,
-          errorWidget: (context, url, error) => Icon(
-            Icons.menu_book_rounded,
-            color: theme.colorScheme.primary,
-          ),
-        ),
+                imageUrl: imageUrl!,
+                fit: BoxFit.cover,
+                errorWidget: (context, url, error) => Icon(
+                  Icons.menu_book_rounded,
+                  color: theme.colorScheme.primary,
+                ),
+              ),
       ),
     );
   }

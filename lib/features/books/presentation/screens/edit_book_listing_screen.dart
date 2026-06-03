@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 
-import '../../../../core/app_theme.dart';
 import '../../../../core/cloudinary_service.dart';
 import '../../../../core/leafmark_text_field.dart';
 import '../../domain/models/book.dart';
@@ -13,10 +12,7 @@ import '../providers/book_shelf_provider.dart';
 class EditBookListingScreen extends StatefulWidget {
   final Book book;
 
-  const EditBookListingScreen({
-    super.key,
-    required this.book,
-  });
+  const EditBookListingScreen({super.key, required this.book});
 
   @override
   State<EditBookListingScreen> createState() => _EditBookListingScreenState();
@@ -44,7 +40,9 @@ class _EditBookListingScreenState extends State<EditBookListingScreen> {
     _selectedCategory = widget.book.category;
     _photoUrls = List<String>.from(widget.book.conditionPhotoUrls);
 
-    _locationController = TextEditingController(text: widget.book.location ?? '');
+    _locationController = TextEditingController(
+      text: widget.book.location ?? '',
+    );
     _notesController = TextEditingController(text: widget.book.notes ?? '');
   }
 
@@ -205,7 +203,8 @@ class _EditBookListingScreenState extends State<EditBookListingScreen> {
               const SizedBox(height: 18),
               _SectionCard(
                 title: 'Condition photos',
-                subtitle: 'Add up to 3 real photos so other readers can judge the condition.',
+                subtitle:
+                    'Add up to 3 real photos so other readers can judge the condition.',
                 child: _PhotoEditor(
                   photoUrls: _photoUrls,
                   isUploading: _isPickingPhoto,
@@ -232,7 +231,7 @@ class _EditBookListingScreenState extends State<EditBookListingScreen> {
                       label: 'Location',
                       hintText: 'e.g. Porto, FEUP',
                       validator: (value) =>
-                      value == null || value.trim().isEmpty
+                          value == null || value.trim().isEmpty
                           ? 'Location is required'
                           : null,
                     ),
@@ -270,13 +269,13 @@ class _EditBookListingScreenState extends State<EditBookListingScreen> {
                   ),
                   child: _isSaving
                       ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text('Save changes'),
                 ),
               ),
@@ -326,7 +325,7 @@ class _PhotoEditor extends StatelessWidget {
           runSpacing: 10,
           children: [
             ...photoUrls.map(
-                  (url) => Stack(
+              (url) => Stack(
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(14),
@@ -339,7 +338,9 @@ class _PhotoEditor extends StatelessWidget {
                         return Container(
                           width: 92,
                           height: 124,
-                          color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.08,
+                          ),
                           child: Icon(
                             Icons.menu_book_rounded,
                             color: theme.colorScheme.primary,
@@ -372,10 +373,7 @@ class _PhotoEditor extends StatelessWidget {
               ),
             ),
             if (photoUrls.length < 3)
-              _AddPhotoTile(
-                isUploading: isUploading,
-                onTap: onAddPhoto,
-              ),
+              _AddPhotoTile(isUploading: isUploading, onTap: onAddPhoto),
           ],
         ),
         if (isUploading) ...[
@@ -411,10 +409,7 @@ class _EmptyPhotosHint extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.add_a_photo_outlined,
-              color: theme.colorScheme.primary,
-            ),
+            Icon(Icons.add_a_photo_outlined, color: theme.colorScheme.primary),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -435,10 +430,7 @@ class _AddPhotoTile extends StatelessWidget {
   final bool isUploading;
   final VoidCallback onTap;
 
-  const _AddPhotoTile({
-    required this.isUploading,
-    required this.onTap,
-  });
+  const _AddPhotoTile({required this.isUploading, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -451,7 +443,9 @@ class _AddPhotoTile extends StatelessWidget {
         width: 92,
         height: 124,
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.5,
+          ),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: theme.colorScheme.outline.withValues(alpha: 0.25),
@@ -459,29 +453,29 @@ class _AddPhotoTile extends StatelessWidget {
         ),
         child: isUploading
             ? const Center(
-          child: SizedBox(
-            width: 22,
-            height: 22,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        )
+                child: SizedBox(
+                  width: 22,
+                  height: 22,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
             : Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.add_a_photo_outlined,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Add',
-              style: theme.textTheme.bodySmall?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: theme.colorScheme.primary,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.add_a_photo_outlined,
+                    color: theme.colorScheme.primary,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Add',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ],
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -527,11 +521,11 @@ class _BookSummaryCard extends StatelessWidget {
               color: theme.colorScheme.primary.withValues(alpha: 0.08),
               child: hasImage
                   ? Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) =>
-                const Icon(Icons.menu_book_rounded),
-              )
+                      imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) =>
+                          const Icon(Icons.menu_book_rounded),
+                    )
                   : const Icon(Icons.menu_book_rounded),
             ),
           ),
@@ -639,16 +633,11 @@ class _CategoryDropdown extends StatelessWidget {
       decoration: InputDecoration(
         labelText: 'Category',
         prefixIcon: const Icon(Icons.auto_stories_outlined),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
       ),
       dropdownColor: theme.colorScheme.surface,
       items: bookCategories.map((category) {
-        return DropdownMenuItem(
-          value: category,
-          child: Text(category),
-        );
+        return DropdownMenuItem(value: category, child: Text(category));
       }).toList(),
       onChanged: onChanged,
       validator: (value) => value == null ? 'Category is required' : null,
@@ -660,13 +649,12 @@ class _ConditionPicker extends StatelessWidget {
   final BookCondition selected;
   final ValueChanged<BookCondition> onChanged;
 
-  const _ConditionPicker({
-    required this.selected,
-    required this.onChanged,
-  });
+  const _ConditionPicker({required this.selected, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
       children: BookCondition.values.map((condition) {
         final isSelected = condition == selected;
@@ -680,11 +668,13 @@ class _ConditionPicker extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppTheme.primary
-                    : AppTheme.primary.withValues(alpha: 0.07),
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.primary.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: isSelected ? AppTheme.primary : Colors.transparent,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : Colors.transparent,
                 ),
               ),
               child: Text(
@@ -693,7 +683,7 @@ class _ConditionPicker extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
-                  color: isSelected ? Colors.white : AppTheme.primary,
+                  color: isSelected ? Colors.white : theme.colorScheme.primary,
                 ),
               ),
             ),

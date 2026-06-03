@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 
-import '../../../../core/app_theme.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../books/data/services/browse_service.dart';
 import '../../../books/domain/models/book.dart';
@@ -65,12 +66,7 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
   }
 
   void _showReportSheet(BuildContext context) {
-    const reasons = [
-      'Spam',
-      'Inappropriate behavior',
-      'Fake account',
-      'Other',
-    ];
+    const reasons = ['Spam', 'Inappropriate behavior', 'Fake account', 'Other'];
 
     showModalBottomSheet(
       context: context,
@@ -97,15 +93,14 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                   'Why are you reporting this profile?',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context)
-                        .colorScheme
-                        .onSurface
-                        .withValues(alpha: 0.62),
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.onSurface.withValues(alpha: 0.62),
                   ),
                 ),
                 const SizedBox(height: 14),
                 ...reasons.map(
-                      (reason) => _ReportReasonTile(
+                  (reason) => _ReportReasonTile(
                     reason: reason,
                     onTap: () async {
                       Navigator.pop(sheetCtx);
@@ -141,7 +136,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                             content: const Text(
                               'Failed to submit report. Please try again.',
                             ),
-                            backgroundColor: Theme.of(context).colorScheme.error,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).colorScheme.error,
                             behavior: SnackBarBehavior.floating,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(14),
@@ -178,8 +175,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
           final bio = data?['bio'] as String?;
           final profilePicUrl = data?['profilePictureUrl'] as String?;
           final bannerPicUrl = data?['bannerPictureUrl'] as String?;
-          final favoriteAuthors =
-          List<String>.from(data?['favoriteAuthors'] ?? []);
+          final favoriteAuthors = List<String>.from(
+            data?['favoriteAuthors'] ?? [],
+          );
           final favBookTitle = data?['favoriteBookTitle'] as String?;
           final favBookAuthor = data?['favoriteBookAuthor'] as String?;
           final favBookCoverUrl = data?['favoriteBookCoverUrl'] as String?;
@@ -200,6 +198,21 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                 currentUid: currentUid,
                 userId: widget.userId,
                 onReport: () => _showReportSheet(context),
+                onShare: () {
+                  final text =
+                      'Check out ${widget.displayName} (@$username) on LeafMark! 📚✨';
+                  Clipboard.setData(ClipboardData(text: text));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Profile details copied for @$username!'),
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 48),
               _PublicProfileInfo(
@@ -230,8 +243,9 @@ class _PublicProfileScreenState extends State<PublicProfileScreen> {
                     children: favoriteAuthors.map((author) {
                       return Chip(
                         label: Text(author),
-                        backgroundColor:
-                        AppTheme.primaryLight.withValues(alpha: 0.5),
+                        backgroundColor: Theme.of(
+                          context,
+                        ).colorScheme.primary.withValues(alpha: 0.15),
                         side: BorderSide.none,
                       );
                     }).toList(),
@@ -275,6 +289,7 @@ class _PublicProfileHero extends StatelessWidget {
   final String currentUid;
   final String userId;
   final VoidCallback onReport;
+  final VoidCallback onShare;
 
   const _PublicProfileHero({
     required this.displayName,
@@ -285,12 +300,14 @@ class _PublicProfileHero extends StatelessWidget {
     required this.currentUid,
     required this.userId,
     required this.onReport,
+    required this.onShare,
   });
 
   @override
   Widget build(BuildContext context) {
     final hasBanner = bannerPictureUrl != null && bannerPictureUrl!.isNotEmpty;
-    final hasAvatar = profilePictureUrl != null && profilePictureUrl!.isNotEmpty;
+    final hasAvatar =
+        profilePictureUrl != null && profilePictureUrl!.isNotEmpty;
 
     return Stack(
       clipBehavior: Clip.none,
@@ -301,12 +318,12 @@ class _PublicProfileHero extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(12, 18, 12, 0),
           decoration: BoxDecoration(
-            color: AppTheme.primary,
+            color: Theme.of(context).colorScheme.primary,
             image: hasBanner
                 ? DecorationImage(
-              image: NetworkImage(bannerPictureUrl!),
-              fit: BoxFit.cover,
-            )
+                    image: NetworkImage(bannerPictureUrl!),
+                    fit: BoxFit.cover,
+                  )
                 : null,
           ),
           child: Row(
@@ -318,21 +335,28 @@ class _PublicProfileHero extends StatelessWidget {
                 child: const Icon(Icons.arrow_back_rounded, size: 20),
               ),
               const Spacer(),
+              _HeroIconButton(
+                tooltip: 'Share profile',
+                onPressed: onShare,
+                child: const Icon(Icons.share_outlined, size: 20),
+              ),
               if (!isOwnProfile) ...[
+                const SizedBox(width: 8),
                 StreamBuilder<List<String>>(
-                  stream:
-                  context.read<BlockProvider>().getBlockedUsers(currentUid),
+                  stream: context.read<BlockProvider>().getBlockedUsers(
+                    currentUid,
+                  ),
                   builder: (context, snapshot) {
-                    final isBlocked =
-                        snapshot.data?.contains(userId) ?? false;
+                    final isBlocked = snapshot.data?.contains(userId) ?? false;
 
                     return _HeroIconButton(
                       tooltip: isBlocked ? 'Unblock user' : 'Block user',
                       onPressed: () async {
                         if (isBlocked) {
-                          await context
-                              .read<BlockProvider>()
-                              .unblockUser(currentUid, userId);
+                          await context.read<BlockProvider>().unblockUser(
+                            currentUid,
+                            userId,
+                          );
 
                           if (!context.mounted) return;
 
@@ -340,9 +364,10 @@ class _PublicProfileHero extends StatelessWidget {
                             const SnackBar(content: Text('User unblocked.')),
                           );
                         } else {
-                          await context
-                              .read<BlockProvider>()
-                              .blockUser(currentUid, userId);
+                          await context.read<BlockProvider>().blockUser(
+                            currentUid,
+                            userId,
+                          );
 
                           if (!context.mounted) return;
 
@@ -377,18 +402,21 @@ class _PublicProfileHero extends StatelessWidget {
             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             child: CircleAvatar(
               radius: 38,
-              backgroundColor: AppTheme.primaryLight,
-              backgroundImage:
-              hasAvatar ? NetworkImage(profilePictureUrl!) : null,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.16),
+              backgroundImage: hasAvatar
+                  ? NetworkImage(profilePictureUrl!)
+                  : null,
               child: !hasAvatar
                   ? Text(
-                initial,
-                style: const TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.w800,
-                  color: AppTheme.primary,
-                ),
-              )
+                      initial,
+                      style: TextStyle(
+                        fontSize: 30,
+                        fontWeight: FontWeight.w800,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                    )
                   : null,
             ),
           ),
@@ -398,7 +426,7 @@ class _PublicProfileHero extends StatelessWidget {
   }
 }
 
-class _PublicProfileInfo extends StatelessWidget {
+class _PublicProfileInfo extends StatefulWidget {
   final String userId;
   final String displayName;
   final String username;
@@ -418,6 +446,27 @@ class _PublicProfileInfo extends StatelessWidget {
   });
 
   @override
+  State<_PublicProfileInfo> createState() => _PublicProfileInfoState();
+}
+
+class _PublicProfileInfoState extends State<_PublicProfileInfo> {
+  late final Stream<int> _exchangeCountStream;
+  late final Stream<List<Rating>> _ratingsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _exchangeCountStream = context
+        .read<SwapProvider>()
+        .exchangeCount(widget.userId)
+        .shareValue();
+    _ratingsStream = context
+        .read<RatingProvider>()
+        .getRatingsForUser(widget.userId)
+        .shareValue();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
@@ -426,39 +475,39 @@ class _PublicProfileInfo extends StatelessWidget {
       child: Column(
         children: [
           Text(
-            displayName,
+            widget.displayName,
             textAlign: TextAlign.center,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.w900,
               letterSpacing: -0.4,
             ),
           ),
-          if (username.isNotEmpty) ...[
+          if (widget.username.isNotEmpty) ...[
             const SizedBox(height: 4),
             Text(
-              '@$username',
+              '@${widget.username}',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.58),
               ),
             ),
           ],
-          if (bio != null && bio!.isNotEmpty) ...[
+          if (widget.bio != null && widget.bio!.isNotEmpty) ...[
             const SizedBox(height: 14),
             Text(
-              bio!,
+              widget.bio!,
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyMedium,
             ),
           ],
           const SizedBox(height: 18),
-          _FollowCounts(userId: userId),
-          if (!isOwnProfile) ...[
+          _FollowCounts(userId: widget.userId),
+          if (!widget.isOwnProfile) ...[
             const SizedBox(height: 16),
-            _FollowButton(currentUid: currentUid, userId: userId),
+            _FollowButton(currentUid: widget.currentUid, userId: widget.userId),
           ],
           const SizedBox(height: 22),
           FutureBuilder<int>(
-            future: shelfCountFuture,
+            future: widget.shelfCountFuture,
             builder: (context, shelfSnap) {
               final count = shelfSnap.data ?? 0;
 
@@ -470,7 +519,7 @@ class _PublicProfileInfo extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   StreamBuilder<int>(
-                    stream: context.read<SwapProvider>().exchangeCount(userId),
+                    stream: _exchangeCountStream,
                     builder: (context, snapshot) {
                       return _StatCard(
                         label: 'Swaps',
@@ -480,8 +529,7 @@ class _PublicProfileInfo extends StatelessWidget {
                   ),
                   const SizedBox(width: 10),
                   StreamBuilder<List<Rating>>(
-                    stream:
-                    context.read<RatingProvider>().getRatingsForUser(userId),
+                    stream: _ratingsStream,
                     builder: (context, snapshot) {
                       var ratingValue = '—';
 
@@ -489,9 +537,11 @@ class _PublicProfileInfo extends StatelessWidget {
                         final ratings = snapshot.data!;
                         final total = ratings.fold<int>(
                           0,
-                              (totalStars, item) => totalStars + item.rating,
+                          (totalStars, item) => totalStars + item.rating,
                         );
-                        ratingValue = (total / ratings.length).toStringAsFixed(1);
+                        ratingValue = (total / ratings.length).toStringAsFixed(
+                          1,
+                        );
                       }
 
                       return _StatCard(label: 'Rating', value: ratingValue);
@@ -507,19 +557,32 @@ class _PublicProfileInfo extends StatelessWidget {
   }
 }
 
-class _FollowButton extends StatelessWidget {
+class _FollowButton extends StatefulWidget {
   final String currentUid;
   final String userId;
 
-  const _FollowButton({
-    required this.currentUid,
-    required this.userId,
-  });
+  const _FollowButton({required this.currentUid, required this.userId});
+
+  @override
+  State<_FollowButton> createState() => _FollowButtonState();
+}
+
+class _FollowButtonState extends State<_FollowButton> {
+  late final Stream<bool> _isFollowingStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _isFollowingStream = context
+        .read<FollowProvider>()
+        .isFollowing(widget.currentUid, widget.userId)
+        .shareValue();
+  }
 
   @override
   Widget build(BuildContext context) {
     return StreamBuilder<bool>(
-      stream: context.read<FollowProvider>().isFollowing(currentUid, userId),
+      stream: _isFollowingStream,
       builder: (context, snapshot) {
         final isFollowing = snapshot.data ?? false;
 
@@ -529,13 +592,15 @@ class _FollowButton extends StatelessWidget {
             onPressed: () async {
               try {
                 if (isFollowing) {
-                  await context
-                      .read<FollowProvider>()
-                      .unfollowUser(currentUid, userId);
+                  await context.read<FollowProvider>().unfollowUser(
+                    widget.currentUid,
+                    widget.userId,
+                  );
                 } else {
-                  await context
-                      .read<FollowProvider>()
-                      .followUser(currentUid, userId);
+                  await context.read<FollowProvider>().followUser(
+                    widget.currentUid,
+                    widget.userId,
+                  );
                 }
               } catch (e) {
                 if (!context.mounted) return;
@@ -551,7 +616,7 @@ class _FollowButton extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: isFollowing
                   ? Theme.of(context).colorScheme.surfaceContainerHighest
-                  : AppTheme.primary,
+                  : Theme.of(context).colorScheme.primary,
               foregroundColor: isFollowing
                   ? Theme.of(context).colorScheme.onSurface
                   : Colors.white,
@@ -596,19 +661,37 @@ class _HeroIconButton extends StatelessWidget {
   }
 }
 
-class _FollowCounts extends StatelessWidget {
+class _FollowCounts extends StatefulWidget {
   final String userId;
 
   const _FollowCounts({required this.userId});
+
+  @override
+  State<_FollowCounts> createState() => _FollowCountsState();
+}
+
+class _FollowCountsState extends State<_FollowCounts> {
+  late final Stream<int> _followersStream;
+  late final Stream<int> _followingStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _followersStream = context
+        .read<FollowProvider>()
+        .getFollowersCount(widget.userId)
+        .shareValue();
+    _followingStream = context
+        .read<FollowProvider>()
+        .getFollowingCount(widget.userId)
+        .shareValue();
+  }
 
   void _openList(BuildContext context, FollowListType type) {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => FollowListScreen(
-          userId: userId,
-          type: type,
-        ),
+        builder: (_) => FollowListScreen(userId: widget.userId, type: type),
       ),
     );
   }
@@ -621,7 +704,7 @@ class _FollowCounts extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         StreamBuilder<int>(
-          stream: context.read<FollowProvider>().getFollowersCount(userId),
+          stream: _followersStream,
           builder: (context, snapshot) {
             return _FollowCountText(
               value: snapshot.hasData ? '${snapshot.data}' : '-',
@@ -638,7 +721,7 @@ class _FollowCounts extends StatelessWidget {
           color: theme.colorScheme.outline.withValues(alpha: 0.25),
         ),
         StreamBuilder<int>(
-          stream: context.read<FollowProvider>().getFollowingCount(userId),
+          stream: _followingStream,
           builder: (context, snapshot) {
             return _FollowCountText(
               value: '${snapshot.data ?? 0}',
@@ -696,10 +779,7 @@ class _ProfileSection extends StatelessWidget {
   final String title;
   final Widget child;
 
-  const _ProfileSection({
-    required this.title,
-    required this.child,
-  });
+  const _ProfileSection({required this.title, required this.child});
 
   @override
   Widget build(BuildContext context) {
@@ -722,9 +802,9 @@ class _ProfileSection extends StatelessWidget {
         children: [
           Text(
             title,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w900,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 12),
           child,
@@ -834,10 +914,8 @@ class _ShelfPreviewState extends State<_ShelfPreview> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => BookDetailScreen(
-                        book: book,
-                        isOwner: false,
-                      ),
+                      builder: (context) =>
+                          BookDetailScreen(book: book, isOwner: false),
                     ),
                   );
                 },
@@ -854,10 +932,7 @@ class _ShelfBookPreview extends StatelessWidget {
   final Book book;
   final VoidCallback onTap;
 
-  const _ShelfBookPreview({
-    required this.book,
-    required this.onTap,
-  });
+  const _ShelfBookPreview({required this.book, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -878,9 +953,9 @@ class _ShelfBookPreview extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -889,15 +964,31 @@ class _ShelfBookPreview extends StatelessWidget {
   }
 }
 
-class _WishlistPreview extends StatelessWidget {
+class _WishlistPreview extends StatefulWidget {
   final String userId;
 
   const _WishlistPreview({required this.userId});
 
   @override
+  State<_WishlistPreview> createState() => _WishlistPreviewState();
+}
+
+class _WishlistPreviewState extends State<_WishlistPreview> {
+  late final Stream<List<WishlistItem>> _wishlistStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _wishlistStream = context
+        .read<WishlistProvider>()
+        .getWishlist(widget.userId)
+        .shareValue();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<WishlistItem>>(
-      stream: context.read<WishlistProvider>().getWishlist(userId),
+      stream: _wishlistStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const _SectionLoading();
@@ -936,13 +1027,15 @@ class _WishlistTile extends StatelessWidget {
             width: 38,
             height: 38,
             decoration: BoxDecoration(
-              color: AppTheme.primaryLight.withValues(alpha: 0.55),
+              color: Theme.of(
+                context,
+              ).colorScheme.primary.withValues(alpha: 0.16),
               borderRadius: BorderRadius.circular(13),
             ),
-            child: const Icon(
+            child: Icon(
               Icons.bookmark_outline_rounded,
               size: 19,
-              color: AppTheme.primary,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(width: 12),
@@ -954,9 +1047,9 @@ class _WishlistTile extends StatelessWidget {
                   item.title,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 if (authors != null) ...[
                   const SizedBox(height: 2),
@@ -976,15 +1069,31 @@ class _WishlistTile extends StatelessWidget {
   }
 }
 
-class _ReviewsPreview extends StatelessWidget {
+class _ReviewsPreview extends StatefulWidget {
   final String userId;
 
   const _ReviewsPreview({required this.userId});
 
   @override
+  State<_ReviewsPreview> createState() => _ReviewsPreviewState();
+}
+
+class _ReviewsPreviewState extends State<_ReviewsPreview> {
+  late final Stream<List<Rating>> _ratingsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _ratingsStream = context
+        .read<RatingProvider>()
+        .getRatingsForUser(widget.userId)
+        .shareValue();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return StreamBuilder<List<Rating>>(
-      stream: context.read<RatingProvider>().getRatingsForUser(userId),
+      stream: _ratingsStream,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const _SectionLoading();
@@ -992,8 +1101,10 @@ class _ReviewsPreview extends StatelessWidget {
 
         final ratings = snapshot.data ?? [];
         final reviews = ratings
-            .where((rating) =>
-        rating.comment != null && rating.comment!.trim().isNotEmpty)
+            .where(
+              (rating) =>
+                  rating.comment != null && rating.comment!.trim().isNotEmpty,
+            )
             .toList();
 
         if (reviews.isEmpty) {
@@ -1026,10 +1137,9 @@ class _ReviewTile extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 10),
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceContainerHighest
-                .withValues(alpha: 0.55),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
             borderRadius: BorderRadius.circular(18),
           ),
           child: Column(
@@ -1075,18 +1185,14 @@ class _ReportReasonTile extends StatelessWidget {
   final String reason;
   final VoidCallback onTap;
 
-  const _ReportReasonTile({
-    required this.reason,
-    required this.onTap,
-  });
+  const _ReportReasonTile({required this.reason, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Theme.of(context)
-          .colorScheme
-          .surfaceContainerHighest
-          .withValues(alpha: 0.55),
+      color: Theme.of(
+        context,
+      ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         onTap: onTap,
@@ -1098,9 +1204,9 @@ class _ReportReasonTile extends StatelessWidget {
               Expanded(
                 child: Text(
                   reason,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w700),
                 ),
               ),
               const Icon(Icons.chevron_right_rounded),
@@ -1129,13 +1235,11 @@ class _BookCover extends StatelessWidget {
         color: Colors.grey[200],
         child: hasCover
             ? Image.network(
-          coverUrl!,
-          fit: BoxFit.cover,
-          errorBuilder: (context, error, stackTrace) => const Icon(
-            Icons.book,
-            color: Colors.grey,
-          ),
-        )
+                coverUrl!,
+                fit: BoxFit.cover,
+                errorBuilder: (context, error, stackTrace) =>
+                    const Icon(Icons.book, color: Colors.grey),
+              )
             : const Icon(Icons.book, color: Colors.grey),
       ),
     );
@@ -1146,10 +1250,7 @@ class _StatCard extends StatelessWidget {
   final String label;
   final String value;
 
-  const _StatCard({
-    required this.label,
-    required this.value,
-  });
+  const _StatCard({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -1170,10 +1271,10 @@ class _StatCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (label == 'Rating' && value != '—') ...[
-                  const Icon(
+                  Icon(
                     Icons.star_rounded,
                     size: 17,
-                    color: AppTheme.accent,
+                    color: theme.colorScheme.tertiary,
                   ),
                   const SizedBox(width: 3),
                 ],
@@ -1201,9 +1302,7 @@ class _SectionLoading extends StatelessWidget {
   Widget build(BuildContext context) {
     return const Padding(
       padding: EdgeInsets.symmetric(vertical: 18),
-      child: Center(
-        child: CircularProgressIndicator(strokeWidth: 2),
-      ),
+      child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
     );
   }
 }
@@ -1218,9 +1317,7 @@ class _SectionEmptyText extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-        color: Theme.of(context).colorScheme.onSurface.withValues(
-          alpha: 0.62,
-        ),
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.62),
       ),
     );
   }

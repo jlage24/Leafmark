@@ -12,9 +12,9 @@ class FollowService {
     FirebaseFirestore? firestore,
     BlockService? blockService,
     NotificationService? notificationService,
-  })  : _db = firestore ?? FirebaseFirestore.instance,
-        _blockService = blockService ?? BlockService(),
-        _notificationService = notificationService ?? NotificationService();
+  }) : _db = firestore ?? FirebaseFirestore.instance,
+       _blockService = blockService ?? BlockService(),
+       _notificationService = notificationService ?? NotificationService();
 
   Future<void> followUser(String followerId, String followedId) async {
     if (followerId.isEmpty || followedId.isEmpty || followerId == followedId) {
@@ -163,10 +163,7 @@ class FollowService {
       final doc = await _db.collection('users').doc(uid).get();
 
       if (!doc.exists) {
-        return {
-          'displayName': null,
-          'photoUrl': null,
-        };
+        return {'displayName': null, 'photoUrl': null};
       }
 
       final data = doc.data()!;
@@ -176,10 +173,7 @@ class FollowService {
         'photoUrl': data['profilePictureUrl'] as String?,
       };
     } catch (_) {
-      return {
-        'displayName': null,
-        'photoUrl': null,
-      };
+      return {'displayName': null, 'photoUrl': null};
     }
   }
 }

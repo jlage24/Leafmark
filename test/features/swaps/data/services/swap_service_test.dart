@@ -246,6 +246,7 @@ void main() {
 
         await createDummyBooks();
         await createDummyChat(acceptedSwap.id);
+        await createDummyChat(conflictingSwap.id);
 
         await swapService.acceptSwapAndLockBooks(acceptedSwap);
 
@@ -260,7 +261,7 @@ void main() {
             .get();
 
         expect(acceptedSnap['status'], SwapStatus.accepted.name);
-        expect(rejectedSnap['status'], SwapStatus.rejected.name);
+        expect(rejectedSnap['status'], SwapStatus.cancelled.name);
       },
     );
 

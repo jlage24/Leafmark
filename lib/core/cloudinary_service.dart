@@ -8,7 +8,8 @@ class CloudinaryService {
 
   static Future<String?> uploadImage(File file, String folder) async {
     final uri = Uri.parse(
-        'https://api.cloudinary.com/v1_1/$_cloudName/image/upload');
+      'https://api.cloudinary.com/v1_1/$_cloudName/image/upload',
+    );
 
     final request = http.MultipartRequest('POST', uri)
       ..fields['upload_preset'] = _uploadPreset

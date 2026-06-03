@@ -4,10 +4,9 @@ class BlockService {
   final FirebaseFirestore _db;
 
   BlockService({FirebaseFirestore? firestore})
-      : _db = firestore ?? FirebaseFirestore.instance;
+    : _db = firestore ?? FirebaseFirestore.instance;
 
-
-// Blocks a user by saving them
+  // Blocks a user by saving them
   Future<void> blockUser(String currentUid, String targetUid) async {
     if (currentUid.isEmpty || targetUid.isEmpty || currentUid == targetUid) {
       throw ArgumentError('Invalid block operation');
@@ -15,17 +14,37 @@ class BlockService {
 
     final batch = _db.batch();
 
-    final blockRef = _db.collection('users').doc(currentUid).collection('blocked_users').doc(targetUid);
+    final blockRef = _db
+        .collection('users')
+        .doc(currentUid)
+        .collection('blocked_users')
+        .doc(targetUid);
     batch.set(blockRef, {
       'blockedUid': targetUid,
       'blockedAt': FieldValue.serverTimestamp(),
     });
 
-    final currentUserFollowingRef = _db.collection('users').doc(currentUid).collection('following').doc(targetUid);
-    final targetUserFollowersRef = _db.collection('users').doc(targetUid).collection('followers').doc(currentUid);
+    final currentUserFollowingRef = _db
+        .collection('users')
+        .doc(currentUid)
+        .collection('following')
+        .doc(targetUid);
+    final targetUserFollowersRef = _db
+        .collection('users')
+        .doc(targetUid)
+        .collection('followers')
+        .doc(currentUid);
 
-    final targetUserFollowingRef = _db.collection('users').doc(targetUid).collection('following').doc(currentUid);
-    final currentUserFollowersRef = _db.collection('users').doc(currentUid).collection('followers').doc(targetUid);
+    final targetUserFollowingRef = _db
+        .collection('users')
+        .doc(targetUid)
+        .collection('following')
+        .doc(currentUid);
+    final currentUserFollowersRef = _db
+        .collection('users')
+        .doc(currentUid)
+        .collection('followers')
+        .doc(targetUid);
 
     batch.delete(currentUserFollowingRef);
     batch.delete(targetUserFollowersRef);
@@ -34,6 +53,7 @@ class BlockService {
 
     await batch.commit();
   }
+
   // Unblocks a user
   Future<void> unblockUser(String currentUid, String targetUid) async {
     await _db

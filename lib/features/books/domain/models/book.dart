@@ -67,9 +67,10 @@ class Book {
     ownerName: json['ownerName'] as String?,
     ownerId: json['ownerId'] as String?,
     lockedBySwapId: json['lockedBySwapId'] as String?,
-    conditionPhotoUrls: (json['conditionPhotoUrls'] as List<dynamic>?)
-        ?.map((e) => e as String)
-        .toList() ??
+    conditionPhotoUrls:
+        (json['conditionPhotoUrls'] as List<dynamic>?)
+            ?.map((e) => e as String)
+            .toList() ??
         const [],
     category: json['category'] as String?,
     location: json['location'] as String?,
@@ -92,26 +93,25 @@ class Book {
     String? category,
     String? location,
     String? lastExchangeId,
-  }) =>
-      Book(
-        id: id ?? this.id,
-        isbn: isbn ?? this.isbn,
-        title: title ?? this.title,
-        authors: authors ?? this.authors,
-        coverUrl: coverUrl ?? this.coverUrl,
-        condition: condition ?? this.condition,
-        notes: notes ?? this.notes,
-        addedAt: addedAt ?? this.addedAt,
-        ownerName: ownerName ?? this.ownerName,
-        ownerId: ownerId ?? this.ownerId,
-        lockedBySwapId: lockedBySwapId == _sentinel
-            ? this.lockedBySwapId
-            : lockedBySwapId as String?,
-        conditionPhotoUrls: conditionPhotoUrls ?? this.conditionPhotoUrls,
-        category: category ?? this.category,
-        location: location ?? this.location,
-        lastExchangeId: lastExchangeId ?? this.lastExchangeId,
-      );
+  }) => Book(
+    id: id ?? this.id,
+    isbn: isbn ?? this.isbn,
+    title: title ?? this.title,
+    authors: authors ?? this.authors,
+    coverUrl: coverUrl ?? this.coverUrl,
+    condition: condition ?? this.condition,
+    notes: notes ?? this.notes,
+    addedAt: addedAt ?? this.addedAt,
+    ownerName: ownerName ?? this.ownerName,
+    ownerId: ownerId ?? this.ownerId,
+    lockedBySwapId: lockedBySwapId == _sentinel
+        ? this.lockedBySwapId
+        : lockedBySwapId as String?,
+    conditionPhotoUrls: conditionPhotoUrls ?? this.conditionPhotoUrls,
+    category: category ?? this.category,
+    location: location ?? this.location,
+    lastExchangeId: lastExchangeId ?? this.lastExchangeId,
+  );
 
   @override
   bool operator ==(Object other) =>

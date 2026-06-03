@@ -10,8 +10,8 @@ class NotificationProvider extends ChangeNotifier {
   NotificationProvider({
     NotificationService? service,
     required AuthProvider auth,
-  })  : _service = service ?? NotificationService(),
-        _auth = auth;
+  }) : _service = service ?? NotificationService(),
+       _auth = auth;
 
   String get _uid => _auth.user?.uid ?? '';
 

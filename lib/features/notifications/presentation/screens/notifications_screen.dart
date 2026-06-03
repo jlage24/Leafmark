@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:rxdart/rxdart.dart';
 
 import '../../../auth/presentation/screens/public_profile_screen.dart';
 import '../../../chat/presentation/screens/chat_screen.dart';
@@ -7,14 +8,30 @@ import '../../../swaps/presentation/screens/swap_requests_screen.dart';
 import '../../domain/models/app_notification.dart';
 import '../providers/notification_provider.dart';
 
-class NotificationsScreen extends StatelessWidget {
+class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
 
+  @override
+  State<NotificationsScreen> createState() => _NotificationsScreenState();
+}
+
+class _NotificationsScreenState extends State<NotificationsScreen> {
+  late final Stream<List<AppNotification>> _notificationsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _notificationsStream = context
+        .read<NotificationProvider>()
+        .notifications()
+        .shareValue();
+  }
+
   Future<void> _handleNotificationTap(
-      BuildContext context,
-      AppNotification notification,
-      NotificationProvider provider,
-      ) async {
+    BuildContext context,
+    AppNotification notification,
+    NotificationProvider provider,
+  ) async {
     await provider.markAsRead(notification.id);
 
     if (!context.mounted) return;
@@ -37,8 +54,7 @@ class NotificationsScreen extends StatelessWidget {
             builder: (_) => ChatScreen(
               swapId: chatId,
               otherUserId: notification.senderId,
-              otherUserName:
-              notification.senderDisplayName ?? 'LeafMark user',
+              otherUserName: notification.senderDisplayName ?? 'LeafMark user',
             ),
           ),
         );
@@ -58,8 +74,7 @@ class NotificationsScreen extends StatelessWidget {
           MaterialPageRoute(
             builder: (_) => PublicProfileScreen(
               userId: notification.senderId,
-              displayName:
-              notification.senderDisplayName ?? 'LeafMark user',
+              displayName: notification.senderDisplayName ?? 'LeafMark user',
             ),
           ),
         );
@@ -72,9 +87,7 @@ class NotificationsScreen extends StatelessWidget {
       SnackBar(
         content: const Text('This notification cannot be opened anymore.'),
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
     );
   }
@@ -90,7 +103,7 @@ class NotificationsScreen extends StatelessWidget {
             _NotificationsHeader(provider: provider),
             Expanded(
               child: StreamBuilder<List<AppNotification>>(
-                stream: provider.notifications(),
+                stream: _notificationsStream,
                 builder: (context, snapshot) {
                   if (snapshot.hasError) {
                     return const _NotificationsMessageState(
@@ -111,7 +124,7 @@ class NotificationsScreen extends StatelessWidget {
                       icon: Icons.notifications_none_rounded,
                       title: 'No notifications yet',
                       message:
-                      'When someone messages you or interacts with your swaps, you will see it here.',
+                          'When someone messages you or interacts with your swaps, you will see it here.',
                     );
                   }
 
@@ -248,14 +261,8 @@ class _NotificationsHeader extends StatelessWidget {
               }
             },
             itemBuilder: (_) => const [
-              PopupMenuItem(
-                value: 'read',
-                child: Text('Mark all as read'),
-              ),
-              PopupMenuItem(
-                value: 'clear',
-                child: Text('Clear all'),
-              ),
+              PopupMenuItem(value: 'read', child: Text('Mark all as read')),
+              PopupMenuItem(value: 'clear', child: Text('Clear all')),
             ],
           ),
         ],
@@ -268,10 +275,7 @@ class _NotificationCard extends StatelessWidget {
   final AppNotification notification;
   final VoidCallback onTap;
 
-  const _NotificationCard({
-    required this.notification,
-    required this.onTap,
-  });
+  const _NotificationCard({required this.notification, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -310,9 +314,7 @@ class _NotificationCard extends StatelessWidget {
               children: [
                 _NotificationAvatar(notification: notification),
                 const SizedBox(width: 14),
-                Expanded(
-                  child: _NotificationText(notification: notification),
-                ),
+                Expanded(child: _NotificationText(notification: notification)),
                 const SizedBox(width: 10),
                 _NotificationTrailing(isUnread: isUnread),
               ],
@@ -332,7 +334,8 @@ class _NotificationAvatar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasPhoto = notification.senderPhotoUrl != null &&
+    final hasPhoto =
+        notification.senderPhotoUrl != null &&
         notification.senderPhotoUrl!.isNotEmpty;
 
     return Stack(
@@ -342,13 +345,14 @@ class _NotificationAvatar extends StatelessWidget {
           radius: 26,
           backgroundColor: theme.colorScheme.primaryContainer,
           foregroundColor: theme.colorScheme.onPrimaryContainer,
-          backgroundImage:
-          hasPhoto ? NetworkImage(notification.senderPhotoUrl!) : null,
+          backgroundImage: hasPhoto
+              ? NetworkImage(notification.senderPhotoUrl!)
+              : null,
           child: !hasPhoto
               ? Text(
-            _initialFor(notification.senderDisplayName),
-            style: const TextStyle(fontWeight: FontWeight.w900),
-          )
+                  _initialFor(notification.senderDisplayName),
+                  style: const TextStyle(fontWeight: FontWeight.w900),
+                )
               : null,
         ),
         Positioned(
@@ -500,10 +504,7 @@ class _LoadingNotificationCard extends StatelessWidget {
           Container(
             width: 52,
             height: 52,
-            decoration: BoxDecoration(
-              color: baseColor,
-              shape: BoxShape.circle,
-            ),
+            decoration: BoxDecoration(color: baseColor, shape: BoxShape.circle),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -573,11 +574,7 @@ class _NotificationsMessageState extends StatelessWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon,
-                size: 38,
-                color: theme.colorScheme.primary,
-              ),
+              child: Icon(icon, size: 38, color: theme.colorScheme.primary),
             ),
             const SizedBox(height: 18),
             Text(

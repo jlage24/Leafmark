@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-
 class LeafmarkTextField extends StatelessWidget {
   final TextEditingController controller;
   final String label;
@@ -46,10 +45,7 @@ class LeafmarkTextField extends StatelessWidget {
           readOnly: readOnly,
           decoration: InputDecoration(
             hintText: hintText,
-            hintStyle: TextStyle(
-              color: Colors.grey.shade400,
-              fontSize: 14,
-            ),
+            hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
           ),
         ),
       ],

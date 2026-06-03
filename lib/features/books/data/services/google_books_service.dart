@@ -8,20 +8,24 @@ enum SearchType { title, author, isbn }
 /// Fetches book metadata from the Google Books API.
 class GoogleBooksService {
   // Read in build-time, never hardcoded
-  static const String _apiKey =
-  String.fromEnvironment('GOOGLE_BOOKS_API_KEY', defaultValue: '');
+  static const String _apiKey = String.fromEnvironment(
+    'GOOGLE_BOOKS_API_KEY',
+    defaultValue: '',
+  );
 
   final http.Client _client;
 
-  GoogleBooksService({http.Client? client})
-      : _client = client ?? http.Client();
+  GoogleBooksService({http.Client? client}) : _client = client ?? http.Client();
 
   Future<http.Response> _getWithRetry(Uri uri, {int maxAttempts = 3}) async {
     int attempt = 0;
     while (true) {
       attempt++;
-      final response = await _client.get(uri).timeout(const Duration(seconds: 10));
-      if (response.statusCode != 503 || attempt >= maxAttempts) {
+      final response = await _client
+          .get(uri)
+          .timeout(const Duration(seconds: 10));
+      if ((response.statusCode != 503 && response.statusCode != 429) ||
+          attempt >= maxAttempts) {
         return response;
       }
       // Exponential backoff: 1s, 2s, 4s...
@@ -44,7 +48,9 @@ class GoogleBooksService {
     }
 
     if (response.statusCode != 200) {
-      throw BookFetchException('Unexpected status code: ${response.statusCode}');
+      throw BookFetchException(
+        'Unexpected status code: ${response.statusCode}',
+      );
     }
 
     final Map<String, dynamic> json;
@@ -61,13 +67,17 @@ class GoogleBooksService {
     if (items == null || items.isEmpty) return null;
 
     final volumeInfo =
-    (items.first as Map<String, dynamic>)['volumeInfo'] as Map<String, dynamic>?;
+        (items.first as Map<String, dynamic>)['volumeInfo']
+            as Map<String, dynamic>?;
     if (volumeInfo == null) return null;
 
     return BookFetchResult.fromGoogleBooksJson(volumeInfo, isbn);
   }
 
-  Future<List<BookFetchResult>> searchBooks(String query, SearchType type) async {
+  Future<List<BookFetchResult>> searchBooks(
+    String query,
+    SearchType type,
+  ) async {
     final String queryParam;
     switch (type) {
       case SearchType.title:
@@ -94,7 +104,9 @@ class GoogleBooksService {
     }
 
     if (response.statusCode != 200) {
-      throw BookFetchException('Unexpected status code: ${response.statusCode}');
+      throw BookFetchException(
+        'Unexpected status code: ${response.statusCode}',
+      );
     }
 
     final Map<String, dynamic> json;
@@ -107,13 +119,18 @@ class GoogleBooksService {
     final items = json['items'] as List<dynamic>?;
     if (items == null || items.isEmpty) return [];
 
-    return items.map((item) {
-      final volumeInfo =
-      (item as Map<String, dynamic>)['volumeInfo'] as Map<String, dynamic>?;
-      if (volumeInfo == null) return null;
-      final fallbackIsbn = type == SearchType.isbn ? query : '';
-      return BookFetchResult.fromGoogleBooksJson(volumeInfo, fallbackIsbn);
-    }).where((result) => result != null).cast<BookFetchResult>().toList();
+    return items
+        .map((item) {
+          final volumeInfo =
+              (item as Map<String, dynamic>)['volumeInfo']
+                  as Map<String, dynamic>?;
+          if (volumeInfo == null) return null;
+          final fallbackIsbn = type == SearchType.isbn ? query : '';
+          return BookFetchResult.fromGoogleBooksJson(volumeInfo, fallbackIsbn);
+        })
+        .where((result) => result != null)
+        .cast<BookFetchResult>()
+        .toList();
   }
 }
 

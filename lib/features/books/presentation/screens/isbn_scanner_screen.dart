@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
-import '../../../../core/app_theme.dart';
 import 'add_book_screen.dart';
 
 class IsbnScannerScreen extends StatefulWidget {
@@ -28,8 +27,10 @@ class _IsbnScannerScreenState extends State<IsbnScannerScreen>
     super.initState();
     _pulseController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1500),)..repeat(reverse: true);
-    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+      duration: const Duration(milliseconds: 1500),
+    )..repeat(reverse: true);
+    _pulseAnimation = Tween<double>(begin: 0.85, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
   }
 
@@ -56,17 +57,13 @@ class _IsbnScannerScreenState extends State<IsbnScannerScreen>
     _scannerController.stop();
 
     Navigator.of(context)
-        .push(
-      MaterialPageRoute(
-        builder: (_) => AddBookScreen(isbn: cleaned),
-      ),
-    )
+        .push(MaterialPageRoute(builder: (_) => AddBookScreen(isbn: cleaned)))
         .then((_) {
-      if (mounted) {
-        setState(() => _isProcessing = false);
-        _scannerController.start();
-      }
-    });
+          if (mounted) {
+            setState(() => _isProcessing = false);
+            _scannerController.start();
+          }
+        });
   }
 
   void _toggleTorch() {
@@ -129,8 +126,8 @@ class _IsbnScannerScreenState extends State<IsbnScannerScreen>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     if (_isProcessing)
-                      const CircularProgressIndicator(
-                        color: AppTheme.primary,
+                      CircularProgressIndicator(
+                        color: Theme.of(context).colorScheme.primary,
                         strokeWidth: 2.5,
                       )
                     else ...[
@@ -158,12 +155,15 @@ class _IsbnScannerScreenState extends State<IsbnScannerScreen>
                           ),
                         );
                       },
-                      icon: const Icon(Icons.edit_outlined,
-                          size: 16, color: AppTheme.primary),
-                      label: const Text(
+                      icon: Icon(
+                        Icons.edit_outlined,
+                        size: 16,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                      label: Text(
                         'Enter ISBN manually',
                         style: TextStyle(
-                          color: AppTheme.primary,
+                          color: Theme.of(context).colorScheme.primary,
                           fontSize: 13,
                           fontWeight: FontWeight.w500,
                         ),
@@ -189,6 +189,7 @@ class _ScannerOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final cutoutSize = size.width * 0.72;
+    final primaryColor = Theme.of(context).colorScheme.primary;
 
     return AnimatedBuilder(
       animation: pulseAnimation,
@@ -198,6 +199,7 @@ class _ScannerOverlay extends StatelessWidget {
           painter: _OverlayPainter(
             cutoutSize: cutoutSize * pulseAnimation.value,
             cornerRadius: 16,
+            primaryColor: primaryColor,
           ),
         );
       },
@@ -208,8 +210,13 @@ class _ScannerOverlay extends StatelessWidget {
 class _OverlayPainter extends CustomPainter {
   final double cutoutSize;
   final double cornerRadius;
+  final Color primaryColor;
 
-  _OverlayPainter({required this.cutoutSize, required this.cornerRadius});
+  _OverlayPainter({
+    required this.cutoutSize,
+    required this.cornerRadius,
+    required this.primaryColor,
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -234,7 +241,7 @@ class _OverlayPainter extends CustomPainter {
 
     // Draw corner brackets
     final bracketPaint = Paint()
-      ..color = AppTheme.primary
+      ..color = primaryColor
       ..strokeWidth = 3.0
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round;
@@ -244,25 +251,49 @@ class _OverlayPainter extends CustomPainter {
     final r = cornerRadius;
 
     // Top-left
-    canvas.drawLine(Offset(rect.left + r, rect.top),
-        Offset(rect.left + r + bracketLen, rect.top), bracketPaint);
-    canvas.drawLine(Offset(rect.left, rect.top + r),
-        Offset(rect.left, rect.top + r + bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(rect.left + r, rect.top),
+      Offset(rect.left + r + bracketLen, rect.top),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(rect.left, rect.top + r),
+      Offset(rect.left, rect.top + r + bracketLen),
+      bracketPaint,
+    );
     // Top-right
-    canvas.drawLine(Offset(rect.right - r, rect.top),
-        Offset(rect.right - r - bracketLen, rect.top), bracketPaint);
-    canvas.drawLine(Offset(rect.right, rect.top + r),
-        Offset(rect.right, rect.top + r + bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(rect.right - r, rect.top),
+      Offset(rect.right - r - bracketLen, rect.top),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(rect.right, rect.top + r),
+      Offset(rect.right, rect.top + r + bracketLen),
+      bracketPaint,
+    );
     // Bottom-left
-    canvas.drawLine(Offset(rect.left + r, rect.bottom),
-        Offset(rect.left + r + bracketLen, rect.bottom), bracketPaint);
-    canvas.drawLine(Offset(rect.left, rect.bottom - r),
-        Offset(rect.left, rect.bottom - r - bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(rect.left + r, rect.bottom),
+      Offset(rect.left + r + bracketLen, rect.bottom),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(rect.left, rect.bottom - r),
+      Offset(rect.left, rect.bottom - r - bracketLen),
+      bracketPaint,
+    );
     // Bottom-right
-    canvas.drawLine(Offset(rect.right - r, rect.bottom),
-        Offset(rect.right - r - bracketLen, rect.bottom), bracketPaint);
-    canvas.drawLine(Offset(rect.right, rect.bottom - r),
-        Offset(rect.right, rect.bottom - r - bracketLen), bracketPaint);
+    canvas.drawLine(
+      Offset(rect.right - r, rect.bottom),
+      Offset(rect.right - r - bracketLen, rect.bottom),
+      bracketPaint,
+    );
+    canvas.drawLine(
+      Offset(rect.right, rect.bottom - r),
+      Offset(rect.right, rect.bottom - r - bracketLen),
+      bracketPaint,
+    );
   }
 
   @override
@@ -283,6 +314,8 @@ class _OverlayIconButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -290,19 +323,19 @@ class _OverlayIconButton extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: isActive
-              ? AppTheme.primary.withValues(alpha: 0.2)
+              ? primaryColor.withValues(alpha: 0.2)
               : Colors.white.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isActive
-                ? AppTheme.primary.withValues(alpha: 0.6)
+                ? primaryColor.withValues(alpha: 0.6)
                 : Colors.white.withValues(alpha: 0.2),
             width: 1,
           ),
         ),
         child: Icon(
           icon,
-          color: isActive ? AppTheme.primary : Colors.white,
+          color: isActive ? primaryColor : Colors.white,
           size: 20,
         ),
       ),

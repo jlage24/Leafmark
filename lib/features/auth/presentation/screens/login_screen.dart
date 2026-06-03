@@ -42,7 +42,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(success ? 'Welcome back! 👋' : auth.errorMessage ?? 'Unknown error.'),
+        content: Text(
+          success ? 'Welcome back! 👋' : auth.errorMessage ?? 'Unknown error.',
+        ),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
@@ -84,7 +86,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     'Log in to continue swapping books.',
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.62),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.62,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 28),
@@ -115,7 +119,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             validator: (value) {
                               final email = value?.trim() ?? '';
-                              return email.contains('@') ? null : 'Invalid email';
+                              return email.contains('@')
+                                  ? null
+                                  : 'Invalid email';
                             },
                           ),
                           const SizedBox(height: 16),
@@ -125,7 +131,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             textInputAction: TextInputAction.done,
                             decoration: InputDecoration(
                               labelText: 'Password',
-                              prefixIcon: const Icon(Icons.lock_outline_rounded),
+                              prefixIcon: const Icon(
+                                Icons.lock_outline_rounded,
+                              ),
                               suffixIcon: IconButton(
                                 onPressed: () {
                                   setState(() {
@@ -140,7 +148,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               ),
                             ),
                             validator: (value) =>
-                            value != null && value.isNotEmpty ? null : 'Password is required',
+                                value != null && value.isNotEmpty
+                                ? null
+                                : 'Password is required',
                             onFieldSubmitted: (_) => _submit(),
                           ),
                           const SizedBox(height: 24),
@@ -149,14 +159,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: FilledButton(
                               onPressed: _loading ? null : _submit,
                               style: FilledButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(vertical: 14),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
                               ),
                               child: _loading
                                   ? const SizedBox(
-                                height: 18,
-                                width: 18,
-                                child: CircularProgressIndicator(strokeWidth: 2),
-                              )
+                                      height: 18,
+                                      width: 18,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                      ),
+                                    )
                                   : const Text('Log in'),
                             ),
                           ),

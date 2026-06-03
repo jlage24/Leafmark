@@ -4,7 +4,7 @@ import '../../domain/models/app_user.dart';
 
 class AuthRepository {
   final _auth = FirebaseAuth.instance;
-  final _db   = FirebaseFirestore.instance;
+  final _db = FirebaseFirestore.instance;
 
   Stream<AppUser?> get authStateChanges async* {
     await for (final user in _auth.authStateChanges()) {
@@ -40,11 +40,11 @@ class AuthRepository {
   }
 
   Future<AppUser> register(
-      String email,
-      String password,
-      String displayName,
-      String username,
-      ) async {
+    String email,
+    String password,
+    String displayName,
+    String username,
+  ) async {
     final normalizedUsername = username.trim().toLowerCase();
 
     if (await isUsernameTaken(normalizedUsername)) {
@@ -125,16 +125,77 @@ class AuthRepository {
   }) async {
     final Map<String, dynamic> updates = {};
     if (bio != null) updates['bio'] = bio;
-    if (profilePictureUrl != null) updates['profilePictureUrl'] = profilePictureUrl;
-    if (bannerPictureUrl != null) updates['bannerPictureUrl'] = bannerPictureUrl;
+    if (profilePictureUrl != null) {
+      updates['profilePictureUrl'] = profilePictureUrl;
+    }
+    if (bannerPictureUrl != null) {
+      updates['bannerPictureUrl'] = bannerPictureUrl;
+    }
     if (favoriteAuthors != null) updates['favoriteAuthors'] = favoriteAuthors;
-    if (favoriteBookTitle != null) updates['favoriteBookTitle'] = favoriteBookTitle;
-    if (favoriteBookAuthor != null) updates['favoriteBookAuthor'] = favoriteBookAuthor;
-    if (favoriteBookCoverUrl != null) updates['favoriteBookCoverUrl'] = favoriteBookCoverUrl;
+    if (favoriteBookTitle != null) {
+      updates['favoriteBookTitle'] = favoriteBookTitle;
+    }
+    if (favoriteBookAuthor != null) {
+      updates['favoriteBookAuthor'] = favoriteBookAuthor;
+    }
+    if (favoriteBookCoverUrl != null) {
+      updates['favoriteBookCoverUrl'] = favoriteBookCoverUrl;
+    }
 
     if (updates.isNotEmpty) {
       await _db.collection('users').doc(uid).update(updates);
     }
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == null) {
+      throw FirebaseAuthException(
+        code: 'no-user-logged-in',
+        message: 'No authenticated user found.',
+      );
+    }
+
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: currentPassword,
+    );
+
+    await user.reauthenticateWithCredential(credential);
+    await user.updatePassword(newPassword);
+  }
+
+  Future<void> deleteAccount({required String password}) async {
+    final user = _auth.currentUser;
+    if (user == null || user.email == null) {
+      throw FirebaseAuthException(
+        code: 'no-user-logged-in',
+        message: 'No authenticated user found.',
+      );
+    }
+
+    final credential = EmailAuthProvider.credential(
+      email: user.email!,
+      password: password,
+    );
+
+    await user.reauthenticateWithCredential(credential);
+
+    // Get username before deleting document to free it up
+    final doc = await _db.collection('users').doc(user.uid).get();
+    final username = doc.data()?['username'] as String?;
+
+    final batch = _db.batch();
+    batch.delete(_db.collection('users').doc(user.uid));
+    if (username != null && username.isNotEmpty) {
+      batch.delete(_db.collection('usernames').doc(username.toLowerCase()));
+    }
+    await batch.commit();
+
+    await user.delete();
   }
 
   Future<void> logout() => _auth.signOut();

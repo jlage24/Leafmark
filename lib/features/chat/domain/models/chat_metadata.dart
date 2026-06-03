@@ -1,11 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-enum ChatStatus {
-  active,
-  accepted,
-  completed,
-  cancelled,
-}
+enum ChatStatus { active, accepted, completed, cancelled }
 
 class ChatMetadata {
   final String swapId;

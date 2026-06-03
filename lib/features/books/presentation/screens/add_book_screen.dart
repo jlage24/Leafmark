@@ -8,7 +8,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
 
-import '../../../../core/app_theme.dart';
 import '../../../../core/cloudinary_service.dart';
 import '../../../../core/leafmark_text_field.dart';
 import '../../data/services/google_books_service.dart';
@@ -20,11 +19,7 @@ class AddBookScreen extends StatefulWidget {
   final String? isbn;
   final GoogleBooksService? googleBooksService;
 
-  const AddBookScreen({
-    super.key,
-    required this.isbn,
-    this.googleBooksService,
-  });
+  const AddBookScreen({super.key, required this.isbn, this.googleBooksService});
 
   @override
   State<AddBookScreen> createState() => _AddBookScreenState();
@@ -142,7 +137,8 @@ class _AddBookScreenState extends State<AddBookScreen> {
 
       if (!serviceEnabled) {
         setState(() {
-          _locationMessage = 'Location services are off. You can type it manually.';
+          _locationMessage =
+              'Location services are off. You can type it manually.';
           _locationWasAutoDetected = false;
         });
         return;
@@ -156,7 +152,8 @@ class _AddBookScreenState extends State<AddBookScreen> {
 
       if (permission == LocationPermission.denied) {
         setState(() {
-          _locationMessage = 'Location permission denied. You can type it manually.';
+          _locationMessage =
+              'Location permission denied. You can type it manually.';
           _locationWasAutoDetected = false;
         });
         return;
@@ -164,7 +161,8 @@ class _AddBookScreenState extends State<AddBookScreen> {
 
       if (permission == LocationPermission.deniedForever) {
         setState(() {
-          _locationMessage = 'Location permission permanently denied. You can type it manually.';
+          _locationMessage =
+              'Location permission permanently denied. You can type it manually.';
           _locationWasAutoDetected = false;
         });
         return;
@@ -186,7 +184,8 @@ class _AddBookScreenState extends State<AddBookScreen> {
 
       if (detectedLocation == null || detectedLocation.isEmpty) {
         setState(() {
-          _locationMessage = 'Could not detect a useful location. You can type it manually.';
+          _locationMessage =
+              'Could not detect a useful location. You can type it manually.';
           _locationWasAutoDetected = false;
         });
         return;
@@ -201,7 +200,8 @@ class _AddBookScreenState extends State<AddBookScreen> {
       if (!mounted) return;
 
       setState(() {
-        _locationMessage = 'Could not detect location. You can type it manually.';
+        _locationMessage =
+            'Could not detect location. You can type it manually.';
         _locationWasAutoDetected = false;
       });
     } finally {
@@ -259,9 +259,9 @@ class _AddBookScreenState extends State<AddBookScreen> {
     } catch (_) {
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to pick images.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to pick images.')));
     }
   }
 
@@ -325,7 +325,7 @@ class _AddBookScreenState extends State<AddBookScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('"${book.title}" added to your shelf!'),
-          backgroundColor: AppTheme.primary,
+          backgroundColor: Theme.of(context).colorScheme.primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
@@ -443,27 +443,27 @@ class _AddBookScreenState extends State<AddBookScreen> {
                       ? null
                       : _saveBook,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppTheme.primary,
+                    backgroundColor: Theme.of(context).colorScheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
                   ),
                   child: _isSaving
                       ? const SizedBox(
-                    width: 22,
-                    height: 22,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.5,
-                      color: Colors.white,
-                    ),
-                  )
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2.5,
+                            color: Colors.white,
+                          ),
+                        )
                       : const Text(
-                    'Add to My Shelf',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
+                          'Add to My Shelf',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
                 ),
               ),
               const SizedBox(height: 24),
@@ -488,6 +488,8 @@ class _IsbnInputRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -522,22 +524,24 @@ class _IsbnInputRow extends StatelessWidget {
             child: FilledButton(
               onPressed: isLoading ? null : onLookup,
               style: FilledButton.styleFrom(
-                backgroundColor: AppTheme.primary.withValues(alpha: 0.15),
-                foregroundColor: AppTheme.primary,
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: 0.15,
+                ),
+                foregroundColor: theme.colorScheme.primary,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
               ),
               child: isLoading
-                  ? const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.2,
-                  color: AppTheme.primary,
-                ),
-              )
+                  ? SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.2,
+                        color: theme.colorScheme.primary,
+                      ),
+                    )
                   : const Icon(Icons.search_rounded),
             ),
           ),
@@ -647,7 +651,7 @@ class _BookForm extends StatelessWidget {
                 height: 140,
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) =>
-                const SizedBox.shrink(),
+                    const SizedBox.shrink(),
               ),
             ),
           ),
@@ -657,16 +661,18 @@ class _BookForm extends StatelessWidget {
           controller: titleController,
           label: 'Title',
           hintText: 'The Name of the Rose',
-          validator: (value) =>
-          value == null || value.trim().isEmpty ? 'Title is required' : null,
+          validator: (value) => value == null || value.trim().isEmpty
+              ? 'Title is required'
+              : null,
         ),
         const SizedBox(height: 14),
         LeafmarkTextField(
           controller: authorsController,
           label: 'Author(s)',
           hintText: 'Umberto Eco',
-          validator: (value) =>
-          value == null || value.trim().isEmpty ? 'Author is required' : null,
+          validator: (value) => value == null || value.trim().isEmpty
+              ? 'Author is required'
+              : null,
         ),
         const SizedBox(height: 14),
         _CategorySelector(
@@ -685,21 +691,22 @@ class _BookForm extends StatelessWidget {
             hintText: 'e.g. FEUP, Porto',
             suffixIcon: isDetectingLocation
                 ? const Padding(
-              padding: EdgeInsets.all(12),
-              child: SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-            )
+                    padding: EdgeInsets.all(12),
+                    child: SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  )
                 : IconButton(
-              tooltip: 'Detect location',
-              onPressed: onDetectLocation,
-              icon: const Icon(Icons.my_location_rounded),
-            ),
+                    tooltip: 'Detect location',
+                    onPressed: onDetectLocation,
+                    icon: const Icon(Icons.my_location_rounded),
+                  ),
           ),
-          validator: (value) =>
-          value == null || value.trim().isEmpty ? 'Location is required' : null,
+          validator: (value) => value == null || value.trim().isEmpty
+              ? 'Location is required'
+              : null,
         ),
         if (locationMessage != null) ...[
           const SizedBox(height: 6),
@@ -740,10 +747,7 @@ class _BookForm extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        _ConditionPicker(
-          selected: condition,
-          onChanged: onConditionChanged,
-        ),
+        _ConditionPicker(selected: condition, onChanged: onConditionChanged),
         const SizedBox(height: 20),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -776,16 +780,14 @@ class _BookForm extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context)
-                  .colorScheme
-                  .surfaceContainerHighest
-                  .withValues(alpha: 0.5),
+              color: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
               borderRadius: BorderRadius.circular(10),
               border: Border.all(
-                color: Theme.of(context)
-                    .colorScheme
-                    .outline
-                    .withValues(alpha: 0.2),
+                color: Theme.of(
+                  context,
+                ).colorScheme.outline.withValues(alpha: 0.2),
               ),
             ),
             child: Row(
@@ -900,10 +902,7 @@ class _CategorySelector extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(
-              Icons.auto_awesome_rounded,
-              color: theme.colorScheme.primary,
-            ),
+            Icon(Icons.auto_awesome_rounded, color: theme.colorScheme.primary),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -926,10 +925,7 @@ class _CategorySelector extends StatelessWidget {
                 ],
               ),
             ),
-            TextButton(
-              onPressed: onChangePressed,
-              child: const Text('Change'),
-            ),
+            TextButton(onPressed: onChangePressed, child: const Text('Change')),
           ],
         ),
       );
@@ -950,7 +946,9 @@ class _CategorySelector extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            border: Border.all(color: AppTheme.divider),
+            border: Border.all(
+              color: theme.colorScheme.outline.withValues(alpha: 0.25),
+            ),
             borderRadius: BorderRadius.circular(12),
           ),
           child: DropdownButtonHideUnderline(
@@ -960,10 +958,7 @@ class _CategorySelector extends StatelessWidget {
               isExpanded: true,
               dropdownColor: theme.colorScheme.surface,
               items: categories.map((category) {
-                return DropdownMenuItem(
-                  value: category,
-                  child: Text(category),
-                );
+                return DropdownMenuItem(value: category, child: Text(category));
               }).toList(),
               onChanged: onCategoryChanged,
             ),
@@ -978,13 +973,12 @@ class _ConditionPicker extends StatelessWidget {
   final BookCondition selected;
   final ValueChanged<BookCondition> onChanged;
 
-  const _ConditionPicker({
-    required this.selected,
-    required this.onChanged,
-  });
+  const _ConditionPicker({required this.selected, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Row(
       children: BookCondition.values.map((condition) {
         final isSelected = condition == selected;
@@ -998,11 +992,13 @@ class _ConditionPicker extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 9),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppTheme.primary
-                    : AppTheme.primary.withValues(alpha: 0.07),
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.primary.withValues(alpha: 0.07),
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: isSelected ? AppTheme.primary : Colors.transparent,
+                  color: isSelected
+                      ? theme.colorScheme.primary
+                      : Colors.transparent,
                 ),
               ),
               child: Text(
@@ -1011,7 +1007,7 @@ class _ConditionPicker extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
-                  color: isSelected ? Colors.white : AppTheme.primary,
+                  color: isSelected ? Colors.white : theme.colorScheme.primary,
                 ),
               ),
             ),

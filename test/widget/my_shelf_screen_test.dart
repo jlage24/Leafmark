@@ -43,6 +43,15 @@ class FakeAuthProvider extends ChangeNotifier implements AuthProvider {
     String? favoriteBookAuthor,
     String? favoriteBookCoverUrl,
   }) async => true;
+
+  @override
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async => true;
+
+  @override
+  Future<bool> deleteAccount({required String password}) async => true;
 }
 
 void main() {

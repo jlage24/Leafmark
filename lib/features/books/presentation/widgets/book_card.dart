@@ -51,10 +51,7 @@ class BookCard extends StatelessWidget {
                 _BookCover(imageUrl: displayUrl),
                 const SizedBox(width: 14),
                 Expanded(
-                  child: _BookInfo(
-                    book: book,
-                    isCatalogView: isCatalogView,
-                  ),
+                  child: _BookInfo(book: book, isCatalogView: isCatalogView),
                 ),
                 const SizedBox(width: 8),
                 Icon(
@@ -87,29 +84,29 @@ class _BookCover extends StatelessWidget {
         color: theme.colorScheme.primary.withValues(alpha: 0.08),
         child: imageUrl == null || imageUrl!.isEmpty
             ? Icon(
-          Icons.menu_book_rounded,
-          size: 36,
-          color: theme.colorScheme.primary,
-        )
-            : CachedNetworkImage(
-          imageUrl: imageUrl!,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Center(
-            child: SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(
-                strokeWidth: 2,
+                Icons.menu_book_rounded,
+                size: 36,
                 color: theme.colorScheme.primary,
+              )
+            : CachedNetworkImage(
+                imageUrl: imageUrl!,
+                fit: BoxFit.cover,
+                placeholder: (context, url) => Center(
+                  child: SizedBox(
+                    width: 22,
+                    height: 22,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+                errorWidget: (context, url, error) => Icon(
+                  Icons.menu_book_rounded,
+                  size: 36,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-            ),
-          ),
-          errorWidget: (context, url, error) => Icon(
-            Icons.menu_book_rounded,
-            size: 36,
-            color: theme.colorScheme.primary,
-          ),
-        ),
       ),
     );
   }
@@ -119,15 +116,13 @@ class _BookInfo extends StatelessWidget {
   final Book book;
   final bool isCatalogView;
 
-  const _BookInfo({
-    required this.book,
-    required this.isCatalogView,
-  });
+  const _BookInfo({required this.book, required this.isCatalogView});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasLocation = book.location != null && book.location!.trim().isNotEmpty;
+    final hasLocation =
+        book.location != null && book.location!.trim().isNotEmpty;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -177,10 +172,7 @@ class _InfoChip extends StatelessWidget {
   final IconData icon;
   final String label;
 
-  const _InfoChip({
-    required this.icon,
-    required this.label,
-  });
+  const _InfoChip({required this.icon, required this.label});
 
   @override
   Widget build(BuildContext context) {

@@ -34,7 +34,9 @@ class _RateExchangeScreenState extends State<RateExchangeScreen> {
     // Validation: Must select stars for both fields
     if (_partnerRating == 0 || _bookConditionRating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a star rating for both fields.')),
+        const SnackBar(
+          content: Text('Please select a star rating for both fields.'),
+        ),
       );
       return;
     }
@@ -53,7 +55,9 @@ class _RateExchangeScreenState extends State<RateExchangeScreen> {
       swapId: widget.swapId,
       rating: _partnerRating,
       bookConditionRating: _bookConditionRating,
-      comment: _commentController.text.trim().isEmpty ? null : _commentController.text.trim(),
+      comment: _commentController.text.trim().isEmpty
+          ? null
+          : _commentController.text.trim(),
       createdAt: DateTime.now(),
     );
 
@@ -65,14 +69,18 @@ class _RateExchangeScreenState extends State<RateExchangeScreen> {
       );
       Navigator.of(context).pop(); // Go back to the ChatScreen
     } else if (mounted && ratingProvider.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(ratingProvider.errorMessage!)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(ratingProvider.errorMessage!)));
     }
   }
 
   // Helper widget to build the 5-star interactive row
-  Widget _buildStarRow(String title, int currentRating, ValueChanged<int> onChanged) {
+  Widget _buildStarRow(
+    String title,
+    int currentRating,
+    ValueChanged<int> onChanged,
+  ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -101,9 +109,7 @@ class _RateExchangeScreenState extends State<RateExchangeScreen> {
     final isLoading = context.watch<RatingProvider>().isLoading;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Rate Exchange'),
-      ),
+      appBar: AppBar(title: const Text('Rate Exchange')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -112,18 +118,21 @@ class _RateExchangeScreenState extends State<RateExchangeScreen> {
             _buildStarRow(
               'How was your trading partner?',
               _partnerRating,
-                  (val) => setState(() => _partnerRating = val),
+              (val) => setState(() => _partnerRating = val),
             ),
             const SizedBox(height: 24),
 
             _buildStarRow(
               'How accurate was the book condition?',
               _bookConditionRating,
-                  (val) => setState(() => _bookConditionRating = val),
+              (val) => setState(() => _bookConditionRating = val),
             ),
             const SizedBox(height: 24),
 
-            Text('Leave a comment (optional)', style: Theme.of(context).textTheme.titleMedium),
+            Text(
+              'Leave a comment (optional)',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: _commentController,
@@ -144,11 +153,17 @@ class _RateExchangeScreenState extends State<RateExchangeScreen> {
                 onPressed: isLoading ? null : _submit,
                 child: isLoading
                     ? const SizedBox(
-                  height: 24,
-                  width: 24,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                )
-                    : const Text('Submit Rating', style: TextStyle(fontSize: 16)),
+                        height: 24,
+                        width: 24,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'Submit Rating',
+                        style: TextStyle(fontSize: 16),
+                      ),
               ),
             ),
           ],

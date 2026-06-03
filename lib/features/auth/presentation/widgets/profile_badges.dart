@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/app_theme.dart';
 import '../../../ratings/domain/models/rating.dart';
 import '../../../ratings/presentation/providers/rating_provider.dart';
 import '../../../swaps/presentation/providers/swap_provider.dart';
 import '../../../books/presentation/providers/follow_provider.dart';
+import 'package:rxdart/rxdart.dart';
 
-class ProfileBadges extends StatelessWidget {
+class ProfileBadges extends StatefulWidget {
   final String userId;
   final int shelfCount;
 
@@ -17,34 +17,66 @@ class ProfileBadges extends StatelessWidget {
   });
 
   @override
+  State<ProfileBadges> createState() => _ProfileBadgesState();
+}
+
+class _ProfileBadgesState extends State<ProfileBadges> {
+  late final Stream<int> _exchangeCountStream;
+  late final Stream<List<Rating>> _ratingsStream;
+  late final Stream<int> _followersStream;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.userId.isNotEmpty) {
+      _exchangeCountStream = context
+          .read<SwapProvider>()
+          .exchangeCount(widget.userId)
+          .shareValue();
+      _ratingsStream = context
+          .read<RatingProvider>()
+          .getRatingsForUser(widget.userId)
+          .shareValue();
+      _followersStream = context
+          .read<FollowProvider>()
+          .getFollowersCount(widget.userId)
+          .shareValue();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    if (userId.isEmpty) return const SizedBox.shrink();
+    if (widget.userId.isEmpty) return const SizedBox.shrink();
 
     return StreamBuilder<int>(
-      stream: context.read<SwapProvider>().exchangeCount(userId),
+      stream: _exchangeCountStream,
       builder: (context, swapSnapshot) {
         final swapsCount = swapSnapshot.data ?? 0;
 
         return StreamBuilder<List<Rating>>(
-          stream: context.read<RatingProvider>().getRatingsForUser(userId),
+          stream: _ratingsStream,
           builder: (context, ratingSnapshot) {
             final ratings = ratingSnapshot.data ?? [];
             double averageRating = 0.0;
             if (ratings.isNotEmpty) {
-              final totalStars = ratings.fold<int>(0, (total, item) => total + item.rating);
+              final totalStars = ratings.fold<int>(
+                0,
+                (total, item) => total + item.rating,
+              );
               averageRating = totalStars / ratings.length;
             }
 
             return StreamBuilder<int>(
-              stream: context.read<FollowProvider>().getFollowersCount(userId),
+              stream: _followersStream,
               builder: (context, followersSnapshot) {
                 final followersCount = followersSnapshot.data ?? 0;
 
                 final badges = _calculateBadges(
+                  context,
                   swapsCount: swapsCount,
                   averageRating: averageRating,
                   ratingsCount: ratings.length,
-                  shelfCount: shelfCount,
+                  shelfCount: widget.shelfCount,
                   followersCount: followersCount,
                 );
 
@@ -67,7 +99,9 @@ class ProfileBadges extends StatelessWidget {
                       child: Wrap(
                         spacing: 8,
                         runSpacing: 8,
-                        children: badges.map((badge) => _BadgeChip(badge: badge)).toList(),
+                        children: badges
+                            .map((badge) => _BadgeChip(badge: badge))
+                            .toList(),
                       ),
                     ),
                   ],
@@ -81,7 +115,8 @@ class ProfileBadges extends StatelessWidget {
   }
 
   // Deterministic badge logic mapping
-  List<Map<String, dynamic>> _calculateBadges({
+  List<Map<String, dynamic>> _calculateBadges(
+    BuildContext context, {
     required int swapsCount,
     required double averageRating,
     required int ratingsCount,
@@ -89,12 +124,13 @@ class ProfileBadges extends StatelessWidget {
     required int followersCount,
   }) {
     final badges = <Map<String, dynamic>>[];
+    final scheme = Theme.of(context).colorScheme;
 
     if (swapsCount >= 1) {
       badges.add({
         'label': 'First Swap',
         'icon': Icons.swap_horiz_rounded,
-        'color': AppTheme.secondary,
+        'color': scheme.secondary,
       });
     }
 
@@ -102,7 +138,7 @@ class ProfileBadges extends StatelessWidget {
       badges.add({
         'label': 'Trusted Swapper',
         'icon': Icons.handshake_rounded,
-        'color': AppTheme.primary,
+        'color': scheme.primary,
       });
     }
 
@@ -110,7 +146,7 @@ class ProfileBadges extends StatelessWidget {
       badges.add({
         'label': 'Well Rated',
         'icon': Icons.star_rounded,
-        'color': AppTheme.accent,
+        'color': scheme.tertiary,
       });
     }
 
@@ -133,7 +169,6 @@ class ProfileBadges extends StatelessWidget {
     return badges;
   }
 }
-
 
 class _BadgeChip extends StatelessWidget {
   final Map<String, dynamic> badge;

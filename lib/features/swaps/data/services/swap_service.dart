@@ -20,9 +20,9 @@ class SwapService {
     FirebaseFirestore? firestore,
     BlockService? blockService,
     NotificationService? notificationService,
-  })  : _db = firestore ?? FirebaseFirestore.instance,
-        _blockService = blockService ?? BlockService(),
-        _notificationService = notificationService ?? NotificationService();
+  }) : _db = firestore ?? FirebaseFirestore.instance,
+       _blockService = blockService ?? BlockService(),
+       _notificationService = notificationService ?? NotificationService();
 
   Future<String> createSwapRequest(SwapRequest request) async {
     final hasBlock = await _blockService.hasBlockRelationship(
@@ -34,46 +34,48 @@ class SwapService {
       throw Exception('Cannot create request. Access restricted due to block.');
     }
 
-    return await _db.runTransaction<String>((transaction) async {
-      final query = await _db
-          .collection(_collection)
-          .where('bookWantedId', isEqualTo: request.bookWantedId)
-          .where('requesterId', isEqualTo: request.requesterId)
-          .where('status', isEqualTo: SwapStatus.pending.name)
-          .get();
+    return await _db
+        .runTransaction<String>((transaction) async {
+          final query = await _db
+              .collection(_collection)
+              .where('bookWantedId', isEqualTo: request.bookWantedId)
+              .where('requesterId', isEqualTo: request.requesterId)
+              .where('status', isEqualTo: SwapStatus.pending.name)
+              .get();
 
-      if (query.docs.isNotEmpty) {
-        throw DuplicateSwapException();
-      }
+          if (query.docs.isNotEmpty) {
+            throw DuplicateSwapException();
+          }
 
-      final docRef = _db.collection(_collection).doc();
-      transaction.set(docRef, request.toMap());
+          final docRef = _db.collection(_collection).doc();
+          transaction.set(docRef, request.toMap());
 
-      return docRef.id;
-    }).then((swapRequestId) async {
-      final senderInfo = await fetchUserInfo(request.requesterId);
-      final senderName = senderInfo['displayName'] ?? 'Someone';
+          return docRef.id;
+        })
+        .then((swapRequestId) async {
+          final senderInfo = await fetchUserInfo(request.requesterId);
+          final senderName = senderInfo['displayName'] ?? 'Someone';
 
-      await _notificationService.createNotification(
-        AppNotification(
-          id: '',
-          recipientId: request.ownerId,
-          senderId: request.requesterId,
-          senderDisplayName: senderName,
-          senderPhotoUrl: senderInfo['photoUrl'],
-          type: AppNotificationType.swapRequest,
-          title: 'New swap request',
-          body: '$senderName wants to swap for one of your books.',
-          swapRequestId: swapRequestId,
-          swapId: swapRequestId,
-          isRead: false,
-          createdAt: DateTime.now(),
-        ),
-        notificationId: 'swap_request_$swapRequestId',
-      );
+          await _notificationService.createNotification(
+            AppNotification(
+              id: '',
+              recipientId: request.ownerId,
+              senderId: request.requesterId,
+              senderDisplayName: senderName,
+              senderPhotoUrl: senderInfo['photoUrl'],
+              type: AppNotificationType.swapRequest,
+              title: 'New swap request',
+              body: '$senderName wants to swap for one of your books.',
+              swapRequestId: swapRequestId,
+              swapId: swapRequestId,
+              isRead: false,
+              createdAt: DateTime.now(),
+            ),
+            notificationId: 'swap_request_$swapRequestId',
+          );
 
-      return swapRequestId;
-    });
+          return swapRequestId;
+        });
   }
 
   Future<void> acceptSwapById(String id) async {
@@ -87,12 +89,12 @@ class SwapService {
     await acceptSwapAndLockBooks(swap);
   }
 
-  Future<void> acceptSwapAndLockBooks(SwapRequest swap, {
-        String? requesterBookIdOverride,
-        String? ownerBookIdOverride,
-        String? acceptedByUid,
-      }) async {
-
+  Future<void> acceptSwapAndLockBooks(
+    SwapRequest swap, {
+    String? requesterBookIdOverride,
+    String? ownerBookIdOverride,
+    String? acceptedByUid,
+  }) async {
     if (swap.status != SwapStatus.pending) {
       return;
     }
@@ -100,7 +102,9 @@ class SwapService {
     final requesterBookId = requesterBookIdOverride ?? swap.bookOfferedId;
     final ownerBookId = ownerBookIdOverride ?? swap.bookWantedId;
     final actorUid = acceptedByUid ?? swap.ownerId;
-    final recipientUid = actorUid == swap.requesterId ? swap.ownerId : swap.requesterId;
+    final recipientUid = actorUid == swap.requesterId
+        ? swap.ownerId
+        : swap.requesterId;
 
     final batch = _db.batch();
 
@@ -118,33 +122,52 @@ class SwapService {
       'lastMessageAt': FieldValue.serverTimestamp(),
     });
 
-    final offeredBookRef =
-    _db.collection('users/${swap.requesterId}/shelf').doc(requesterBookId);
-    final wantedBookRef =
-    _db.collection('users/${swap.ownerId}/shelf').doc(ownerBookId);
+    final offeredBookRef = _db
+        .collection('users/${swap.requesterId}/shelf')
+        .doc(requesterBookId);
+    final wantedBookRef = _db
+        .collection('users/${swap.ownerId}/shelf')
+        .doc(ownerBookId);
 
     batch.update(offeredBookRef, {'lockedBySwapId': swap.id});
     batch.update(wantedBookRef, {'lockedBySwapId': swap.id});
 
-    if (actorUid == swap.ownerId) {
-      final otherRequests = await _db
-          .collection(_collection)
-          .where('status', isEqualTo: SwapStatus.pending.name)
-          .where('ownerId', isEqualTo: swap.ownerId)
-          .get();
+    final q1 = _db
+        .collection(_collection)
+        .where('status', isEqualTo: SwapStatus.pending.name)
+        .where('bookOfferedId', isEqualTo: requesterBookId)
+        .get();
+    final q2 = _db
+        .collection(_collection)
+        .where('status', isEqualTo: SwapStatus.pending.name)
+        .where('bookWantedId', isEqualTo: requesterBookId)
+        .get();
+    final q3 = _db
+        .collection(_collection)
+        .where('status', isEqualTo: SwapStatus.pending.name)
+        .where('bookOfferedId', isEqualTo: ownerBookId)
+        .get();
+    final q4 = _db
+        .collection(_collection)
+        .where('status', isEqualTo: SwapStatus.pending.name)
+        .where('bookWantedId', isEqualTo: ownerBookId)
+        .get();
 
-      for (final doc in otherRequests.docs) {
-        if (doc.id == swap.id) continue;
+    final results = await Future.wait([q1, q2, q3, q4]);
+    final Set<String> processedIds = {swap.id};
 
-        final data = doc.data();
+    for (final snapshot in results) {
+      for (final doc in snapshot.docs) {
+        if (processedIds.contains(doc.id)) continue;
+        processedIds.add(doc.id);
 
-        final conflictsWithWanted =
-            data['bookWantedId'] == ownerBookId ||
-                data['bookOfferedId'] == ownerBookId;
-
-        if (conflictsWithWanted) {
-          batch.update(doc.reference, {'status': SwapStatus.rejected.name});
-        }
+        batch.update(doc.reference, {'status': SwapStatus.cancelled.name});
+        batch.update(_db.collection('chats').doc(doc.id), {
+          'status': 'cancelled',
+          'lastMessage':
+              'Swap automatically cancelled because a book became unavailable.',
+          'lastMessageAt': FieldValue.serverTimestamp(),
+        });
       }
     }
 
@@ -162,7 +185,8 @@ class SwapService {
         senderPhotoUrl: senderInfo['photoUrl'],
         type: AppNotificationType.swapAccepted,
         title: 'Swap accepted',
-        body: '$senderName accepted your swap request. Meet up to complete the exchange.',
+        body:
+            '$senderName accepted your swap request. Meet up to complete the exchange.',
         swapRequestId: swap.id,
         swapId: swap.id,
         chatId: swap.id,
@@ -244,7 +268,10 @@ class SwapService {
   Future<void> deleteRequest(String id) => cancelRequest(id);
 
   Future<void> completePhysicalExchange(String swapId) async {
-    final requesterInfo = await fetchUserInfoByFallback(swapId, role: 'requester');
+    final requesterInfo = await fetchUserInfoByFallback(
+      swapId,
+      role: 'requester',
+    );
     final ownerInfo = await fetchUserInfoByFallback(swapId, role: 'owner');
 
     await _db.runTransaction((transaction) async {
@@ -265,10 +292,12 @@ class SwapService {
         throw Exception('Only accepted swaps can be completed.');
       }
 
-      final offeredBookRef =
-      _db.collection('users/${swap.requesterId}/shelf').doc(swap.bookOfferedId);
-      final wantedBookRef =
-      _db.collection('users/${swap.ownerId}/shelf').doc(swap.bookWantedId);
+      final offeredBookRef = _db
+          .collection('users/${swap.requesterId}/shelf')
+          .doc(swap.bookOfferedId);
+      final wantedBookRef = _db
+          .collection('users/${swap.ownerId}/shelf')
+          .doc(swap.bookWantedId);
 
       final offeredSnap = await transaction.get(offeredBookRef);
       final wantedSnap = await transaction.get(wantedBookRef);
@@ -292,7 +321,8 @@ class SwapService {
         throw Exception('Books are not reserved for this swap.');
       }
 
-      final requesterDisplayName = requesterInfo['displayName'] ?? 'LeafMark user';
+      final requesterDisplayName =
+          requesterInfo['displayName'] ?? 'LeafMark user';
       final ownerDisplayName = ownerInfo['displayName'] ?? 'LeafMark user';
 
       final wantedBookForRequester = wantedBook.copyWith(
@@ -309,10 +339,12 @@ class SwapService {
         lastExchangeId: swap.id,
       );
 
-      final newWantedRef =
-      _db.collection('users/${swap.requesterId}/shelf').doc(swap.bookWantedId);
-      final newOfferedRef =
-      _db.collection('users/${swap.ownerId}/shelf').doc(swap.bookOfferedId);
+      final newWantedRef = _db
+          .collection('users/${swap.requesterId}/shelf')
+          .doc(swap.bookWantedId);
+      final newOfferedRef = _db
+          .collection('users/${swap.ownerId}/shelf')
+          .doc(swap.bookOfferedId);
 
       transaction.set(newWantedRef, wantedBookForRequester.toJson());
       transaction.set(newOfferedRef, offeredBookForOwner.toJson());
@@ -336,10 +368,12 @@ class SwapService {
   Future<void> _unlockBooksIfNeeded(WriteBatch batch, SwapRequest swap) async {
     if (swap.status != SwapStatus.accepted) return;
 
-    final offeredBookRef =
-    _db.collection('users/${swap.requesterId}/shelf').doc(swap.bookOfferedId);
-    final wantedBookRef =
-    _db.collection('users/${swap.ownerId}/shelf').doc(swap.bookWantedId);
+    final offeredBookRef = _db
+        .collection('users/${swap.requesterId}/shelf')
+        .doc(swap.bookOfferedId);
+    final wantedBookRef = _db
+        .collection('users/${swap.ownerId}/shelf')
+        .doc(swap.bookWantedId);
 
     final offeredSnap = await offeredBookRef.get();
     final wantedSnap = await wantedBookRef.get();
@@ -377,16 +411,13 @@ class SwapService {
   }
 
   Future<Map<String, String?>> fetchUserInfoByFallback(
-      String swapId, {
-        required String role,
-      }) async {
+    String swapId, {
+    required String role,
+  }) async {
     final snap = await _db.collection(_collection).doc(swapId).get();
 
     if (!snap.exists) {
-      return {
-        'displayName': null,
-        'photoUrl': null,
-      };
+      return {'displayName': null, 'photoUrl': null};
     }
 
     final swap = SwapRequest.fromMap(snap.data()!, snap.id);
@@ -400,10 +431,7 @@ class SwapService {
       final doc = await _db.collection('users').doc(uid).get();
 
       if (!doc.exists) {
-        return {
-          'displayName': null,
-          'photoUrl': null,
-        };
+        return {'displayName': null, 'photoUrl': null};
       }
 
       final data = doc.data()!;
@@ -413,10 +441,7 @@ class SwapService {
         'photoUrl': data['profilePictureUrl'] as String?,
       };
     } catch (_) {
-      return {
-        'displayName': null,
-        'photoUrl': null,
-      };
+      return {'displayName': null, 'photoUrl': null};
     }
   }
 
@@ -476,9 +501,11 @@ class SwapService {
         .collection(_collection)
         .where('ownerId', isEqualTo: uid)
         .snapshots()
-        .map((snap) => snap.docs
-        .map((doc) => SwapRequest.fromMap(doc.data(), doc.id))
-        .toList());
+        .map(
+          (snap) => snap.docs
+              .map((doc) => SwapRequest.fromMap(doc.data(), doc.id))
+              .toList(),
+        );
   }
 
   Stream<List<SwapRequest>> outgoingRequests(String uid) {
@@ -486,9 +513,11 @@ class SwapService {
         .collection(_collection)
         .where('requesterId', isEqualTo: uid)
         .snapshots()
-        .map((snap) => snap.docs
-        .map((doc) => SwapRequest.fromMap(doc.data(), doc.id))
-        .toList());
+        .map(
+          (snap) => snap.docs
+              .map((doc) => SwapRequest.fromMap(doc.data(), doc.id))
+              .toList(),
+        );
   }
 
   Stream<List<SwapRequest>> exchangeHistory(String uid) {
@@ -497,18 +526,20 @@ class SwapService {
         .where('requesterId', isEqualTo: uid)
         .where('status', isEqualTo: SwapStatus.completed.name)
         .snapshots()
-        .map((s) => s.docs
-        .map((d) => SwapRequest.fromMap(d.data(), d.id))
-        .toList());
+        .map(
+          (s) =>
+              s.docs.map((d) => SwapRequest.fromMap(d.data(), d.id)).toList(),
+        );
 
     final asOwner = _db
         .collection(_collection)
         .where('ownerId', isEqualTo: uid)
         .where('status', isEqualTo: SwapStatus.completed.name)
         .snapshots()
-        .map((s) => s.docs
-        .map((d) => SwapRequest.fromMap(d.data(), d.id))
-        .toList());
+        .map(
+          (s) =>
+              s.docs.map((d) => SwapRequest.fromMap(d.data(), d.id)).toList(),
+        );
 
     return Rx.combineLatest2(asRequester, asOwner, (a, b) {
       final merged = [...a, ...b];

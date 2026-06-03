@@ -13,8 +13,8 @@ class SearchProvider extends ChangeNotifier {
   SearchProvider({
     GoogleBooksService? booksService,
     UserSearchRepository? userSearchService,
-  })  : _booksService = booksService ?? GoogleBooksService(),
-        _userSearchService = userSearchService ?? UserSearchService();
+  }) : _booksService = booksService ?? GoogleBooksService(),
+       _userSearchService = userSearchService ?? UserSearchService();
 
   List<BookFetchResult> _bookResults = [];
   List<AppUser> _userResults = [];
@@ -57,10 +57,7 @@ class SearchProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> performSearch(
-      String query, {
-        String? currentUid,
-      }) async {
+  Future<void> performSearch(String query, {String? currentUid}) async {
     if (query.trim().isEmpty) {
       clearSearch();
       return;
@@ -93,7 +90,7 @@ class SearchProvider extends ChangeNotifier {
 
         if (msg.contains('503') || msg.contains('service unavailable')) {
           _errorMessage =
-          'The book service is temporarily unavailable. Please try again in a moment.';
+              'The book service is temporarily unavailable. Please try again in a moment.';
         } else if (msg.contains('network') || msg.contains('timeout')) {
           _errorMessage = 'No internet connection. Please check your network.';
         } else {

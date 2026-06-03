@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:rxdart/rxdart.dart';
@@ -255,12 +256,11 @@ class _ChatAvatar extends StatelessWidget {
       ),
       child: ClipOval(
         child: photoUrl != null && photoUrl!.isNotEmpty
-            ? Image.network(
-                photoUrl!,
+            ? CachedNetworkImage(
+                imageUrl: photoUrl!,
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return _AvatarInitial(initial: initial);
-                },
+                errorWidget: (context, url, error) =>
+                    _AvatarInitial(initial: initial),
               )
             : _AvatarInitial(initial: initial),
       ),

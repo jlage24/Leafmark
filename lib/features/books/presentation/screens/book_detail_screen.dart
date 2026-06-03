@@ -1,4 +1,7 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:photo_view/photo_view.dart';
+import 'package:photo_view/photo_view_gallery.dart';
 import 'package:provider/provider.dart';
 
 import '../../domain/models/book.dart';
@@ -25,12 +28,13 @@ class BookDetailScreen extends StatelessWidget {
   });
 
   List<String> get _galleryUrls {
-    final urls = <String>[
-      ...book.conditionPhotoUrls,
-      if (book.coverUrl != null && book.coverUrl!.isNotEmpty) book.coverUrl!,
-    ];
-
-    return urls.toSet().toList();
+    if (book.conditionPhotoUrls.isNotEmpty) {
+      return book.conditionPhotoUrls;
+    }
+    if (book.coverUrl != null && book.coverUrl!.isNotEmpty) {
+      return [book.coverUrl!];
+    }
+    return [];
   }
 
   @override
@@ -379,11 +383,25 @@ class _BookGalleryAppBarState extends State<_BookGalleryAppBar> {
                 itemCount: widget.imageUrls.length,
                 onPageChanged: (index) => setState(() => _currentIndex = index),
                 itemBuilder: (context, index) {
-                  return Image.network(
-                    widget.imageUrls[index],
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) =>
-                        const _PlaceholderCover(),
+                  return GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => _FullScreenGallery(
+                            imageUrls: widget.imageUrls,
+                            initialIndex: index,
+                          ),
+                          fullscreenDialog: true,
+                        ),
+                      );
+                    },
+                    child: CachedNetworkImage(
+                      imageUrl: widget.imageUrls[index],
+                      fit: BoxFit.cover,
+                      errorWidget: (context, url, error) =>
+                          const _PlaceholderCover(),
+                    ),
                   );
                 },
               )
@@ -1108,6 +1126,72 @@ class _PlaceholderCover extends StatelessWidget {
       color: Colors.grey[200],
       child: const Center(
         child: Icon(Icons.book_outlined, size: 80, color: Colors.grey),
+      ),
+    );
+  }
+}
+
+class _FullScreenGallery extends StatefulWidget {
+  final List<String> imageUrls;
+  final int initialIndex;
+
+  const _FullScreenGallery({
+    super.key,
+    required this.imageUrls,
+    required this.initialIndex,
+  });
+
+  @override
+  State<_FullScreenGallery> createState() => _FullScreenGalleryState();
+}
+
+class _FullScreenGalleryState extends State<_FullScreenGallery> {
+  late PageController _controller;
+  late int _currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+    _controller = PageController(initialPage: widget.initialIndex);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.black,
+        foregroundColor: Colors.white,
+        elevation: 0,
+        title: Text('${_currentIndex + 1} / ${widget.imageUrls.length}'),
+      ),
+      body: PhotoViewGallery.builder(
+        scrollPhysics: const BouncingScrollPhysics(),
+        builder: (BuildContext context, int index) {
+          return PhotoViewGalleryPageOptions(
+            imageProvider: CachedNetworkImageProvider(widget.imageUrls[index]),
+            initialScale: PhotoViewComputedScale.contained,
+            minScale: PhotoViewComputedScale.contained,
+            maxScale: PhotoViewComputedScale.covered * 4,
+          );
+        },
+        itemCount: widget.imageUrls.length,
+        loadingBuilder: (context, event) =>
+            const Center(child: CircularProgressIndicator()),
+        backgroundDecoration: const BoxDecoration(color: Colors.black),
+        pageController: _controller,
+        onPageChanged: (index) {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
       ),
     );
   }

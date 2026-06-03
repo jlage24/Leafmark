@@ -49,6 +49,15 @@ class FakeAuthProvider extends ChangeNotifier implements AuthProvider {
     String? favoriteBookAuthor,
     String? favoriteBookCoverUrl,
   }) async => true;
+
+  @override
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async => true;
+
+  @override
+  Future<bool> deleteAccount({required String password}) async => true;
 }
 
 void main() {
@@ -135,7 +144,11 @@ void main() {
 
       expect(find.text('"Dune" removed from your shelf'), findsOneWidget);
       expect(
-        find.text('Your shelf is empty. Scan a book to add it!'),
+        find.text('Your shelf is empty'),
+        findsOneWidget,
+      );
+      expect(
+        find.text('Scan or search for a book to start building your exchange shelf.'),
         findsOneWidget,
       );
 

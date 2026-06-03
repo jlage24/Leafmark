@@ -60,6 +60,8 @@ class LeafMarkApp extends StatelessWidget {
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             themeMode: themeProvider.themeMode,
+            themeAnimationDuration: const Duration(milliseconds: 500),
+            themeAnimationCurve: Curves.easeInOutCubic,
             home: const SplashScreen(),
           );
         },

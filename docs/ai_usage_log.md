@@ -136,6 +136,27 @@ All five team members used AI assistants at various points. The tools were **Cla
     * Release notes drafting
     * Final release checklist validation
 
+---
+
+## Final Release
+
+**Account Management & Privacy**
+
+* Used Claude to design the secure account deletion workflow, ensuring all associated data (books, swaps, messages) and orphaned resources are correctly cleaned up.
+* Used Gemini to explore edge cases and security implications during the deletion of user data in Firestore.
+
+**UI/UX Refinements & Dark Mode**
+
+* Used ChatGPT to plan the migration from static colors to a global dynamic theme system, enabling full Dark Mode support.
+* Used Gemini to suggest improvements for UI animations, image caching (`CachedNetworkImage` parameters), and smoother transitions between screens.
+* Used Claude to discuss the design implementation of the "Edit Book" screen and the "Followers" list view.
+
+**Logic & Data Formatting**
+
+* Used ChatGPT to implement the automatic cancellation logic for conflicting pending swap requests when a book becomes locked.
+* Used Perplexity to find optimal regular expressions and string manipulation techniques in Dart for applying Title Case formatting to parsed book titles.
+* Used Claude to adjust and refine the Firestore security rules to support the new swap cancellation states and granular read permissions during account cleanup.
+
 **Validation**
 
 All AI-generated suggestions were manually reviewed, adapted and tested before being committed. AI tools were used as implementation assistants and reviewers, not as a replacement for development, testing or design decisions.

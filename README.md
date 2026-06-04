@@ -142,60 +142,39 @@ The survey results directly influenced backlog prioritisation and feature planni
 
 ### User Interfaces
 
-The following screenshots show the current state of the application in the Final Release (v1.0.0).
+The following screenshots and promotional visuals showcase the final state of LeafMark (v1.0.0).
+
+## Product Showcase
 
 <div align="center">
 
-<img src="docs/images/LoginScreen.png" alt="Login Screen" width="22%" />
-<img src="docs/images/BrowseScreen.png" alt="Browse Screen" width="22%" />
-<img src="docs/images/SearchScreen.png" alt="Search Screen" width="22%" />
-<img src="docs/images/MyShelfScreen.png" alt="My Shelf Screen" width="22%" />
+<img src="docs/images/LeafMarkHero.png" alt="LeafMark Product Showcase" width="100%" />
 
 </div>
 
 <div align="center">
 
-<img src="docs/images/BookDetailScreen.png" alt="Book Detail Screen" width="22%" />
-<img src="docs/images/ChatScreen.png" alt="Chat Screen" width="22%" />
-<img src="docs/images/ProfileScreen.png" alt="Profile Screen" width="22%" />
-<img src="docs/images/PublicProfileScreen.png" alt="Public Profile Screen" width="22%" />
+<img src="docs/images/Discover-And-Search.png" alt="Discover and Search" width="49%" />
+<img src="docs/images/Scanner.png" alt="Scanner Experience" width="49%" />
 
 </div>
 
 <div align="center">
 
-<img src="docs/images/NotificationsScreen.png" alt="Notifications Screen" width="22%" />
-<img src="docs/images/SuccessfulSwapScreen.png" alt="Successful Swap Screen" width="22%" />
+<img src="docs/images/Swap-And-Chat.png" alt="Swap and Chat" width="49%" />
+<img src="docs/images/Community-And-Trust.png" alt="Community and Trust" width="49%" />
+
+</div>
+
+<div align="center">
+
+<img src="docs/images/Dark-Mode.png" alt="Dark Mode Support" width="100%" />
 
 </div>
 
 ---
 
 ## Architecture and Design
-
-### Architecture
-
-LeafMark follows a feature-first architecture:
-
-features/
- ├── auth/
- ├── books/
- ├── chat/
- ├── notifications/
- ├── ratings/
- ├── reports/
- ├── search/
- ├── swaps/
- └── wishlist/
-
-Each feature is divided into:
-- data
-- domain
-- presentation
-
-State management is handled through Provider.
-Firebase Authentication and Cloud Firestore are used as backend services.
-Cloudinary is used for image storage.
 
 ### Logical Architecture
 

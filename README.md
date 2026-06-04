@@ -69,6 +69,10 @@ Leafmark is a community-driven book exchange platform that makes trading books b
 - **Exchange History** — track completed book exchanges
 - **Profile Badges** — earn credibility badges based on community activity
 - **Real Book Photos** — upload photos showing the actual condition of books
+- **Dark Mode** — complete application-wide theming support for dark and light modes
+- **Profile Sharing** — share links to your public or private profile externally
+- **Account Management** — comprehensive privacy controls including secure account deletion
+- **Edit Books** — edit details of books already present on your shelf
 
 **Assumptions:**
 - Users have an Android device with a working camera for ISBN scanning
@@ -138,7 +142,7 @@ The survey results directly influenced backlog prioritisation and feature planni
 
 ### User Interfaces
 
-The following screenshots show the current state of the application after Sprint 3.
+The following screenshots show the current state of the application in the Final Release (v1.0.0).
 
 <div align="center">
 
@@ -168,6 +172,30 @@ The following screenshots show the current state of the application after Sprint
 ---
 
 ## Architecture and Design
+
+### Architecture
+
+LeafMark follows a feature-first architecture:
+
+features/
+ ├── auth/
+ ├── books/
+ ├── chat/
+ ├── notifications/
+ ├── ratings/
+ ├── reports/
+ ├── search/
+ ├── swaps/
+ └── wishlist/
+
+Each feature is divided into:
+- data
+- domain
+- presentation
+
+State management is handled through Provider.
+Firebase Authentication and Cloud Firestore are used as backend services.
+Cloudinary is used for image storage.
 
 ### Logical Architecture
 
@@ -215,30 +243,25 @@ Additionally, the Google Books API allows automatic retrieval of book data from 
 
 ### Functional Prototype
 
-The functional prototype evolved across Sprint 0 and Sprint 1 to cover the full core interaction flow of LeafMark.
+The functional prototype evolved across the entire development cycle to cover the full core interaction flow of LeafMark.
 
-- Users can scan ISBN barcodes with the camera, fetching book information automatically from Google Books API.
-- Books are added to a virtual shelf, browsable by other users, and searchable by title, author, or ISBN.
-- Users can create accounts and authenticate securely via Firebase Auth.
-- Swap requests can be initiated, accepted, or rejected; trades can be marked as "In Progress" or "Completed".
-- All data is persisted in Firestore with book images stored in Cloudinary.
-- User authentication and profile management
-- ISBN barcode scanning using Google Books API
-- Personal shelf management
+- User authentication and comprehensive profile management (including secure account deletion)
+- ISBN barcode scanning using Google Books API with automatic Title Case formatting
+- Personal shelf management (add, edit, and delete books)
 - Community browsing with category and location filters
-- Search books and users
-- Real book condition photos
-- Swap proposals and counter-offers
-- Real-time chat
-- Follow/unfollow readers
-- User blocking
+- Search books and users across the platform
+- Real book condition photos uploaded to Cloudinary
+- Swap proposals, counter-offers, and automatic resolution of conflicting swaps
+- Real-time chat integration for smooth negotiations
+- Follow/unfollow readers and view followers
+- User blocking and privacy controls
 - In-app notifications
-- Exchange history
+- Detailed exchange history and ownership transfer
 - Ratings and reviews
 - User reporting
 - Wishlist management
 - Profile badges
-- Ownership transfer after completed exchanges
+- Application-wide Dark Mode support with dynamic theming
 
 ---
 
@@ -264,14 +287,7 @@ flutter pub get
 
 ### 2. Firebase configuration
 
-The `google-services.json` file is not committed to the repository. You need to get it from a team member or generate it yourself from the Firebase console.
-
-Place it at:
-```
-android/app/google-services.json
-```
-
-`firebase_options.dart` is committed and does not need to be recreated.
+`firebase_options.dart` and `google-services.json` are committed and do not need to be recreated. 
 
 ### 3. Google Books API key
 
@@ -328,7 +344,7 @@ A full log of AI interactions is available in [`docs/ai_usage_log.md`](docs/ai_u
 ## Project Management
 
 * Backlog management: Product backlog and Sprint backlog in a [GitHub Projects board](#);
-* Release management: [v0.1.0](../../releases/tag/v0.1.0), [v0.2.0](../../releases/tag/v0.2.0), [v0.3.0](../../releases/tag/v0.3.0), [v0.4.0](../../releases/tag/v0.4.0) ;
+* Release management: [v0.1.0](../../releases/tag/v0.1.0), [v0.2.0](../../releases/tag/v0.2.0), [v0.3.0](../../releases/tag/v0.3.0), [v0.4.0](../../releases/tag/v0.4.0), [v1.0.0](../../releases/tag/v1.0.0);
 * Sprint planning and retrospectives:
     * **Plans**: screenshots of GitHub Projects board at the beginning and end of each Sprint;
     * **Retrospectives**: meeting notes addressing:
@@ -540,7 +556,7 @@ The team intentionally prioritised application stability, testing quality, and c
 * Whether notifications should eventually be extended with Firebase Cloud Messaging
 * How to scale user discovery while keeping browse results relevant
 
-📌 **Improvements for Sprint 4 aka Final Release**
+📌 **Improvements for Final Release**
 
 * Implement the remaining Virtual Brown Paper feature and other user stories
 * Continue expanding automated test coverage
@@ -551,4 +567,42 @@ The team intentionally prioritised application stability, testing quality, and c
 
 ### Final Release
 
-_[Describe the final release, linking to the release tag and summarising what was delivered.]_
+#### Planning
+
+The Final Release was dedicated to polishing the user experience, enhancing privacy controls, addressing technical debt, and providing complete theming support before the final submission.
+
+**Delivered:**
+- Application-wide Dark Mode support with dynamic theme toggling
+- Secure account deletion workflow to permanently remove user and associated data
+- Profile-sharing functionality on both private and public profile pages
+- Dedicated "Followers" screen
+- "Edit Book" screen allowing users to modify details of books already on their shelf
+- Automatic cancellation of conflicting pending swap requests when a book becomes locked
+- Title case formatting for book titles parsed from barcode scans and external sources
+- Major UI redesign and UX enhancements across multiple screens
+- Resolved data integrity issues and orphaned resource leaks upon account deletion
+- Updated Firestore security rules for granular permission control
+
+**Release:** [v1.0.0](../../releases/tag/v1.0.0)
+
+#### Retrospective
+
+✅ **Did well**
+- Successfully implemented full Dark Mode support, which was a highly requested feature
+- Handled edge cases regarding data consistency during account deletion effectively
+- Cleaned up the user interface with cohesive theming and improved animations
+- Proactively addressed potential state conflicts during complex swap scenarios
+
+🔁 **Do differently**
+- Plan for theming and dark mode from the beginning of the project to avoid massive UI refactoring later
+- Dedicate more time for comprehensive beta testing before the final release to catch minor UI bugs
+
+❓ **Puzzles**
+- How to best handle legacy data (e.g., chats) when one of the participants completely deletes their account
+- How to seamlessly integrate native push notifications in a purely Flutter-based architecture without relying heavily on platform-specific code
+
+📌 **Future Work**
+- Implement an AI-driven recommendation feed for book discovery
+- Introduce native push notifications via Firebase Cloud Messaging
+- Support for physical meet-up locations using Maps integration
+- Implement the "Virtual Brown Paper" feature for community discussions

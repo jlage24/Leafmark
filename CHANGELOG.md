@@ -5,6 +5,39 @@ All notable changes to LeafMark will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ---
+## [1.0.0] - 2026-06-04 — Final Release
+
+### Added
+
+* Application-wide Dark Mode support with dynamic theme toggling
+* Secure account deletion workflow to permanently remove user and associated data
+* Profile-sharing functionality on both private and public profile pages
+* Dedicated "Followers" screen to list users following the current user
+* "Edit Book" screen allowing users to modify details of books already on their shelf
+* Automatic cancellation of conflicting pending swap requests when a book becomes locked
+* Title case formatting for book titles parsed from barcode scans and external sources
+
+### Changed
+
+* Major UI redesign and UX enhancements across multiple screens for a more polished experience
+* Replaced hardcoded colors with robust theme-based color schemes to support dark mode
+* Improved image caching performance and UI animation fluidity
+* Streamlined notification management and swap request user experience
+* Applied consistent code formatting across the entire codebase
+
+### Fixed
+
+* Resolved data integrity issues and orphaned resource leaks upon account deletion
+* Fixed `PERMISSION_DENIED` errors by aligning the `blocked_users` collection path
+* Fixed test stability issues related to UI animations and image caching
+
+### Security
+
+* Updated Firestore security rules for granular permission control
+* Enhanced rules to support the new swap cancellation state
+* Adjusted read access rules for reports and notifications to allow proper account cleanup
+
+
 ## [0.4.0] - 2026-05-29 — Sprint 3 Release
 
 ### Added

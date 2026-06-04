@@ -411,5 +411,69 @@ void main() {
       expect(offeredBookSnap['lockedBySwapId'], isNull);
       expect(wantedBookSnap['lockedBySwapId'], isNull);
     });
+
+    test('deleteChat adds user to hiddenBy array', () async {
+      await createDummyChat();
+
+      await chatService.deleteChat('swap1', 'userA');
+
+      final snap = await fakeDb.collection('chats').doc('swap1').get();
+      expect(snap.exists, isTrue);
+      expect(snap['hiddenBy'], contains('userA'));
+      expect(snap['hiddenBy'], isNot(contains('userB')));
+    });
+
+    test('deleteChat completely deletes chat when all participants hide it', () async {
+      await createDummyChat();
+      
+      // Add a dummy message to test subcollection deletion
+      await fakeDb.collection('chats').doc('swap1').collection('messages').doc('msg1').set({'text': 'hi'});
+
+      await chatService.deleteChat('swap1', 'userA');
+      await chatService.deleteChat('swap1', 'userB');
+
+      final snap = await fakeDb.collection('chats').doc('swap1').get();
+      final msgSnap = await fakeDb.collection('chats').doc('swap1').collection('messages').get();
+
+      expect(snap.exists, isFalse);
+      expect(msgSnap.docs, isEmpty);
+    });
+
+    test('getChats filters out chats hidden by the user', () async {
+      when(() => mockBlockService.getBlockedUsersStream(any()))
+          .thenAnswer((_) => Stream.value([]));
+
+      await createDummyChat();
+      
+      // Hidden by userA
+      await chatService.deleteChat('swap1', 'userA');
+      
+      final stream = chatService.getChats('userA');
+      final stream2 = chatService.getChats('userB');
+
+      final list1 = await stream.first;
+      final list2 = await stream2.first;
+
+      expect(list1, isEmpty);
+      expect(list2.length, 1);
+      expect(list2.first.swapId, 'swap1');
+    });
+
+    test('sendMessage clears hiddenBy array', () async {
+      when(
+        () => mockBlockService.hasBlockRelationship('userA', 'userB'),
+      ).thenAnswer((_) async => false);
+
+      await createDummyChat();
+      await chatService.deleteChat('swap1', 'userA');
+
+      var snap = await fakeDb.collection('chats').doc('swap1').get();
+      expect(snap['hiddenBy'], contains('userA'));
+
+      await chatService.sendMessage(swapId: 'swap1', message: makeMessage());
+
+      snap = await fakeDb.collection('chats').doc('swap1').get();
+      expect(snap['hiddenBy'], isEmpty);
+    });
   });
 }

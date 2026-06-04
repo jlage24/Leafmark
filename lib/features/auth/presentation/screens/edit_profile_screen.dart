@@ -186,6 +186,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         photoUrl = await CloudinaryService.uploadImage(
           _selectedImage!,
           'leafmark/users/$uid',
+          publicId: 'avatar',
         );
       }
 
@@ -195,6 +196,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         bannerUrl = await CloudinaryService.uploadImage(
           _selectedBanner!,
           'leafmark/users/$uid',
+          publicId: 'banner',
         );
       }
 

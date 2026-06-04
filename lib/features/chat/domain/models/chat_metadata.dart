@@ -10,6 +10,7 @@ class ChatMetadata {
   final DateTime? lastMessageAt;
   final Map<String, DateTime> lastReadAt;
   final List<String> typingUids;
+  final List<String> hiddenBy;
 
   const ChatMetadata({
     required this.swapId,
@@ -19,6 +20,7 @@ class ChatMetadata {
     this.lastMessageAt,
     this.lastReadAt = const {},
     this.typingUids = const [],
+    this.hiddenBy = const [],
   });
 
   Map<String, dynamic> toMap() => {
@@ -29,6 +31,7 @@ class ChatMetadata {
     'lastMessageAt': lastMessageAt != null
         ? Timestamp.fromDate(lastMessageAt!)
         : null,
+    'hiddenBy': hiddenBy,
   };
 
   factory ChatMetadata.fromMap(Map<String, dynamic> map) {
@@ -40,6 +43,11 @@ class ChatMetadata {
     final rawTyping = map['typingUids'];
     final typingUids = rawTyping != null
         ? List<String>.from(rawTyping as List)
+        : <String>[];
+        
+    final rawHidden = map['hiddenBy'];
+    final hiddenBy = rawHidden != null
+        ? List<String>.from(rawHidden as List)
         : <String>[];
 
     final rawStatus = map['status'] as String? ?? ChatStatus.active.name;
@@ -57,6 +65,7 @@ class ChatMetadata {
           : null,
       lastReadAt: lastReadAt,
       typingUids: typingUids,
+      hiddenBy: hiddenBy,
     );
   }
 }

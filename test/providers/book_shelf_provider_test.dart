@@ -96,6 +96,51 @@ void main() {
       expect(provider.books.length, 1);
       expect(provider.books.first.id, '2');
     });
+
+    test('throws exception when removing a locked book', () async {
+      final provider = makeProvider();
+      await provider.loadBooks('test-uid', null);
+      final book = makeBook('1').copyWith(lockedBySwapId: 'swap-1');
+      await provider.addBook(book);
+      
+      expect(
+        () => provider.removeBook('1'),
+        throwsException,
+      );
+    });
+
+    test('cancels pending swaps and updates chat when book is removed', () async {
+      final provider = makeProvider();
+      await provider.loadBooks('test-uid', null);
+      await provider.addBook(makeBook('1'));
+
+      await fakeFirestore.collection('swap_requests').doc('swap1').set({
+        'status': 'pending',
+        'bookOfferedId': '1',
+      });
+      await fakeFirestore.collection('swap_requests').doc('swap2').set({
+        'status': 'pending',
+        'bookWantedId': '1',
+      });
+      await fakeFirestore.collection('chats').doc('swap1').set({
+        'status': 'active',
+      });
+      await fakeFirestore.collection('chats').doc('swap2').set({
+        'status': 'active',
+      });
+
+      await provider.removeBook('1');
+
+      final swap1 = await fakeFirestore.collection('swap_requests').doc('swap1').get();
+      final swap2 = await fakeFirestore.collection('swap_requests').doc('swap2').get();
+      final chat1 = await fakeFirestore.collection('chats').doc('swap1').get();
+      final chat2 = await fakeFirestore.collection('chats').doc('swap2').get();
+
+      expect(swap1.data()!['status'], 'cancelled');
+      expect(swap2.data()!['status'], 'cancelled');
+      expect(chat1.data()!['status'], 'cancelled');
+      expect(chat2.data()!['status'], 'cancelled');
+    });
   });
 
   group('BookShelfProvider - persistence', () {

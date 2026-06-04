@@ -68,9 +68,11 @@ class BookFetchResult {
     final rawCategories = json['categories'];
     final category = _normalizeGoogleBooksCategory(rawCategories);
 
+    final rawTitle = (json['title'] as String?) ?? 'Unknown title';
+
     return BookFetchResult(
       isbn: extractedIsbn,
-      title: (json['title'] as String?) ?? 'Unknown title',
+      title: _toTitleCase(rawTitle),
       authors: authors,
       coverUrl: coverUrl,
       description: json['description'] as String?,
@@ -120,6 +122,30 @@ class BookFetchResult {
       ownerName: 'Google Books',
       category: category,
     );
+  }
+
+  static String _toTitleCase(String text) {
+    if (text.isEmpty) return text;
+    
+    final exceptions = {
+      'a', 'an', 'and', 'as', 'at', 'but', 'by', 'for', 'if', 'in', 'of', 'on', 'or', 'the', 'to', 'with'
+    };
+    
+    final words = text.split(' ');
+    
+    for (var i = 0; i < words.length; i++) {
+      final word = words[i];
+      if (word.isEmpty) continue;
+      
+      final lowerWord = word.toLowerCase();
+      if (i > 0 && i < words.length - 1 && exceptions.contains(lowerWord)) {
+        words[i] = lowerWord;
+      } else {
+        words[i] = word[0].toUpperCase() + (word.length > 1 ? word.substring(1).toLowerCase() : '');
+      }
+    }
+    
+    return words.join(' ');
   }
 
   static String? _normalizeGoogleBooksCategory(dynamic rawCategories) {

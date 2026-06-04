@@ -24,6 +24,8 @@ class ChatProvider extends ChangeNotifier {
 
   Stream<List<ChatMetadata>> getChats() => _service.getChats(_uid);
 
+  Future<void> deleteChat(String swapId) => _service.deleteChat(swapId, _uid);
+
   Stream<ChatMetadata?> chatStream(String swapId) =>
       _service.chatStream(swapId);
 

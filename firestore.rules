@@ -4,8 +4,10 @@ service cloud.firestore {
 
     match /usernames/{username} {
       allow read: if true;
-      allow write: if request.auth != null
+      allow create, update: if request.auth != null
         && request.resource.data.uid == request.auth.uid;
+      allow delete: if request.auth != null
+        && resource.data.uid == request.auth.uid;
     }
 
     match /users/{uid} {
@@ -149,7 +151,8 @@ service cloud.firestore {
     match /reports/{reportId} {
       allow create: if request.auth != null
         && request.auth.uid == request.resource.data.reporterId;
-      allow read: if false;
+      allow read: if request.auth != null
+        && (request.auth.uid == resource.data.reporterId || request.auth.uid == resource.data.reportedUid);
       allow update: if false;
       allow delete: if request.auth != null
         && (request.auth.uid == resource.data.reporterId || request.auth.uid == resource.data.reportedUid);
@@ -199,7 +202,7 @@ service cloud.firestore {
         && request.resource.data.isRead == false;
 
       allow read: if request.auth != null
-        && request.auth.uid == resource.data.recipientId;
+        && (request.auth.uid == resource.data.recipientId || request.auth.uid == resource.data.senderId);
 
       allow update: if request.auth != null
         && request.auth.uid == resource.data.recipientId
@@ -209,7 +212,7 @@ service cloud.firestore {
         && request.resource.data.isRead == true;
 
       allow delete: if request.auth != null
-        && request.auth.uid == resource.data.recipientId;
+        && (request.auth.uid == resource.data.recipientId || request.auth.uid == resource.data.senderId);
     }
   }
 }

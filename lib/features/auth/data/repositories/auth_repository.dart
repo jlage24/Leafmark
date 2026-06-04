@@ -204,7 +204,7 @@ class AuthRepository {
     await deleteCollection('users/${user.uid}/wishlist');
     await deleteCollection('users/${user.uid}/followers');
     await deleteCollection('users/${user.uid}/following');
-    await deleteCollection('users/${user.uid}/blocked');
+    await deleteCollection('users/${user.uid}/blocked_users');
 
     // Wipe swaps and chats involving the user
     final swapsAsRequester = await _db.collection('swap_requests').where('requesterId', isEqualTo: user.uid).get();

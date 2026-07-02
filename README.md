@@ -19,6 +19,7 @@ It is organised by the following activities:
     * [Functional Prototype](#Functional-Prototype)
 * [Setup](#Setup)
 * [AI Usage](#AI-Usage)
+* [Pitch](#Pitch)
 * [Project Management](#Project-Management)
     * [Sprint 0](#Sprint-0)
     * [Sprint 1](#Sprint-1)
@@ -317,6 +318,30 @@ Claude was used the most, mainly for implementation guidance, architecture decis
 AI was never used to blindly generate and commit code. Every suggestion was read, understood, and adapted to the project's architecture before being used. We treated the tools as a fast way to explore options, not as a replacement for thinking through the problem first.
 
 A full log of AI interactions is available in [`docs/ai_usage_log.md`](docs/ai_usage_log.md).
+
+---
+
+## Pitch
+
+### The Problem
+
+Think about the last time you finished a great book. What did you do with it? For most people, it goes on a shelf and is never opened again. Meanwhile, millions of readers are buying new copies of books that are sitting unused in someone else's home, a few streets away. Book trading has always happened informally — among friends, in Facebook groups, at flea markets — but it's slow, unstructured, and, most importantly, it lacks trust. Our own user research, with 27 respondents, confirmed this: 100% had already tried to exchange books informally, but security concerns were identified as the single biggest barrier stopping people from doing it more.
+
+### Our Solution
+
+That's why we built **LeafMark**, a mobile app that turns book exchange into something effortless, affordable, and safe. With LeafMark, you scan a book's barcode and it's instantly added to your virtual shelf, complete with title, author, and cover. You browse what your community has to offer, propose a swap, negotiate through in-app chat, and once you agree, ownership transfers automatically when the exchange is completed. No middleman, no wasted books, no new spending, just readers trading with readers.
+
+### Our Unique Selling Points
+
+What sets LeafMark apart isn't just that it lets people swap books, it's that we built trust into every layer of the app. Peer ratings, user reporting, and blocking give the community real safety tools, directly because our survey told us that's what people needed most before they'd trust a stranger with a trade. Real condition photos remove the guesswork of buying second-hand. And our real-time chat, with proposals and counter-offers, means negotiation happens where the trade happens, not in a separate app or a comment thread.
+
+### Engaging the Audience
+
+So let me ask you this: how many books do you have on your shelf right now that you've already read, and will probably never open again? Now imagine trading each one for something new to read — for **free**. That's LeafMark.
+
+### Visuals
+
+The pitch was accompanied by our Google Slides deck (linked on Moodle), showcasing the app's UI, from ISBN scanning to the chat and swap flow, alongside screenshots and the LeafMark product showcase visuals also found in this README.
 
 ---
 
